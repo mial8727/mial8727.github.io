@@ -1,14 +1,18 @@
 [
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.mial8727.fitform",
+      "sha256_cert_fingerprints": ["B1:46:64:AB:02:9B:FB:DA:F0:33:7D:B2:A6:00:1A:AA:05:89:FF:36:07:CF:25:85:BA:57:C3:09:C1:5F:BD:B5"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "io.github.mial8727.twa",
-      "sha256_cert_fingerprints": [
-        "42:96:3C:A0:C9:FB:13:59:1A:D9:E3:7D:F3:BB:60:1C:6D:94:CB:7C:A1:CE:01:84:BF:92:EC:77:96:00:FC:3B"
-      ]
+      "sha256_cert_fingerprints": ["B1:46:64:AB:02:9B:FB:DA:F0:33:7D:B2:A6:00:1A:AA:05:89:FF:36:07:CF:25:85:BA:57:C3:09:C1:5F:BD:B5"]
     }
   }
 ]
