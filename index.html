@@ -227,7 +227,7 @@ const RIG = (() => {
   function solveSide(p) {
     const hip = p.hip, tr = p.tr || 0;
     const tv = [Math.sin(tr * D), -Math.cos(tr * D)];
-    const sh = add(hip, tv, L.tor);
+    const sh = add(hip, tv, L.tor + (p.sy || 0));
     const hd = (p.hd || 0) + tr;
     const hv = [Math.sin(hd * D), -Math.cos(hd * D)];
     const head = add(sh, hv, L.neck + L.head);
@@ -259,7 +259,8 @@ const RIG = (() => {
     const [kN, aN] = leg("N"), [kF, aF] = leg("F");
     const toe = (an, t) => add(an, [Math.cos(t * D), Math.sin(t * D)], L.ft);
     const tN = toe(aN, p.tN ?? 0), tF = toe(aF, p.tF ?? (p.tN ?? 0));
-    return { view: "side", hip, sh, head, hv, hd, eN, wN, eF, wF, kN, aN, kF, aF, tN, tF };
+    const xN = has(p, "wa") ? add(wN, dn(p.wa), 9) : null, xF = has(p, "wa") ? add(wF, dn(p.waF ?? p.wa), 9) : null;   // hands (wrist work)
+    return { view: "side", hip, sh, head, hv, hd, eN, wN, eF, wF, kN, aN, kF, aF, tN, tF, xN, xF };
   }
 
   /* ---------- front view ---------- */
@@ -367,6 +368,14 @@ const RIG = (() => {
       }
       case "bottle": { const p = add(jointOf(G, pr.at), pr.off || [0, 0]); return `<rect x="${f1(p[0] - 4)}" y="${f1(p[1] - 9)}" width="8" height="18" rx="3" fill="#60A5FA" stroke="#111" stroke-width="1"/><rect x="${f1(p[0] - 2)}" y="${f1(p[1] - 12)}" width="4" height="4" rx="1" fill="#93C5FD"/>`; }
       case "bag": { const p = add(jointOf(G, pr.at), pr.off || [0, 0]); return `<path d="M${f1(p[0] - 5)} ${f1(p[1] - 2)} Q ${f1(p[0])} ${f1(p[1] - 12)} ${f1(p[0] + 5)} ${f1(p[1] - 2)}" stroke="#9CA3AF" stroke-width="2.5" fill="none"/><rect x="${f1(p[0] - 9)}" y="${f1(p[1] - 1)}" width="18" height="20" rx="5" fill="#3B5BA9" stroke="#111" stroke-width="1"/>`; }
+      case "jug": {
+        const one = (j, far) => { const p = add(jointOf(G, j), pr.off || [0, 0]);
+          return `<rect x="${f1(p[0] - 7)}" y="${f1(p[1] - 1)}" width="14" height="18" rx="4" fill="${far ? "#2F5F8F" : "#60A5FA"}" stroke="#111" stroke-width="1"/><path d="M${f1(p[0] - 4)} ${f1(p[1])} Q ${f1(p[0])} ${f1(p[1] - 9)} ${f1(p[0] + 4)} ${f1(p[1])}" stroke="${far ? "#2F5F8F" : "#93C5FD"}" stroke-width="2.5" fill="none"/>`; };
+        return (pr.both ? one(pr.at.replace("N", "F"), true) : "") + one(pr.at, false);
+      }
+      case "strap": return ln(jointOf(G, pr.a), jointOf(G, pr.b), pr.w || 3, c || "#7DD3FC");
+      case "rope": { const a = jointOf(G, pr.a), b = jointOf(G, pr.b); return `<path d="M${f1(a[0])} ${f1(a[1])} Q ${f1((a[0] + b[0]) / 2)} ${pr.cy ?? 300} ${f1(b[0])} ${f1(b[1])}" stroke="${C.band}" stroke-width="2.2" fill="none"/>`; }
+      case "ring": return `<circle cx="${pr.x}" cy="${pr.y}" r="${pr.r}" fill="${pr.fill || "none"}" stroke="${c || C.frame}" stroke-width="${pr.w || 4}"/>`;
       case "box": return `<rect x="${pr.x}" y="${pr.y}" width="${pr.w}" height="${206 - pr.y}" rx="3" fill="${C.pad}" stroke="${C.padS}"/>`;
       case "tread": return `<rect x="${pr.x}" y="198" width="${pr.w}" height="8" rx="3" fill="#23272E" stroke="${C.frame}"/>` + ln([pr.x + pr.w, 200], [pr.x + pr.w + 10, 110], 5, C.frame) + ln([pr.x + pr.w + 10, 110], [pr.x + pr.w - 18, 112], 5, C.frame) + `<rect x="${pr.x + pr.w}" y="98" width="20" height="12" rx="3" fill="#2B3038" stroke="${C.frame}"/>`;
     }
@@ -375,13 +384,14 @@ const RIG = (() => {
 
   function drawSide(G, an, fem) {
     const props = an.props || [];
-    const layer = z => props.filter(p => (p.z || (["bench", "pad", "tower", "rail", "line", "box", "tread", "circle"].includes(p.t) ? "b" : "f")) === z).map(p => drawProp(p, G)).join("");
+    const layer = z => props.filter(p => (p.z || (["bench", "pad", "tower", "rail", "line", "box", "tread", "circle", "ring"].includes(p.t) ? "b" : "f")) === z).map(p => drawProp(p, G)).join("");
     const o = [];
     if (!an.noFloor) o.push(ln([4, 206], [236, 206], 2, C.floor));
     o.push(layer("b"));
     // far limbs
     o.push(ln(G.hip, G.kF, 11, C.far), ln(G.kF, G.aF, 9, C.far), ln(G.aF, G.tF, 5, C.far));
     o.push(ln(G.sh, G.eF, 8, C.far), ln(G.eF, G.wF, 7, C.far));
+    if (G.xF) o.push(ln(G.wF, G.xF, 6, C.far));
     o.push(layer("m"));
     // torso & head
     o.push(ln(G.hip, G.sh, 15, C.near));
@@ -396,13 +406,14 @@ const RIG = (() => {
     // near limbs
     o.push(ln(G.hip, G.kN, 12, C.near), ln(G.kN, G.aN, 10, C.near), ln(G.aN, G.tN, 6, C.near));
     o.push(ln(G.sh, G.eN, 9, C.near), ln(G.eN, G.wN, 8, C.near));
+    if (G.xN) o.push(ln(G.wN, G.xN, 7, C.near));
     o.push(layer("f"));
     return o.join("");
   }
 
   function drawFront(G, an, fem) {
     const props = an.props || [];
-    const layer = z => props.filter(p => (p.z || (["bench", "pad", "tower", "rail", "line", "box", "circle"].includes(p.t) ? "b" : "f")) === z).map(p => drawProp(p, G)).join("");
+    const layer = z => props.filter(p => (p.z || (["bench", "pad", "tower", "rail", "line", "box", "circle", "ring"].includes(p.t) ? "b" : "f")) === z).map(p => drawProp(p, G)).join("");
     const o = [];
     if (!an.noFloor) o.push(ln([4, 206], [236, 206], 2, C.floor));
     o.push(layer("b"));
@@ -737,6 +748,182 @@ const ANIM = (() => {
   A["suitcase-carry"] = { loop: true, dur: 430, frames: walk(8).map(f => ({ ...f, aN: [3, 3] })), props: [{ t: "db", at: "wN", off: [0, 4] }] };
   A["home-hiit"] = { v: "front", dur: 330, hold: 40, frames: [
       { hipY: 122, a: [8, 8], l: [3, 0] }, { hipY: 116, a: [165, 172], l: [16, -4] }], props: [] };
+
+  /* ===== Expanded library: biceps, triceps, forearms, shoulders, back, chest, core, cardio ===== */
+  const curlF = A["cable-curl"].frames;
+  /* biceps */
+  A["rope-hammer"] = { frames: curlF, props: [{ t: "tower", x: 212 }, { t: "cable", from: [206, 198], to: "wN" }, { t: "att", at: "wN", off: [0, 3], ang: 90, len: 12, w: 5, c: "#D6C7A1" }] };
+  A["db-hammer"] = { frames: curlF, props: [{ t: "db", at: "wN", both: true, v: true }] };
+  A["jug-hammer"] = { frames: curlF, props: [{ t: "jug", at: "wN", both: true, off: [0, 2] }] };
+  A["ez-preacher"] = { frames: [
+      { hip: [96, 160], tr: 12, hd: -10, aN: [48, 62], fN: [134, 200] },
+      { hip: [96, 160], tr: 12, hd: -10, aN: [48, 166], fN: [134, 200] }],
+    props: [{ t: "pad", x: 74, y: 160, w: 42, h: 8 }, { t: "line", p: [92, 168, 92, 206], w: 4 }, { t: "line", p: [116, 146, 122, 206], w: 4 },
+      { t: "pad", x: 103, y: 106, w: 13, h: 44, rot: -48, c: "#4B5563" }, { t: "plate", at: "wN", r: 8 }] };
+  A["db-concentration"] = { frames: [
+      { hip: [100, 160], tr: 40, hd: -12, aN: [2, 4], hF: [142, 156], fN: [150, 200], fF: [146, 200] },
+      { hip: [100, 160], tr: 40, hd: -12, aN: [2, 160], hF: [142, 156], fN: [150, 200], fF: [146, 200] }],
+    props: [{ t: "bench", x: 52, y: 166, w: 62 }, { t: "db", at: "wN", off: [0, 2] }] };
+  A["underhand-table-row"] = A["inverted-row"];
+  A["bayesian-curl"] = { frames: [
+      { hip: [120, 121], tr: 6, aN: [-26, -22], aF: [6, 30], fN: [146, 200], fF: [104, 200] },
+      { hip: [120, 121], tr: 6, aN: [-26, 148], aF: [6, 30], fN: [146, 200], fF: [104, 200] }],
+    props: [{ t: "tower", x: 24 }, { t: "cable", from: [30, 196], to: "wN" }, { t: "grip", at: "wN", r: 4.5 }] };
+  A["incline-db-curl"] = { frames: [
+      { hip: [126, 162], tr: -58, aN: [0, 2], fN: [168, 200] },
+      { hip: [126, 162], tr: -58, aN: [0, 150], fN: [168, 200] }],
+    props: [...inclineBits, { t: "db", at: "wN", both: true }] };
+  A["towel-curl"] = { frames: [
+      { hip: [96, 150], tr: 18, hd: -12, hN: [128, 152], fN: [136, 194], fF: [128, 200], tN: 10 },
+      { hip: [96, 150], tr: 12, hd: -8, hN: [124, 108], fN: [140, 152], fF: [128, 200], tN: -10 }],
+    props: [{ t: "box", x: 56, y: 156, w: 46 }, { t: "strap", a: "wN", b: "aN", w: 4 }] };
+
+  /* triceps */
+  const rowPose = { hip: [90, 118], tr: 88, hd: -8, lF: [0, -90], tF: 175, fN: [112, 200], hF: [142, 158], eF: 1 };
+  A["db-kickback"] = { frames: [{ ...rowPose, aN: [-78, 4] }, { ...rowPose, aN: [-78, -84] }],
+    props: [{ t: "bench", x: 38, y: 160, w: 118 }, { t: "db", at: "wN", r: 7 }] };
+  A["cable-oh-ext"] = { frames: [
+      { hip: [118, 121], tr: 22, hd: -10, aN: [158, -40], fN: [148, 200], fF: [100, 200] },
+      { hip: [118, 121], tr: 22, hd: -10, aN: [158, -198], fN: [148, 200], fF: [100, 200] }],
+    props: [{ t: "tower", x: 24 }, { t: "cable", from: [30, 112], to: "wN" }, { t: "att", at: "wN", ang: 90, len: 12, w: 5, c: "#D6C7A1" }] };
+  A["backpack-oh-ext"] = { frames: A["db-overhead-ext"].frames, props: [{ t: "bag", at: "wN", off: [0, -4] }] };
+  A["ez-skull"] = { frames: [{ ...benchPose, aN: [196, -42] }, { ...benchPose, aN: [196, -164] }],
+    props: [{ t: "bench", x: 46, y: 152, w: 116 }, { t: "plate", at: "wN", r: 8 }] };
+  A["db-skull"] = { frames: A["ez-skull"].frames, props: [{ t: "bench", x: 46, y: 152, w: 116 }, { t: "db", at: "wN", both: true, v: true }] };
+  A["bw-tri-ext"] = { frames: [
+      { hip: [91, 153], tr: 51, hd: -4, hN: [176, 148], fN: [30, 200], tN: 45 },
+      { hip: [104, 176], tr: 70, hd: -4, hN: [176, 148], fN: [30, 200], tN: 45 }],
+    props: [{ t: "box", x: 172, y: 151, w: 54 }] };
+  A["closegrip-bench"] = { frames: A["db-bench"].frames, props: [{ t: "bench", x: 46, y: 152, w: 116 }, { t: "plate", at: "wN", r: 13 }] };
+  A["db-close-press"] = { frames: A["db-bench"].frames, props: [{ t: "bench", x: 46, y: 152, w: 116 }, { t: "db", at: "wN", both: true, v: true, off: [0, -4] }] };
+  A["diamond-pushup"] = A["push-up"];
+
+  /* forearms */
+  const wcPose = { hip: [96, 158], tr: 55, hd: -30, aN: [-41, 92], fN: [140, 200] };
+  const wcBench = { t: "bench", x: 46, y: 164, w: 70 };
+  const wcF = [{ ...wcPose, wa: 28 }, { ...wcPose, wa: 150 }], rwF = [{ ...wcPose, wa: 18 }, { ...wcPose, wa: 120 }];
+  A["bb-wrist-curl"] = { frames: wcF, props: [wcBench, { t: "plate", at: "xN", r: 9 }] };
+  A["db-wrist-curl"] = { frames: wcF, props: [wcBench, { t: "db", at: "xN", both: true }] };
+  A["bottle-wrist-curl"] = { frames: wcF, props: [{ t: "box", x: 50, y: 164, w: 56 }, { t: "bottle", at: "xN" }] };
+  A["bb-rev-wrist"] = { frames: rwF, props: [wcBench, { t: "plate", at: "xN", r: 9 }] };
+  A["db-rev-wrist"] = { frames: rwF, props: [wcBench, { t: "db", at: "xN", both: true }] };
+  A["towel-wring"] = { loop: true, dur: 520, frames: [
+      { hip: [118, 121], tr: 0, hrN: [30, 22], fN: [122, 200], wa: 60 },
+      { hip: [118, 121], tr: 0, hrN: [30, 22], fN: [122, 200], wa: 125 }],
+    props: [{ t: "att", at: "wN", off: [5, 13], ang: 90, len: 22, w: 8, c: "#7DD3FC" }] };
+  const revF = curlF.map(f => ({ ...f, wa: f.aN[1] }));
+  A["cable-rev-curl"] = { frames: revF, props: [{ t: "tower", x: 212 }, { t: "cable", from: [206, 198], to: "wN" }, { t: "att", at: "wN", ang: 90, len: 10, w: 4, c: "#9CA3AF" }] };
+  A["db-rev-curl"] = { frames: revF, props: [{ t: "db", at: "wN", both: true }] };
+  A["backpack-rev-curl"] = { frames: revF, props: [{ t: "bag", at: "wN", off: [0, 2] }] };
+  const hangBar = [{ t: "line", p: [70, 6, 180, 6], w: 6, c: "#5B6472" }, { t: "line", p: [76, 6, 76, 206], w: 4 }, { t: "line", p: [174, 6, 174, 206], w: 4 }];
+  const hang = { hip: [120, 112], tr: 0, hrN: [1, -54], lN: [-4, -30], tN: 60 };
+  A["dead-hang"] = { dur: 1600, frames: [{ ...hang }, { ...hang, hip: [118, 113], tr: -3, lN: [0, -24] }], props: hangBar };
+  const carry = walk(8).map(f => ({ ...f, aN: [3, 3], aF: [3, 3] }));
+  A["farmer-carry"] = { loop: true, dur: 430, frames: carry, props: [{ t: "db", at: "wN", both: true, off: [0, 4] }] };
+  A["jug-carry"] = { loop: true, dur: 430, frames: carry, props: [{ t: "jug", at: "wN", both: true, off: [0, 2] }] };
+
+  /* shoulders */
+  A["landmine-press"] = { frames: [
+      { hip: [116, 121], tr: 10, hrN: [14, 2], fN: [146, 200], fF: [98, 200] },
+      { hip: [118, 121], tr: 12, hrN: [42, -32], fN: [146, 200], fF: [98, 200] }],
+    props: [{ t: "lever", from: [300, 214], to: "wN" }, { t: "plate", at: "wN", off: [14, 13], r: 10 }] };
+  A["arnold-press"] = { frames: [
+      { hip: [100, 160], tr: -4, hrN: [18, -8], lN: [84, 6] },
+      { hip: [100, 160], tr: -4, hrN: [6, -52], lN: [84, 6] }],
+    props: [...uprightBits, { t: "db", at: "wN", both: true, v: true, off: [0, -3] }] };
+  A["elevated-pike"] = { frames: [
+      { hip: [100, 108], tr: 165, hd: 8, hN: [130, 204], fN: [40, 158], tN: 20 },
+      { hip: [104, 118], tr: 172, hd: 8, hN: [130, 204], fN: [40, 158], tN: 20 }],
+    props: [{ t: "box", x: 16, y: 164, w: 44 }] };
+  const uprF = [{ ...STAND, fN: [124, 200], hrN: [6, 50], eN: -1 }, { ...STAND, fN: [124, 200], hrN: [12, 8], eN: -1 }];
+  A["cable-uprow"] = { frames: uprF, props: [{ t: "tower", x: 210 }, { t: "cable", from: [204, 198], to: "wN" }, { t: "grip", at: "wN", r: 4.5 }] };
+  A["db-uprow"] = { frames: uprF, props: [{ t: "db", at: "wN", both: true }] };
+  A["backpack-uprow"] = { frames: uprF, props: [{ t: "bag", at: "wN", off: [0, 2] }] };
+
+  /* back */
+  const bentF = [
+    { hip: [100, 124], tr: 62, hd: -16, hrN: [0, 52], fN: [124, 200] },
+    { hip: [100, 124], tr: 62, hd: -16, hrN: [-22, 24], fN: [124, 200] }];
+  A["bb-row"] = { frames: bentF, props: [{ t: "plate", at: "wN", off: [0, 3], r: 14 }] };
+  A["backpack-row"] = { frames: bentF, props: [{ t: "bag", at: "wN" }] };
+  A["cs-db-row"] = { frames: [
+      { hip: [86, 159], tr: 54, hd: -6, hrN: [0, 52], fN: [18, 200], tN: 30 },
+      { hip: [86, 159], tr: 54, hd: -6, hrN: [-20, 26], fN: [18, 200], tN: 30 }],
+    props: [{ t: "line", p: [60, 186, 152, 119], w: 10, c: "#30353D" }, { t: "line", p: [80, 176, 80, 206], w: 4 }, { t: "line", p: [126, 144, 126, 206], w: 4 }, { t: "db", at: "wN", both: true }] };
+  A["straight-arm-pulldown"] = { frames: [
+      { hip: [104, 121], tr: 24, hd: -8, aN: [124, 132], fN: [128, 200], fF: [104, 200] },
+      { hip: [104, 121], tr: 24, hd: -8, aN: [8, 14], fN: [128, 200], fF: [104, 200] }],
+    props: [{ t: "tower", x: 212 }, { t: "cable", from: [206, 30], to: "wN" }, { t: "grip", at: "wN", r: 4.5 }] };
+  A["db-lat-pullback"] = { frames: [
+      { hip: [98, 124], tr: 76, hd: -14, aN: [0, 2], fN: [122, 200] },
+      { hip: [98, 124], tr: 76, hd: -14, aN: [-62, -60], fN: [122, 200] }],
+    props: [{ t: "db", at: "wN", both: true }] };
+  A["backpack-pullover"] = { frames: [
+      { hip: [126, 196], tr: -90, aN: [178, 180], fN: [165, 200], tN: 0 },
+      { hip: [126, 196], tr: -90, aN: [258, 262], fN: [165, 200], tN: 0 }],
+    props: [{ t: "line", p: [30, 205, 200, 205], w: 3, c: "#3B2A55" }, { t: "bag", at: "wN", off: [0, -8] }] };
+  const shrugF = [{ ...STAND, fN: [122, 200], hrN: [3, 52], sy: 0 }, { ...STAND, fN: [122, 200], hrN: [3, 52], sy: 8 }];
+  A["bb-shrug"] = { frames: shrugF, props: [{ t: "plate", at: "wN", off: [0, 4], r: 14 }] };
+  A["db-shrug"] = { frames: shrugF, props: [{ t: "db", at: "wN", both: true, off: [0, 3] }] };
+  A["backpack-shrug"] = { frames: shrugF, props: [{ t: "bag", at: "wN", off: [0, 2] }] };
+
+  /* chest */
+  A["cable-crossover"] = { v: "front", frames: [
+      { aL: [104, 112], aR: [104, 112], ualL: 1, ualR: 1, l: [6, 0] },
+      { aL: [-8, -38], aR: [-8, -38], ualL: 0.6, ualR: 0.6, l: [6, 0] }],
+    props: [{ t: "tower", x: 18 }, { t: "tower", x: 222 }, { t: "cable", from: [24, 30], to: "wL" }, { t: "cable", from: [216, 30], to: "wR" }, { t: "grip", at: "wL", r: 4.5 }, { t: "grip", at: "wR", r: 4.5 }] };
+  A["db-fly"] = { frames: [{ ...benchPose, hrN: [4, 8], eN: -1 }, { ...benchPose, hrN: [2, -50], eN: -1 }],
+    props: [{ t: "bench", x: 46, y: 152, w: 116 }, { t: "db", at: "wN", both: true, off: [0, -3] }] };
+  A["deficit-pushup"] = { frames: [
+      { hip: [113, 162], tr: 66, hd: -14, hN: [162, 192], fN: [30, 199], tN: 45 },
+      { hip: [110, 186], tr: 84, hd: -8, hN: [162, 192], fN: [30, 199], tN: 45 }],
+    props: [{ t: "box", x: 152, y: 194, w: 22 }] };
+
+  /* core */
+  A["ab-wheel"] = { frames: [
+      { hip: [80, 166], tr: 58, hd: -10, lN: [25, -90], tN: 180, hN: [126, 194] },
+      { hip: [120, 170], tr: 84, hd: -6, lN: [-38, -90], tN: 180, hN: [214, 194] }],
+    props: [{ t: "roller", at: "wN", off: [0, 4], r: 8 }] };
+  A["plank"] = { dur: 1600, frames: [
+      { hip: [102, 184], tr: 79, hd: -10, aN: [0, 90], fN: [24, 200], tN: 45 },
+      { hip: [102, 182], tr: 79, hd: -10, aN: [0, 90], fN: [24, 200], tN: 45 }], props: [] };
+  A["hanging-knee-raise"] = { frames: [
+      { ...hang, lN: [4, -14], tN: 70 },
+      { ...hang, tr: -8, lN: [104, 10], tN: 40 }], props: hangBar };
+  const mat = { t: "line", p: [30, 205, 236, 205], w: 3, c: "#3B2A55" };
+  A["lying-leg-raise"] = { frames: [
+      { hip: [124, 196], tr: -90, aN: [90, 90], lN: [94, 94], tN: -90 },
+      { hip: [124, 196], tr: -90, aN: [90, 90], lN: [176, 176], tN: -180 }], props: [mat] };
+  A["reverse-crunch"] = { frames: [
+      { hip: [124, 196], tr: -90, aN: [90, 90], lN: [178, 92], tN: -90 },
+      { hip: [126, 186], tr: -104, aN: [90, 90], lN: [212, 128], tN: -60 }], props: [mat] };
+  A["cable-woodchop"] = { v: "front", frames: [
+      { cx: 130, aL: [-110, -125], aR: [120, 165], ualL: 1, ualR: 1, l: [14, 0] },
+      { cx: 110, aL: [30, 20], aR: [-35, -50], ualL: 1, ualR: 1, l: [14, 0] }],
+    props: [{ t: "tower", x: 222 }, { t: "cable", from: [216, 30], to: "wR" }, { t: "strap", a: "wL", b: "wR", w: 4, c: "#9CA3AF" }, { t: "grip", at: "wR", r: 5 }] };
+  A["russian-twist"] = { v: "front", loop: true, dur: 700, frames: [
+      { hipY: 197, tl: 0.8, tlf: 0.8, l: [160, 20], aL: [20, 60], aR: [-34, -70] },
+      { hipY: 197, tl: 0.8, tlf: 0.8, l: [160, 20], aL: [-34, -70], aR: [20, 60] }],
+    props: [{ t: "db", at: "wL", off: [10, 0], v: true }] };
+  A["bicycle-crunch"] = { loop: true, dur: 620, frames: [
+      { hip: [126, 194], tr: -70, hd: 10, hN: [64, 170], lN: [150, 60], lF: [96, 96], tN: 0, tF: 0 },
+      { hip: [126, 194], tr: -70, hd: 10, hN: [64, 170], lN: [96, 96], lF: [150, 60], tN: 0, tF: 0 }], props: [mat] };
+
+  /* cardio */
+  const crank = [128, 168];
+  A["stationary-bike"] = { loop: true, dur: 140, hold: 0, frames: Array.from({ length: 8 }, (_, i) => {
+      const a = i * Math.PI / 4, c = Math.cos(a) * 16, s = Math.sin(a) * 16;
+      return { hip: [100, 114], tr: 26, hd: -18, hN: [158, 86], fN: [crank[0] + c, crank[1] + s], fF: [crank[0] - c, crank[1] - s], tN: 0, tF: 0 }; }),
+    props: [{ t: "line", p: [70, 204, 184, 204], w: 5 }, { t: "line", p: [104, 122, 116, 202], w: 5 }, { t: "pad", x: 86, y: 116, w: 28, h: 6 },
+      { t: "line", p: [150, 202, 162, 90], w: 5 }, { t: "line", p: [156, 88, 170, 84], w: 5 }, { t: "ring", x: 152, y: 178, r: 20 }, { t: "ring", x: crank[0], y: crank[1], r: 4, w: 3 }] };
+  A["jump-rope"] = { v: "front", loop: true, dur: 240, frames: [
+      { hipY: 122, a: [16, 50], l: [3, 0] },
+      { hipY: 112, a: [18, 56], l: [3, 4] }],
+    props: [{ t: "rope", a: "wL", b: "wR", cy: 300 }] };
+  A["stair-climb"] = { frames: [
+      { hip: [116, 126], tr: 16, aN: [20, 40], aF: [-16, 10], fN: [152, 156], fF: [100, 200], tN: 0, tF: 0 },
+      { hip: [146, 80], tr: 6, aN: [-14, 10], aF: [20, 40], fN: [152, 156], fF: [146, 156], tN: 0, tF: 0 }],
+    props: [{ t: "box", x: 132, y: 160, w: 108 }, { t: "box", x: 196, y: 118, w: 44 }] };
 
   return A;
 })();
@@ -1202,6 +1389,380 @@ const EX = {
     steps: ["Warm up for 3–5 minutes (marching, arm circles).", "30 seconds each: jumping jacks, high knees, fast squats, mountain climbers.", "Rest 60–90 seconds after the four moves. That's one round.", "Do 4–5 rounds, then walk for 3 minutes to cool down."],
     tips: ["Low impact: step jacks and marching instead of jumping", "Hard means breathing too hard to talk"], avoid: ["More than 2 HIIT sessions a week", "HIIT the day before a heavy leg day"],
     yt: "20 minute HIIT workout at home no equipment" }
+  ,
+  /* ===== Biceps ===== */
+  "rope-hammer": { name: "Cable Rope Hammer Curl", type: "gym", equip: "Cable + rope", kind: "isolation",
+    P: ["biceps", "forearms"], S: [],
+    brief: "A curl with your thumbs pointing up. The neutral grip works the brachialis (under the biceps) and the thick muscle on top of the forearm, which adds arm thickness.",
+    steps: ["Attach a rope to the low pulley and hold one end in each hand, thumbs up.", "Stand tall with your elbows pinned at your sides.", "Curl the rope up toward your shoulders, keeping your thumbs up.", "Lower slowly to straight arms."],
+    tips: ["Keep your wrists straight", "Squeeze at the top"], avoid: ["Swinging your body", "Elbows drifting forward"],
+    yt: "cable rope hammer curl form" },
+  "db-hammer": { name: "Dumbbell Hammer Curl", type: "db", equip: "Dumbbells", kind: "isolation",
+    P: ["biceps", "forearms"], S: [],
+    brief: "Curling dumbbells with your palms facing each other. It builds the biceps, the brachialis underneath and the top of the forearm.",
+    steps: ["Stand holding dumbbells at your sides, palms facing your legs.", "Keep your elbows at your sides.", "Curl the dumbbells up, thumbs leading, without turning your wrists.", "Lower slowly."],
+    tips: ["Alternate arms if you like", "2–3 seconds on the way down"], avoid: ["Swinging", "Half reps"],
+    yt: "dumbbell hammer curl proper form" },
+  "jug-hammer": { name: "Water-Jug Hammer Curl", type: "bw", equip: "Two filled water jugs (or heavy bottles)", kind: "isolation",
+    P: ["biceps", "forearms"], S: [],
+    brief: "Hammer curls at home with filled water jugs. A full 4–5 litre jug weighs about 4–5 kg.",
+    steps: ["Hold a jug by its handle in each hand, thumbs forward.", "Elbows pinned at your sides.", "Curl the jugs up toward your shoulders.", "Lower slowly."],
+    tips: ["Fill with water or sand to set the weight", "Do higher reps (12–20)"], avoid: ["Swinging the jugs", "Leaning back"],
+    yt: "hammer curl at home with water jugs" },
+  "ez-preacher": { name: "EZ-Bar Preacher Curl", type: "gym", equip: "Preacher bench + EZ bar (or preacher curl machine)", kind: "isolation",
+    P: ["biceps"], S: ["forearms"],
+    brief: "Your upper arms rest on an angled pad, so you can't swing the weight. It loads the biceps hard in the lower, stretched part of the curl.",
+    steps: ["Sit at the preacher bench with your armpits snug against the top of the pad.", "Hold the EZ bar with an underhand grip, arms resting on the pad.", "Curl the bar up until your forearms are about vertical.", "Lower slowly until your arms are almost straight."],
+    tips: ["Control the bottom of every rep", "Use less weight than a standing curl"], avoid: ["Dropping fast into the bottom (hard on the elbows)", "Lifting your elbows off the pad"],
+    yt: "EZ bar preacher curl form" },
+  "db-concentration": { name: "Concentration Curl", type: "db", equip: "One dumbbell + bench", kind: "isolation", uni: true,
+    P: ["biceps"], S: ["forearms"],
+    brief: "Seated, with your elbow braced against your inner thigh, you curl one dumbbell with strict form and a hard squeeze at the top.",
+    steps: ["Sit on a bench, feet wide, and lean forward.", "Brace the back of your upper arm against your inner thigh, arm straight.", "Curl the dumbbell up toward your shoulder and squeeze.", "Lower slowly. Finish all reps, then switch."],
+    tips: ["Turn your little finger up at the top", "Keep your upper arm still"], avoid: ["Pushing the arm up with your thigh", "Rushing the lowering"],
+    yt: "concentration curl proper form" },
+  "underhand-table-row": { name: "Underhand Table Row", type: "bw", equip: "A sturdy table", kind: "compound",
+    P: ["biceps", "lats"], S: ["upperback", "forearms"],
+    brief: "An inverted row with your palms facing you. Like a chin-up, the underhand grip puts more of the work on the biceps.",
+    steps: ["Lie under a solid table and grip its edge with your palms facing you, hands shoulder-width.", "Body straight, heels on the floor.", "Pull your chest up to the table, elbows close to your sides.", "Lower slowly to straight arms."],
+    tips: ["Check the table can't tip first", "Bend your knees to make it easier"], avoid: ["Hips sagging", "Jerking up"],
+    yt: "underhand inverted row biceps at home" },
+  "bayesian-curl": { name: "Bayesian Cable Curl", type: "gym", equip: "Cable + single handle", kind: "isolation", uni: true,
+    P: ["biceps"], S: ["forearms"],
+    brief: "You face away from a low cable with your arm pulled slightly behind you, so the biceps work from a deep stretch all the way to the top.",
+    steps: ["Set a handle on the low pulley and face away from the machine.", "Step forward until your arm is pulled slightly behind your body.", "Curl the handle forward and up, keeping your elbow back.", "Lower slowly to the full stretch. Finish all reps, then switch."],
+    tips: ["Staggered stance for balance", "Elbow stays pointing down and slightly back"], avoid: ["Shoulder rolling forward", "Swinging"],
+    yt: "bayesian cable curl form" },
+  "incline-db-curl": { name: "Incline Dumbbell Curl", type: "db", equip: "Dumbbells + adjustable bench", kind: "isolation",
+    P: ["biceps"], S: ["forearms"],
+    brief: "Lying back on an incline bench lets your arms hang behind your body, which stretches the long head of the biceps on every rep.",
+    steps: ["Set the bench to about 45° and sit back with the dumbbells hanging at your sides.", "Let your arms hang straight down, palms forward.", "Curl both dumbbells up without moving your upper arms.", "Lower slowly to a full stretch."],
+    tips: ["Head and back stay on the bench", "Use less weight than a standing curl"], avoid: ["Elbows swinging forward", "Cutting the stretch short"],
+    yt: "incline dumbbell curl form" },
+  "towel-curl": { name: "Towel Curl", type: "bw", equip: "A towel and a chair", kind: "isolation",
+    P: ["biceps"], S: ["forearms"],
+    brief: "Sitting on a chair with a towel looped under one foot, you curl the towel up while that leg pushes down. Your leg sets the resistance, so it works at any strength level.",
+    steps: ["Sit on a chair and loop a towel under the foot of one leg.", "Hold one end of the towel in each hand, arms nearly straight.", "Curl the towel up while your leg pushes down against it.", "Lower slowly while your leg keeps pushing. Switch legs each set."],
+    tips: ["Push harder with your leg to make it harder", "3 seconds up, 3 seconds down"], avoid: ["Letting your leg go slack", "Leaning back to help"],
+    yt: "towel bicep curl at home" },
+
+  /* ===== Triceps ===== */
+  "db-kickback": { name: "Dumbbell Triceps Kickback", type: "db", equip: "Dumbbell + bench", kind: "isolation", uni: true,
+    P: ["triceps"], S: [],
+    brief: "Bent over on a bench, you straighten your arm behind you. It's a strict triceps move that peaks when your arm is fully straight.",
+    steps: ["Knee and hand on a bench, back flat, dumbbell in your free hand.", "Lift your upper arm until it's level with your back, elbow bent.", "Straighten your arm back until it's fully locked out and squeeze.", "Bend your elbow slowly to return. Finish all reps, then switch."],
+    tips: ["Upper arm stays still", "Light weight, full lockout"], avoid: ["Swinging the dumbbell", "Dropping your elbow"],
+    yt: "dumbbell tricep kickback proper form" },
+  "cable-oh-ext": { name: "Cable Overhead Triceps Extension", type: "gym", equip: "Cable + rope", kind: "isolation",
+    P: ["triceps"], S: [],
+    brief: "Facing away from the cable, you straighten a rope overhead. The overhead position trains the long head of the triceps, the biggest part of the back of the arm, in a stretch.",
+    steps: ["Set the pulley at about hip height with a rope and face away from the machine.", "Bring the rope over your head, elbows bent and pointing forward, in a staggered stance.", "Straighten your arms forward and up.", "Bend your elbows slowly back to the stretch."],
+    tips: ["Brace your abs and lean slightly forward", "Keep your elbows narrow"], avoid: ["Elbows flaring out", "Arching your lower back"],
+    yt: "cable overhead tricep extension form" },
+  "backpack-oh-ext": { name: "Backpack Overhead Triceps Extension", type: "bw", equip: "A loaded backpack", kind: "isolation",
+    P: ["triceps"], S: [],
+    brief: "The overhead triceps extension holding a loaded backpack by its top handle. Add books or bottles to make it heavier.",
+    steps: ["Hold the backpack's top handle with both hands above your head.", "Keep your elbows pointing forward, close to your head.", "Lower the backpack behind your head.", "Straighten your arms back up."],
+    tips: ["Pack the bag tightly so it doesn't swing", "Sit on a chair if standing feels unsteady"], avoid: ["Elbows flaring out", "Arching your back"],
+    yt: "overhead tricep extension at home backpack" },
+  "ez-skull": { name: "EZ-Bar Skull Crusher", type: "gym", equip: "EZ bar + flat bench", kind: "isolation",
+    P: ["triceps"], S: [],
+    brief: "Lying on a bench, you lower an EZ bar toward your forehead and press it back up by straightening only your elbows. A classic triceps mass builder.",
+    steps: ["Lie on a bench holding an EZ bar above your chest, hands about shoulder-width.", "Tilt your arms back slightly toward your head.", "Bend your elbows to lower the bar to just above or behind your forehead.", "Straighten your arms to press it back up."],
+    tips: ["Elbows point at the ceiling", "Ask for a hand-off when the weight gets heavy"], avoid: ["Elbows flaring wide", "Letting the bar drop fast toward your face"],
+    yt: "EZ bar skull crusher proper form" },
+  "db-skull": { name: "Dumbbell Skull Crusher", type: "db", equip: "Dumbbells + flat bench", kind: "isolation",
+    P: ["triceps"], S: [],
+    brief: "The lying triceps extension with a dumbbell in each hand, palms facing each other. Many people find it easier on the elbows than a bar.",
+    steps: ["Lie on a bench holding dumbbells above your chest, palms facing each other.", "Tilt your arms back slightly.", "Bend your elbows to lower the dumbbells beside your head.", "Straighten your arms to lift them back up."],
+    tips: ["Upper arms stay still", "Slow on the way down"], avoid: ["Turning it into a press", "Going too heavy"],
+    yt: "dumbbell skull crusher form" },
+  "bw-tri-ext": { name: "Bodyweight Triceps Extension", type: "bw", equip: "A sturdy counter, table or bench", kind: "isolation",
+    P: ["triceps"], S: ["abs"],
+    brief: "A bodyweight skull crusher. Hands on a counter edge and body straight, you bend only your elbows to lower your forehead toward your hands, then press back.",
+    steps: ["Hold the edge of a sturdy counter, arms straight, and walk your feet back until your body is straight and leaning.", "Brace your abs and glutes.", "Bend your elbows to lower your forehead toward the edge.", "Straighten your arms to push back up."],
+    tips: ["Higher surface = easier", "Body stays in one straight line"], avoid: ["Hips sagging", "Using a surface that can slide"],
+    safety: "Use a surface that can't move, like a kitchen counter or a bench against a wall.",
+    yt: "bodyweight tricep extension counter" },
+  "closegrip-bench": { name: "Close-Grip Bench Press", type: "gym", equip: "Barbell or Smith machine + bench", kind: "compound",
+    P: ["triceps"], S: ["chest", "delt_f"],
+    brief: "A bench press with your hands just inside shoulder-width and elbows tucked. It lets you load the triceps heavily.",
+    steps: ["Lie on the bench and grip the bar just inside shoulder-width.", "Unrack and lower the bar to your lower chest, elbows close to your sides.", "Press straight up until your arms are straight.", "Re-rack safely when done."],
+    tips: ["Use safety pins or a spotter", "Wrists stacked over elbows"], avoid: ["Hands so close your wrists bend", "Elbows flaring out"],
+    yt: "close grip bench press form" },
+  "db-close-press": { name: "Close-Grip Dumbbell Press", type: "db", equip: "Dumbbells + bench", kind: "compound",
+    P: ["triceps"], S: ["chest", "delt_f"],
+    brief: "Pressing dumbbells with your palms facing each other and elbows tucked to your sides shifts the press toward the triceps.",
+    steps: ["Lie on a bench with dumbbells over your chest, palms facing each other.", "Lower them to your lower chest, elbows brushing your sides.", "Press straight up and lock out.", "Repeat under control."],
+    tips: ["Think elbows in", "Squeeze your triceps at the top"], avoid: ["Flaring your elbows", "Bouncing off your chest"],
+    yt: "close grip dumbbell press triceps" },
+  "diamond-pushup": { name: "Diamond Push-Up", type: "bw", equip: "Floor", kind: "compound",
+    P: ["triceps"], S: ["chest", "delt_f", "abs"],
+    brief: "A push-up with your hands close together under your chest, thumbs and index fingers forming a diamond. The top bodyweight triceps builder.",
+    steps: ["Place your hands together under your chest, thumbs and index fingers forming a diamond.", "Body straight from head to heels.", "Lower your chest toward your hands, elbows close to your body.", "Push back up."],
+    tips: ["Knees down or hands on a sofa to make it easier", "Lower in 3 seconds"], avoid: ["Hips sagging", "Elbows flaring wide"],
+    yt: "diamond push up proper form" },
+
+  /* ===== Forearms ===== */
+  "bb-wrist-curl": { name: "Barbell Wrist Curl", type: "gym", equip: "Barbell or EZ bar + bench", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "Forearms resting on your thighs, palms up, you curl a bar using only your wrists. It builds the muscles on the inside of the forearm and your grip.",
+    steps: ["Sit on a bench holding a light bar with an underhand grip.", "Rest your forearms on your thighs so your wrists hang just past your knees.", "Let the bar roll toward your fingertips, then curl your wrists up as high as you can.", "Lower slowly."],
+    tips: ["Higher reps (12–20)", "Forearms stay glued to your thighs"], avoid: ["Lifting your forearms", "Bouncing the weight"],
+    yt: "barbell wrist curl form" },
+  "db-wrist-curl": { name: "Dumbbell Wrist Curl", type: "db", equip: "Dumbbells + bench", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "Wrist curls with a dumbbell in each hand. Each wrist works on its own, so the weaker side can't hide.",
+    steps: ["Sit holding dumbbells, palms up, forearms resting on your thighs.", "Let your wrists hang just past your knees.", "Curl your wrists up as high as you can and squeeze.", "Lower slowly to a full stretch."],
+    tips: ["Higher reps (12–20)", "Slow and controlled"], avoid: ["Lifting with your arms", "Going too heavy"],
+    yt: "dumbbell wrist curl proper form" },
+  "bottle-wrist-curl": { name: "Water-Bottle Wrist Curl", type: "bw", equip: "Two full water bottles", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "Wrist curls at home with full water bottles. Your forearms rest on your thighs and only your wrists move.",
+    steps: ["Sit on a chair holding a full bottle in each hand, palms up.", "Rest your forearms on your thighs, wrists just past your knees.", "Curl your wrists up and squeeze.", "Lower slowly."],
+    tips: ["Use bigger bottles as you get stronger", "Do 15–25 reps"], avoid: ["Lifting your forearms off your legs", "Rushing"],
+    yt: "wrist curl at home water bottle" },
+  "bb-rev-wrist": { name: "Reverse Wrist Curl (bar)", type: "gym", equip: "Barbell or EZ bar + bench", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "The wrist curl with your palms facing down. It works the extensors on top of the forearm, which balance your grip muscles and help protect the elbows.",
+    steps: ["Sit holding a light bar with an overhand grip, forearms on your thighs.", "Let your wrists hang just past your knees.", "Lift the backs of your hands as high as you can.", "Lower slowly."],
+    tips: ["Use much less weight than wrist curls", "Pause at the top"], avoid: ["Swinging the bar up", "Lifting your forearms"],
+    yt: "reverse wrist curl barbell form" },
+  "db-rev-wrist": { name: "Dumbbell Reverse Wrist Curl", type: "db", equip: "Light dumbbells + bench", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "Reverse wrist curls with light dumbbells for the muscles on top of the forearm.",
+    steps: ["Sit holding light dumbbells, palms down, forearms on your thighs.", "Let your wrists drop just past your knees.", "Raise the backs of your hands as high as you can.", "Lower slowly."],
+    tips: ["Light weight, strict form", "Do 15–20 reps"], avoid: ["Bending your elbows", "Going heavy"],
+    yt: "dumbbell reverse wrist curl" },
+  "towel-wring": { name: "Towel Wring", type: "bw", equip: "A towel", kind: "isolation",
+    P: ["forearms"], S: [],
+    brief: "Twisting a rolled towel as hard as you can, like wringing out water. It trains your grip and both sides of the forearm.",
+    steps: ["Hold a rolled towel in front of you with both hands, elbows slightly bent.", "Twist your hands in opposite directions as hard as you can.", "Hold the squeeze for 2 seconds, then twist the other way.", "Each twist counts as one rep."],
+    tips: ["A damp towel is harder", "Squeeze as hard as you can"], avoid: ["Shrugging your shoulders", "Holding your breath"],
+    yt: "towel wringing forearm exercise" },
+  "cable-rev-curl": { name: "Cable Reverse Curl", type: "gym", equip: "Cable + straight or EZ bar", kind: "isolation",
+    P: ["forearms", "biceps"], S: [],
+    brief: "A curl with an overhand (palms-down) grip. It moves the work onto the muscle on top of the forearm and the brachialis.",
+    steps: ["Face a low pulley holding the bar palms down, hands shoulder-width.", "Elbows pinned at your sides.", "Curl the bar up toward your shoulders, wrists straight.", "Lower slowly."],
+    tips: ["Lighter than a normal curl", "Wrists stay straight"], avoid: ["Wrists bending back", "Swinging"],
+    yt: "cable reverse curl form" },
+  "db-rev-curl": { name: "Dumbbell Reverse Curl", type: "db", equip: "Dumbbells", kind: "isolation",
+    P: ["forearms", "biceps"], S: [],
+    brief: "Curling dumbbells with your palms facing down. It builds the top of the forearm and the brachialis.",
+    steps: ["Stand holding dumbbells, palms facing behind you.", "Elbows at your sides.", "Curl up, keeping your palms down and wrists straight.", "Lower slowly."],
+    tips: ["Lighter dumbbells than for normal curls", "Slow lowering"], avoid: ["Wrists drooping", "Leaning back"],
+    yt: "dumbbell reverse curl form" },
+  "backpack-rev-curl": { name: "Backpack Reverse Curl", type: "bw", equip: "A loaded backpack", kind: "isolation",
+    P: ["forearms", "biceps"], S: [],
+    brief: "Holding a loaded backpack by its straps with your palms down, you curl it up. A forearm builder you can do anywhere.",
+    steps: ["Grab both shoulder straps, palms facing down.", "Elbows pinned at your sides.", "Curl the backpack up, wrists straight.", "Lower slowly."],
+    tips: ["Keep the load light at first", "Squeeze the straps hard"], avoid: ["Swinging", "Wrists bending back"],
+    yt: "reverse curl at home forearms" },
+  "dead-hang": { name: "Dead Hang", type: "gym", equip: "Pull-up bar", kind: "isolation",
+    P: ["forearms"], S: ["lats", "upperback"],
+    brief: "Simply hanging from a bar. It builds grip strength and endurance and stretches the shoulders and lats.",
+    steps: ["Grab a pull-up bar with an overhand grip, hands shoulder-width.", "Step off the box and hang with straight arms.", "Keep your shoulders slightly engaged, not shrugged up to your ears.", "Hold for the time shown, then step down."],
+    tips: ["Use a step to get up and down safely", "Build up 10 seconds at a time"], avoid: ["Dropping off the bar suddenly", "Swinging"],
+    yt: "dead hang grip strength how to" },
+  "farmer-carry": { name: "Farmer's Carry", type: "db", equip: "Two heavy dumbbells", kind: "compound",
+    P: ["forearms", "traps"], S: ["abs", "obliques", "glutes"],
+    brief: "Walking with a heavy dumbbell in each hand. It builds your grip, traps and core together.",
+    steps: ["Pick up two heavy dumbbells with a flat back.", "Stand tall, shoulders down and back.", "Walk with short, steady steps for the time shown.", "Put the weights down with a flat back."],
+    tips: ["Squeeze the handles hard", "Look straight ahead"], avoid: ["Leaning or rounding forward", "Shrugging"],
+    yt: "farmers carry proper form" },
+  "jug-carry": { name: "Water-Jug Carry", type: "bw", equip: "Two full water jugs or heavy shopping bags", kind: "compound",
+    P: ["forearms", "traps"], S: ["abs", "obliques"],
+    brief: "A farmer's carry at home: walk with a full water jug or heavy shopping bag in each hand.",
+    steps: ["Pick up a full jug in each hand with a flat back.", "Stand tall, shoulders down.", "Walk around the room or hallway for the time shown.", "Set them down carefully."],
+    tips: ["Squeeze the handles hard", "Use the heaviest load you can carry with good posture"], avoid: ["Leaning forward", "Bags with thin handles that cut into your hands"],
+    yt: "farmers walk at home" },
+
+  /* ===== Shoulders ===== */
+  "landmine-press": { name: "Landmine Press", type: "gym", equip: "Barbell in a landmine (or wedged in a corner)", kind: "compound", uni: true,
+    P: ["delt_f"], S: ["triceps", "chest", "abs"],
+    brief: "Pressing the end of a barbell that's anchored to the floor. The angled path is easy on the shoulders and also works the upper chest and core.",
+    steps: ["Wedge one end of a barbell in a landmine or corner. Hold the other end at your shoulder.", "Stand in a staggered stance and brace your abs.", "Press the bar up and forward until your arm is straight.", "Lower it back to your shoulder. Finish all reps, then switch."],
+    tips: ["Lean slightly into the bar", "Squeeze your glutes"], avoid: ["Arching your lower back", "Twisting your torso"],
+    yt: "landmine press form" },
+  "arnold-press": { name: "Arnold Press", type: "db", equip: "Dumbbells + upright bench", kind: "compound",
+    P: ["delt_f", "delt_s"], S: ["triceps", "traps"],
+    brief: "A seated dumbbell press that starts with your palms facing you and rotates as you press. The rotation brings in more of the side shoulders.",
+    steps: ["Sit tall holding dumbbells in front of your shoulders, palms facing you.", "As you press up, rotate your palms to face forward.", "Finish with your arms nearly straight overhead.", "Reverse the rotation as you lower."],
+    tips: ["Smooth rotation, no jerk", "Brace your abs"], avoid: ["Leaning back", "Going too heavy"],
+    yt: "arnold press proper form" },
+  "elevated-pike": { name: "Feet-Up Pike Push-Up", type: "bw", equip: "Chair, sofa or step", kind: "compound",
+    P: ["delt_f", "delt_s"], S: ["triceps", "traps"],
+    brief: "A pike push-up with your feet up on a chair, which puts more of your bodyweight on your shoulders. A step toward the handstand push-up.",
+    steps: ["Put your feet on a chair and walk your hands back until your hips are high and your body forms an upside-down L.", "Hands shoulder-width, head between your arms.", "Bend your elbows to lower the top of your head toward the floor.", "Press back up."],
+    tips: ["Master the floor pike push-up first", "Keep your hips high"], avoid: ["Dropping your head onto the floor", "Elbows flaring straight out"],
+    yt: "elevated pike push up form" },
+  "cable-uprow": { name: "Cable Upright Row", type: "gym", equip: "Cable + straight bar", kind: "compound",
+    P: ["delt_s", "traps"], S: ["biceps", "delt_f"],
+    brief: "Pulling a bar up your body to chest height trains the side shoulders and upper traps. A wide grip and stopping at chest height keep it shoulder-friendly.",
+    steps: ["Hold the bar on a low pulley with an overhand grip, hands wider than your shoulders.", "Stand tall.", "Pull the bar up to lower-chest height, leading with your elbows.", "Lower slowly."],
+    tips: ["Elbows go up and out, above your hands", "Stop at chest height"], avoid: ["Narrow grip", "Pulling up to your chin"],
+    safety: "Skip this one if it pinches your shoulders. Lateral raises work the same muscle.",
+    yt: "cable upright row wide grip form" },
+  "db-uprow": { name: "Dumbbell Upright Row", type: "db", equip: "Dumbbells", kind: "compound",
+    P: ["delt_s", "traps"], S: ["biceps", "delt_f"],
+    brief: "Raising dumbbells up your body to chest height. Dumbbells let your wrists move freely, which is easier on the shoulders than a narrow bar.",
+    steps: ["Stand holding dumbbells in front of your thighs.", "Lead with your elbows and pull the dumbbells up to lower-chest height.", "Pause, elbows above your hands.", "Lower slowly."],
+    tips: ["Hands wider than your body", "Moderate weight"], avoid: ["Pulling up to your chin", "Shrugging hard"],
+    safety: "Skip this one if it pinches your shoulders. Lateral raises work the same muscle.",
+    yt: "dumbbell upright row form" },
+  "backpack-uprow": { name: "Backpack Upright Row", type: "bw", equip: "A loaded backpack", kind: "compound",
+    P: ["delt_s", "traps"], S: ["biceps"],
+    brief: "An upright row holding a loaded backpack by its shoulder straps, hands wide.",
+    steps: ["Hold the backpack by its straps in front of your thighs, hands wide.", "Lead with your elbows and pull it up to lower-chest height.", "Pause.", "Lower slowly."],
+    tips: ["Elbows higher than your hands", "Higher reps (12–20)"], avoid: ["Pulling up to your chin", "Swinging"],
+    safety: "Skip this one if it pinches your shoulders.",
+    yt: "upright row at home backpack" },
+
+  /* ===== Back ===== */
+  "bb-row": { name: "Barbell Bent-Over Row", type: "gym", equip: "Barbell", kind: "compound",
+    P: ["upperback", "lats"], S: ["delt_r", "biceps", "lowback", "forearms"],
+    brief: "Bent over at the hips, you row a barbell to your stomach. It builds a thick, strong back.",
+    steps: ["Hold the bar with an overhand grip just outside your knees.", "Hinge forward until your torso is at about 45° or lower, back flat, knees soft.", "Row the bar to your lower ribs, squeezing your shoulder blades together.", "Lower it under control to straight arms."],
+    tips: ["Brace your abs before each rep", "Keep your torso angle fixed"], avoid: ["Rounding your back", "Standing up as you row"],
+    yt: "barbell bent over row form" },
+  "cs-db-row": { name: "Chest-Supported Dumbbell Row", type: "db", equip: "Dumbbells + adjustable bench", kind: "compound",
+    P: ["upperback", "lats"], S: ["delt_r", "biceps"],
+    brief: "Lying face down on an incline bench takes the strain off your lower back, so all the effort goes into your back muscles.",
+    steps: ["Set the bench to about 30–45° and lie face down with your chest on the pad.", "Let the dumbbells hang straight down.", "Row them up, driving your elbows back, and squeeze your shoulder blades.", "Lower to a full stretch."],
+    tips: ["Pause 1 second at the top", "Chest stays on the pad"], avoid: ["Lifting your chest off the pad", "Shrugging"],
+    yt: "chest supported dumbbell row form" },
+  "backpack-row": { name: "Backpack Bent-Over Row", type: "bw", equip: "A loaded backpack", kind: "compound",
+    P: ["upperback", "lats"], S: ["delt_r", "biceps", "lowback"],
+    brief: "Hinged forward, you row a loaded backpack to your stomach. Load it with books or bottles.",
+    steps: ["Hold the backpack by its straps with both hands.", "Hinge forward with a flat back and soft knees.", "Row it to your stomach, squeezing your shoulder blades.", "Lower slowly."],
+    tips: ["Pack it tightly so it doesn't swing", "Pause at the top"], avoid: ["Rounding your back", "Jerking the bag up"],
+    yt: "backpack bent over row at home" },
+  "straight-arm-pulldown": { name: "Straight-Arm Cable Pulldown", type: "gym", equip: "Cable + straight bar or rope", kind: "isolation",
+    P: ["lats"], S: ["triceps", "abs"],
+    brief: "With straight arms, you sweep a bar from overhead down to your thighs. It isolates the lats without the biceps taking over.",
+    steps: ["Face a high pulley holding a bar, arms straight, and step back.", "Hinge slightly forward with soft knees.", "Sweep the bar down in an arc to your thighs, keeping your arms straight.", "Let it rise slowly back to a stretch."],
+    tips: ["Think of pushing the bar into your thighs", "Arms stay straight"], avoid: ["Bending your elbows", "Rocking your body"],
+    yt: "straight arm cable pulldown lats" },
+  "db-lat-pullback": { name: "Dumbbell Lat Pullback", type: "db", equip: "Dumbbells", kind: "isolation",
+    P: ["lats"], S: ["delt_r", "triceps"],
+    brief: "Bent forward, you sweep dumbbells from under your shoulders back to your hips with straight arms. The dumbbell version of the straight-arm pulldown.",
+    steps: ["Hold dumbbells and hinge forward until your torso is close to level, back flat.", "Let the dumbbells hang under your shoulders, arms straight.", "Sweep them back to your hips without bending your elbows.", "Lower slowly."],
+    tips: ["Light weight, big squeeze", "Pause at your hips"], avoid: ["Bending your elbows into a row", "Rounding your back"],
+    yt: "dumbbell straight arm pullback lats" },
+  "backpack-pullover": { name: "Backpack Floor Pullover", type: "bw", equip: "A loaded backpack", kind: "isolation",
+    P: ["lats"], S: ["chest", "triceps"],
+    brief: "Lying on the floor, you lower a backpack behind your head and pull it back over your chest. It trains the lats with no machine.",
+    steps: ["Lie on your back, knees bent, holding the backpack above your chest with straight arms.", "Lower it slowly behind your head until it nearly touches the floor.", "Pull it back over your chest using your back.", "Keep your lower back flat on the floor."],
+    tips: ["Slight bend in your elbows", "Slow on the way down"], avoid: ["Arching your back", "Bending your elbows a lot"],
+    yt: "floor pullover lats at home" },
+  "bb-shrug": { name: "Barbell Shrug", type: "gym", equip: "Barbell or Smith machine", kind: "isolation",
+    P: ["traps"], S: ["forearms"],
+    brief: "Lifting your shoulders straight up toward your ears while holding a bar builds the upper traps.",
+    steps: ["Hold the bar in front of your thighs, hands shoulder-width.", "Stand tall, arms straight.", "Shrug your shoulders straight up as high as you can and pause.", "Lower slowly."],
+    tips: ["Straight up and down", "Pause 1–2 seconds at the top"], avoid: ["Rolling your shoulders", "Bending your elbows"],
+    yt: "barbell shrug proper form" },
+  "db-shrug": { name: "Dumbbell Shrug", type: "db", equip: "Dumbbells", kind: "isolation",
+    P: ["traps"], S: ["forearms"],
+    brief: "Shrugs with a dumbbell in each hand at your sides, which lets you lift straight up in line with your body.",
+    steps: ["Stand holding dumbbells at your sides.", "Keep your arms straight.", "Shrug your shoulders up toward your ears and pause.", "Lower slowly."],
+    tips: ["Pause at the top", "Heavy is fine with strict form"], avoid: ["Rolling your shoulders", "Jerking"],
+    yt: "dumbbell shrug proper form" },
+  "backpack-shrug": { name: "Backpack Shrug", type: "bw", equip: "A loaded backpack or two heavy bags", kind: "isolation",
+    P: ["traps"], S: ["forearms"],
+    brief: "Shrugs holding a heavy backpack or two shopping bags. The traps respond well to higher reps.",
+    steps: ["Hold a heavy backpack by its straps in front of you, or a bag in each hand.", "Arms straight, stand tall.", "Shrug straight up and pause.", "Lower slowly."],
+    tips: ["Do 15–25 reps", "Pause 2 seconds at the top"], avoid: ["Rolling your shoulders", "Bending your elbows"],
+    yt: "shrugs at home backpack" },
+
+  /* ===== Chest ===== */
+  "cable-crossover": { name: "Cable Crossover", type: "gym", equip: "Cable crossover station", kind: "isolation",
+    P: ["chest"], S: ["delt_f"],
+    brief: "Standing between two high pulleys, you bring the handles together in front of you. The cables keep tension on the chest the whole way.",
+    steps: ["Set both pulleys high and hold a handle in each hand.", "Step forward into a staggered stance with a slight bend in your elbows.", "Bring your hands down and together in front of your hips, squeezing your chest.", "Open slowly to a stretch."],
+    tips: ["Keep the elbow bend fixed", "Squeeze for 1 second"], avoid: ["Turning it into a press", "Going too heavy"],
+    yt: "cable crossover proper form" },
+  "db-fly": { name: "Dumbbell Fly", type: "db", equip: "Dumbbells + bench", kind: "isolation",
+    P: ["chest"], S: ["delt_f"],
+    brief: "Lying on a bench, you open your arms wide in an arc and bring the dumbbells back together. It stretches and isolates the chest.",
+    steps: ["Lie on a bench with dumbbells above your chest, palms facing each other.", "With a slight bend in your elbows, lower them out to the sides in a wide arc.", "Stop at a comfortable chest stretch, about level with the bench.", "Bring them back up the same way, like hugging a big tree."],
+    tips: ["Light weight", "Same elbow bend throughout"], avoid: ["Lowering too deep", "Bending your elbows into a press"],
+    yt: "dumbbell fly proper form" },
+  "deficit-pushup": { name: "Deficit Push-Up", type: "bw", equip: "Two stacks of books or push-up handles", kind: "compound",
+    P: ["chest"], S: ["delt_f", "triceps", "abs"],
+    brief: "A push-up with your hands raised on books, so your chest can go lower than your hands. The extra stretch makes it a home version of the chest fly.",
+    steps: ["Put two equal, stable stacks of books under your hands, slightly wider than your shoulders.", "Body straight, abs braced.", "Lower slowly until your chest dips below the level of your hands.", "Push back up."],
+    tips: ["Start with low stacks", "Lower in 3 seconds"], avoid: ["Wobbly stacks", "Hips sagging"],
+    yt: "deficit push up form" },
+
+  /* ===== Core ===== */
+  "ab-wheel": { name: "Ab-Wheel Rollout", type: "gym", equip: "Ab wheel (or a barbell with round plates)", kind: "isolation",
+    P: ["abs"], S: ["obliques", "lats"],
+    brief: "From your knees, you roll a wheel forward and pull it back. Your abs have to stop your back from arching, which makes it one of the hardest ab exercises.",
+    steps: ["Kneel on a mat holding the wheel under your shoulders.", "Brace your abs and tuck your hips slightly.", "Roll forward as far as you can without your lower back sagging.", "Pull back to the start using your abs."],
+    tips: ["Start with short rollouts", "Breathe out on the way back"], avoid: ["Lower back sagging", "Going further than you can control"],
+    yt: "ab wheel rollout proper form" },
+  "plank": { name: "Plank", type: "bw", equip: "Floor or mat", kind: "isolation",
+    P: ["abs"], S: ["obliques", "glutes", "delt_f"],
+    brief: "Holding a straight body on your forearms trains your core to stop your back from sagging.",
+    steps: ["Forearms on the floor, elbows under your shoulders.", "Step your feet back so your body is straight from head to heels.", "Squeeze your glutes and brace your abs.", "Hold, breathing normally."],
+    tips: ["Push the floor away", "Knees down to make it easier"], avoid: ["Hips sagging or piking up", "Holding your breath"],
+    yt: "plank proper form" },
+  "hanging-knee-raise": { name: "Hanging Knee Raise", type: "gym", equip: "Pull-up bar or captain's chair", kind: "isolation",
+    P: ["abs"], S: ["obliques", "forearms"],
+    brief: "Hanging from a bar, you lift your knees toward your chest. It trains the lower abs and your grip.",
+    steps: ["Hang from a bar (or rest your forearms on a captain's chair).", "Brace your abs so you don't swing.", "Raise your knees toward your chest, curling your hips up.", "Lower slowly."],
+    tips: ["Curl your pelvis up at the top", "Slow on the way down"], avoid: ["Swinging", "Lifting your legs without curling your hips"],
+    yt: "hanging knee raise proper form" },
+  "lying-leg-raise": { name: "Lying Leg Raise", type: "bw", equip: "Floor or bench", kind: "isolation",
+    P: ["abs"], S: ["obliques"],
+    brief: "Lying on your back, you raise straight legs up and lower them slowly while keeping your lower back down.",
+    steps: ["Lie on your back, hands under your hips or by your sides.", "Press your lower back into the floor.", "Raise your legs up to vertical, keeping them straight.", "Lower slowly, only as far as your back stays flat."],
+    tips: ["Bend your knees to make it easier", "The slow lowering does most of the work"], avoid: ["Lower back arching", "Dropping your legs"],
+    yt: "lying leg raise proper form" },
+  "reverse-crunch": { name: "Reverse Crunch", type: "bw", equip: "Floor or mat", kind: "isolation",
+    P: ["abs"], S: ["obliques"],
+    brief: "Instead of lifting your shoulders, you curl your hips off the floor toward your chest. It's gentle on the neck.",
+    steps: ["Lie on your back with your knees bent and lifted, thighs vertical.", "Press your arms into the floor.", "Curl your hips off the floor, bringing your knees toward your chest.", "Lower slowly."],
+    tips: ["Small, controlled movement", "Breathe out as you curl"], avoid: ["Swinging your legs", "Using momentum"],
+    yt: "reverse crunch proper form" },
+  "cable-woodchop": { name: "Cable Woodchop", type: "gym", equip: "Cable + single handle", kind: "compound", uni: true,
+    P: ["obliques"], S: ["abs", "delt_f"],
+    brief: "Pulling a cable diagonally from high to low across your body trains the obliques to rotate with control.",
+    steps: ["Set the pulley high and stand side-on to the machine, holding the handle with both hands.", "Feet wide, knees soft.", "Pull the handle down and across your body to your opposite hip, turning through your torso and hips.", "Return slowly. Finish all reps, then face the other way."],
+    tips: ["Arms stay fairly straight", "Pivot your back foot"], avoid: ["Pulling only with your arms", "Twisting your lower back hard"],
+    yt: "cable woodchop form" },
+  "russian-twist": { name: "Dumbbell Russian Twist", type: "db", equip: "One dumbbell", kind: "isolation",
+    P: ["obliques"], S: ["abs"],
+    brief: "Seated and leaning back, you turn a dumbbell from side to side. It works the obliques and the deep abs.",
+    steps: ["Sit with your knees bent and heels on the floor, holding a dumbbell at your chest.", "Lean back to about 45° with a tall chest.", "Turn your shoulders to bring the dumbbell beside one hip, then the other.", "Each side counts as one rep."],
+    tips: ["Rotate your shoulders, not just your arms", "Lift your feet to make it harder"], avoid: ["Rounding your back", "Twisting fast"],
+    yt: "russian twist proper form" },
+  "bicycle-crunch": { name: "Bicycle Crunch", type: "bw", equip: "Floor or mat", kind: "isolation",
+    P: ["obliques", "abs"], S: [],
+    brief: "Lying on your back, you bring each elbow toward the opposite knee in a slow pedalling motion. A classic, very effective oblique exercise.",
+    steps: ["Lie on your back, fingertips lightly behind your head, knees lifted.", "Curl your shoulders off the floor.", "Turn to bring one elbow toward the opposite knee while the other leg straightens.", "Switch sides in a slow pedalling motion."],
+    tips: ["Slow and controlled", "Rotate from your ribs"], avoid: ["Pulling on your neck", "Racing through reps"],
+    yt: "bicycle crunch proper form" },
+
+  /* ===== Cardio ===== */
+  "stationary-bike": { name: "Stationary Bike", type: "gym", equip: "Exercise bike", kind: "cardio",
+    P: ["quads"], S: ["glutes", "hams", "calves"],
+    brief: "Low-impact cardio that's easy on the knees and back. Good for steady sessions or intervals.",
+    steps: ["Set the seat so your knee is slightly bent at the bottom of the pedal stroke.", "Pedal at a steady pace where you can talk in short sentences.", "Keep your upper body relaxed."],
+    tips: ["Seat at hip-bone height when you stand next to it", "Add resistance instead of spinning wildly"], avoid: ["Seat too low (knee pain)", "Gripping the bars tightly"],
+    yt: "stationary bike setup and form" },
+  "jump-rope": { name: "Jump Rope", type: "db", equip: "Skipping rope", kind: "cardio",
+    P: ["calves"], S: ["quads", "delt_s"],
+    brief: "Skipping is quick, cheap, vigorous cardio that also builds calf strength and footwork.",
+    steps: ["Hold the handles at hip height, elbows close to your sides.", "Turn the rope with your wrists, not your arms.", "Jump just high enough to clear the rope and land softly on the balls of your feet.", "Work in rounds: about 45 seconds skipping, 30 seconds rest."],
+    tips: ["Small jumps", "Start on a forgiving surface"], avoid: ["Big jumps", "Landing flat-footed"],
+    yt: "how to jump rope for beginners" },
+  "stair-climb": { name: "Stair Climbing", type: "bw", equip: "A flight of stairs", kind: "cardio",
+    P: ["quads", "glutes"], S: ["calves", "hams"],
+    brief: "Walking up stairs is hard cardio that also works the legs. Walk up, then take your time coming down.",
+    steps: ["Walk up a flight of stairs at a steady pace, one step at a time.", "Walk back down carefully, holding the rail.", "Repeat for the time shown."],
+    tips: ["Use the handrail", "Step with your whole foot"], avoid: ["Running down the stairs", "Rushing if you feel unsteady"],
+    yt: "stair climbing workout tips" }
 
 };
 
@@ -1220,48 +1781,86 @@ const SLOTS = {
   calf:     { label: "Calves",           cat: "Legs",      gym: "machine-calf",        db: "db-calf", home: "sl-calf" },
   pulldown: { label: "Vertical pull",    cat: "Back",      gym: "lat-pulldown",        db: "db-pullover", home: "prone-wpull" },
   row:      { label: "Row",              cat: "Back",      gym: "cable-row",           db: "db-row", home: "inverted-row" },
+  bentrow:  { label: "Bent-over row",    cat: "Back",      gym: "bb-row",              db: "cs-db-row", home: "backpack-row" },
+  straightarm: { label: "Straight-arm pull", cat: "Back",  gym: "straight-arm-pulldown", db: "db-lat-pullback", home: "backpack-pullover" },
+  shrug:    { label: "Shrug (traps)",    cat: "Back",      gym: "bb-shrug",            db: "db-shrug", home: "backpack-shrug" },
   press:    { label: "Chest press",      cat: "Chest",     gym: "machine-chest-press", db: "db-bench", home: "push-up" },
   incline:  { label: "Incline press",    cat: "Chest",     gym: "smith-incline",       db: "db-incline", home: "feet-up-pushup" },
   fly:      { label: "Chest fly",        cat: "Chest",     gym: "pec-deck",            db: "db-squeeze-press", home: "wide-pushup" },
+  crossover: { label: "Fly variation",   cat: "Chest",     gym: "cable-crossover",     db: "db-fly", home: "deficit-pushup" },
   ohp:      { label: "Shoulder press",   cat: "Shoulders", gym: "machine-shoulder-press", db: "db-shoulder-press", home: "pike-pushup" },
   lateral:  { label: "Lateral raise",    cat: "Shoulders", gym: "cable-lateral",       db: "db-lateral", home: "bottle-lateral" },
   reardelt: { label: "Rear shoulders",   cat: "Shoulders", gym: "face-pull",           db: "db-reverse-fly", home: "prone-yt" },
-  biceps:   { label: "Biceps",           cat: "Arms",      gym: "cable-curl",          db: "db-curl", home: "backpack-curl" },
-  triceps:  { label: "Triceps",          cat: "Arms",      gym: "rope-pushdown",       db: "db-overhead-ext", home: "chair-dip" },
+  arnold:   { label: "Press variation",  cat: "Shoulders", gym: "landmine-press",      db: "arnold-press", home: "elevated-pike" },
+  uprow:    { label: "Upright row",      cat: "Shoulders", gym: "cable-uprow",         db: "db-uprow", home: "backpack-uprow" },
+  biceps:   { label: "Biceps curl",      cat: "Biceps",    gym: "cable-curl",          db: "db-curl", home: "backpack-curl" },
+  hammer:   { label: "Hammer curl",      cat: "Biceps",    gym: "rope-hammer",         db: "db-hammer", home: "jug-hammer" },
+  preacher: { label: "Supported curl",   cat: "Biceps",    gym: "ez-preacher",         db: "db-concentration", home: "underhand-table-row" },
+  inclinecurl: { label: "Stretch curl",  cat: "Biceps",    gym: "bayesian-curl",       db: "incline-db-curl", home: "towel-curl" },
+  triceps:  { label: "Pushdown / kickback", cat: "Triceps", gym: "rope-pushdown",      db: "db-kickback", home: "chair-dip" },
+  triohp:   { label: "Overhead extension", cat: "Triceps", gym: "cable-oh-ext",        db: "db-overhead-ext", home: "backpack-oh-ext" },
+  skull:    { label: "Lying extension",  cat: "Triceps",   gym: "ez-skull",            db: "db-skull", home: "bw-tri-ext" },
+  closepress: { label: "Close-grip press", cat: "Triceps", gym: "closegrip-bench",     db: "db-close-press", home: "diamond-pushup" },
+  wristcurl: { label: "Wrist curl",      cat: "Forearms",  gym: "bb-wrist-curl",       db: "db-wrist-curl", home: "bottle-wrist-curl" },
+  revwrist: { label: "Reverse wrist curl", cat: "Forearms", gym: "bb-rev-wrist",       db: "db-rev-wrist", home: "towel-wring" },
+  revcurl:  { label: "Reverse curl",     cat: "Forearms",  gym: "cable-rev-curl",      db: "db-rev-curl", home: "backpack-rev-curl" },
+  grip:     { label: "Grip & carry",     cat: "Forearms",  gym: "dead-hang",           db: "farmer-carry", home: "jug-carry" },
   coreflex: { label: "Abs",              cat: "Core",      gym: "cable-crunch",        db: "db-crunch", home: "dead-bug" },
   coreanti: { label: "Core stability",   cat: "Core",      gym: "pallof",              db: "suitcase-carry", home: "side-plank" },
+  plank:    { label: "Plank / rollout",  cat: "Core",      gym: "ab-wheel",            db: "plank", home: "plank" },
+  legraise: { label: "Leg raise",        cat: "Core",      gym: "hanging-knee-raise",  db: "lying-leg-raise", home: "reverse-crunch" },
+  rotation: { label: "Rotation",         cat: "Core",      gym: "cable-woodchop",      db: "russian-twist", home: "bicycle-crunch" },
   cardio:   { label: "Cardio",           cat: "Cardio",    gym: "incline-walk",        db: "brisk-walk", home: "home-hiit" },
+  cardio2:  { label: "Cardio variation", cat: "Cardio",    gym: "stationary-bike",     db: "jump-rope", home: "stair-climb" },
   balance:  { label: "Balance",          cat: "Core",      gym: "sl-balance",          db: "sl-balance", home: "sl-balance" },
   warmup:   { label: "Warm-up",          cat: "Cardio",    gym: "warmup",              db: "warmup", home: "warmup" }
 };
 /* 60+ swaps: steadier options */
-const SLOTS_60 = { squat: { gym: "leg-press", db: "box-squat", home: "box-squat" }, cardio: { home: "brisk-walk" } };
+const SLOTS_60 = { squat: { gym: "leg-press", db: "box-squat", home: "box-squat" }, cardio: { home: "brisk-walk" },
+  bentrow: { gym: "cs-db-row", home: "inverted-row" }, grip: { gym: "farmer-carry" }, plank: { gym: "plank" },
+  legraise: { gym: "reverse-crunch", db: "reverse-crunch" }, rotation: { db: "pallof", home: "side-plank" }, arnold: { home: "pike-pushup" } };
 
-/* ---------- program templates: [slot, role] ---------- */
+/* ---------- rotation pools: "@pool" in a template picks a different movement each session and each week,
+   so every exercise for that muscle comes round regularly ---------- */
+const POOLS = {
+  bi:   ["biceps", "hammer", "preacher", "inclinecurl"],
+  tri:  ["triceps", "triohp", "skull", "closepress"],
+  fore: ["wristcurl", "grip", "revcurl", "revwrist"],
+  vp:   ["pulldown", "straightarm"],
+  hp:   ["row", "bentrow"],
+  chest: ["press", "fly", "incline", "crossover"],
+  fly:  ["fly", "crossover"],
+  shp:  ["ohp", "arnold"],
+  shs:  ["lateral", "uprow"],
+  shx:  ["ohp", "lateral", "arnold", "reardelt", "uprow"],
+  core: ["coreflex", "coreanti", "legraise", "rotation", "plank"]
+};
+
+/* ---------- program templates: [slot or @pool, role]. Every template trains every muscle group each week ---------- */
 const TEMPLATES = {
   glutes: {
     title: "Glutes & Back",
-    2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Hip thrust, legs, back, shoulders", items: [["thrust", "main"], ["legpress", "sec"], ["pulldown", "sec"], ["press", "acc"], ["abduct", "acc"], ["coreanti", "core"]] },
-         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hinge, split squat, rows, shoulders, arms", items: [["hinge", "main"], ["split", "sec"], ["row", "sec"], ["kickback", "acc"], ["lateral", "acc"], ["triceps", "acc"], ["coreflex", "core"]] } ],
-    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Thrust, hinge, split squat", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["coreflex", "core"]] },
-         { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Pulldown, chest press, shoulders, arms", items: [["pulldown", "main"], ["press", "sec"], ["ohp", "sec"], ["lateral", "acc"], ["reardelt", "acc"], ["triceps", "acc"], ["coreanti", "core"]] },
-         { id: "g2", ab: "G+Q", name: "Glutes, Quads & Back", focus: "Squat, thrust, rows, glute finishers", items: [["squat", "main"], ["thrust", "sec"], ["row", "acc"], ["kickback", "acc"], ["backext", "acc"], ["coreflex", "core"]] } ],
-    4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Thrust, hinge, side glutes", items: [["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["coreflex", "core"]] },
-         { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Width, posture, shoulders", items: [["pulldown", "main"], ["row", "sec"], ["ohp", "sec"], ["lateral", "acc"], ["reardelt", "acc"], ["coreanti", "core"]] },
-         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["calf", "acc"], ["coreflex", "core"]] },
-         { ab: "Arms", id: "u2", name: "Upper Body & Arms", focus: "Back thickness, chest, arms", items: [["row", "main"], ["press", "sec"], ["lateral", "acc"], ["biceps", "acc"], ["triceps", "acc"], ["coreanti", "core"]] } ]
+    2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Glutes, quads, back, chest, shoulders, biceps, core", items: [["thrust", "main"], ["legpress", "sec"], ["@vp", "sec"], ["@chest", "acc"], ["abduct", "acc"], ["@shx", "acc"], ["@bi", "acc"], ["@core", "core"]] },
+         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hamstrings, glutes, back, triceps, calves, forearms, core", items: [["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["@tri", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, calves, core", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "Back", id: "u1", name: "Back, Shoulders & Arms", focus: "Back, chest, shoulders, biceps, triceps", items: [["@vp", "main"], ["@chest", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Quads, glutes, back, forearms, core", items: [["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, traps, core", items: [["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["shrug", "acc"], ["@core", "core"]] },
+         { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Back width and thickness, shoulders, biceps", items: [["@vp", "main"], ["@hp", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@core", "core"]] },
+         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers, calves", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "Arms", id: "u2", name: "Upper Body & Arms", focus: "Back, chest, shoulders, biceps, triceps, forearms", items: [["@hp", "main"], ["@chest", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
   upper: {
     title: "Upper Body · V-Shape",
-    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, shoulders, biceps", items: [["press", "main"], ["row", "main"], ["squat", "sec"], ["lateral", "acc"], ["biceps", "acc"], ["coreflex", "core"]] },
-         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, shoulders, triceps", items: [["incline", "main"], ["pulldown", "main"], ["hinge", "sec"], ["lateral", "acc"], ["triceps", "acc"], ["coreanti", "core"]] } ],
-    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest press, vertical pull, squat, shoulders, triceps", items: [["press", "main"], ["pulldown", "sec"], ["squat", "sec"], ["lateral", "acc"], ["triceps", "acc"], ["coreflex", "core"]] },
-         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, row, hip hinge, arms", items: [["ohp", "main"], ["row", "main"], ["hinge", "sec"], ["lateral", "acc"], ["reardelt", "acc"], ["biceps", "acc"]] },
-         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, vertical pull, legs, chest fly", items: [["incline", "main"], ["pulldown", "sec"], ["legpress", "sec"], ["fly", "acc"], ["legcurl", "acc"], ["biceps", "acc"], ["coreanti", "core"]] } ],
-    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Strength: press & row", items: [["press", "main"], ["row", "main"], ["ohp", "sec"], ["pulldown", "sec"], ["lateral", "acc"], ["biceps", "acc"], ["triceps", "acc"]] },
-         { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["coreflex", "core"]] },
-         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, shoulders", items: [["incline", "main"], ["pulldown", "main"], ["fly", "acc"], ["reardelt", "acc"], ["lateral", "acc"], ["triceps", "acc"], ["biceps", "acc"]] },
-         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf", "acc"], ["coreanti", "core"]] } ]
+    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, shoulders, biceps, calves, core", items: [["press", "main"], ["@hp", "main"], ["squat", "sec"], ["@shs", "acc"], ["@bi", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, shoulders, triceps, forearms, core", items: [["incline", "main"], ["@vp", "main"], ["hinge", "sec"], ["@shx", "acc"], ["@tri", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, shoulders, triceps, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hip hinge, biceps, forearms", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, legs, chest fly, arms", items: [["incline", "main"], ["@vp", "sec"], ["legpress", "sec"], ["@fly", "acc"], ["legcurl", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Strength: press & row, shoulders, arms", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, traps", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["shrug", "acc"], ["@core", "core"]] },
+         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["reardelt", "acc"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"]] },
+         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   }
 };
 
@@ -1272,7 +1871,8 @@ const GOALS = {
   strength: { name: "Get stronger", short: "Strength", icon: "🏋️", main: [4, "4–6", 180], sec: [3, "6–8", 120], acc: [3, "8–12", 75], core: [3, "8–12", 60], cardio: { min: "10 min easy", opt: true } },
   health:   { name: "Fitness & health", short: "Health", icon: "❤️", main: [3, "8–12", 90], sec: [2, "10–12", 75], acc: [2, "12–15", 60], core: [2, "10–15", 45], cardio: { min: "15 min", opt: false } }
 };
-const TIMED = { "side-plank": "20–40 s", "sl-balance": "20–30 s", "wall-sit": "30–60 s", "suitcase-carry": "30–40 s" };
+const TIMED = { "side-plank": "20–40 s", "sl-balance": "20–30 s", "wall-sit": "30–60 s", "suitcase-carry": "30–40 s", "plank": "30–45 s",
+  "dead-hang": "20–40 s", "farmer-carry": "30–40 s", "jug-carry": "30–40 s" };
 
 /* ---------- sources ---------- */
 const SOURCES = {
@@ -1297,7 +1897,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const $ = (s, el = document) => el.querySelector(s);
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], DAYF = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DEFAULT_DAYS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4] };
-const CATS = ["All", "Glutes", "Legs", "Back", "Chest", "Shoulders", "Arms", "Core", "Cardio"];
+const CATS = ["All", "Glutes", "Legs", "Back", "Chest", "Shoulders", "Biceps", "Triceps", "Forearms", "Core", "Cardio"];
 
 /* ---------- storage ---------- */
 const KEY = "fitform.v1";
@@ -1313,6 +1913,7 @@ const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.get
 const todayDow = () => new Date().getDay();
 function dateForDow(dow) { const t = new Date(); t.setHours(12, 0, 0, 0); const d = new Date(t); d.setDate(t.getDate() + (dow - t.getDay())); return d; }
 const fmtRest = s => s >= 60 ? Math.floor(s / 60) + ":" + pad(s % 60) : s + " s";
+const weekNo = () => Math.round(dateForDow(0).getTime() / 6048e5);   // changes every Sunday; drives exercise rotation
 
 /* ---------- plan builder ---------- */
 const KEYS = ["gym", "db", "home"], KEYNAME = { gym: "Gym", db: "Dumbbells", home: "Home" }, EQNAME = { gym: "Gym machines", db: "Dumbbells", home: "Home / bodyweight" };
@@ -1322,6 +1923,7 @@ function keyOf(pr, slot, id) { const sd = slot && slotDef(pr, slot); const k = s
 const tagFor = k => `<span class="tag ${k}">${KEYNAME[k] || "Cardio"}</span>`;
 function lowRep(r) { const m = /^(\d+)/.exec(r); return m ? +m[1] : 99; }
 function dose(pr, role, exId) {
+  if (role === "main" && EX[exId].kind === "isolation") role = "sec";   // isolation moves never get heavy main-lift dosing
   const g = GOALS[pr.goal][role]; let [sets, reps, rest] = g;
   if (pr.exp === "new") { sets = Math.max(2, sets - 1); if (role === "main" && pr.goal === "strength") reps = "6–8"; }
   if (pr.age >= 60) { sets = Math.max(2, sets - 1); if (lowRep(reps) < 8) reps = "8–12"; rest = Math.min(180, rest + 30); }
@@ -1330,13 +1932,20 @@ function dose(pr, role, exId) {
   if (EX[exId].uni) reps += " / side";
   return { sets, reps, rest };
 }
-function buildPlan(pr) {
-  const T = TEMPLATES[pr.focus], tpl = T[pr.days];
+/* "@pool" → a concrete slot. Each appearance in the week takes the next movement in the pool,
+   and the starting point moves on every week, so all variations come round. */
+function poolPicker(tpl, wn) {
+  const cnt = {}, seen = {};
+  tpl.forEach(s => s.items.forEach(([k]) => { if (k[0] === "@") cnt[k] = (cnt[k] || 0) + 1; }));
+  return k => { if (k[0] !== "@") return k; const pool = POOLS[k.slice(1)], n = seen[k] = (seen[k] ?? -1) + 1; return pool[(wn * cnt[k] + n) % pool.length]; };
+}
+function buildPlan(pr, wn = weekNo()) {
+  const T = TEMPLATES[pr.focus], tpl = T[pr.days], resolve = poolPicker(tpl, wn);
   const sessions = tpl.map(s => {
     const used = new Set(), items = [];
     items.push({ slot: "warmup", role: "warm", ex: "warmup", alt: null, sets: 1, reps: pr.age >= 40 ? "8–10 min" : "5–8 min", rest: 0 });
-    s.items.forEach(([slot, role]) => {
-      const sd = slotDef(pr, slot), order = pickOrder(pr, slot);
+    s.items.forEach(([k, role]) => {
+      const slot = resolve(k), sd = slotDef(pr, slot), order = pickOrder(pr, slot);
       const key = order.find(k => !used.has(sd[k])) || order[0], ex = sd[key];
       used.add(ex);
       items.push(Object.assign({ slot, role, ex, key, alt: true }, dose(pr, role, ex)));
@@ -1346,7 +1955,7 @@ function buildPlan(pr) {
     items.push({ slot: "cardio", role: "cardio", ex: cex, key: ck, alt: true, sets: 1, reps: c.min, rest: 0, opt: c.opt });
     return { id: s.id, ab: s.ab, name: s.name, focus: s.focus, items };
   });
-  return { title: T.title, sessions, cardioSessions: cardioSessions(pr) };
+  return { title: T.title, sessions, cardioSessions: cardioSessions(pr, wn) };
 }
 /* rest-day cardio: walks, plus one HIIT for fat-loss/health goals */
 function cardioPick(pr) {
@@ -1357,14 +1966,25 @@ function cardioPick(pr) {
   const hiitOK = (pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new";
   const out = {}; pick.forEach((d, i) => out[d] = hiitOK && i === 0 ? "hiit" : "walk"); return out;
 }
-function cardioSessions(pr) {
+/* second steady-cardio type, used on every other walk day (or every other week) for variety */
+const CARDIO_ALT = {
+  "stationary-bike": { ab: "Bike", name: "Cardio Bike", focus: "Steady, moderate cycling", reps: "30–40 min" },
+  "stair-climb": { ab: "Stairs", name: "Stair Climb", focus: "Steady stair climbing, rest on the way down", reps: "20–30 min" },
+  "jump-rope": { ab: "Rope", name: "Jump Rope", focus: "Rounds: about 45 s skipping, 30 s rest", reps: "15 min", vig: true }
+};
+function cardioSessions(pr, wn = weekNo()) {
   const pk = cardioPick(pr), walkEx = pr.equip === "gym" ? "incline-walk" : "brisk-walk";
+  let alt = pr.age >= 60 ? null : { gym: "stationary-bike", db: "jump-rope", home: "stair-climb" }[pr.equip];
+  if (alt === "jump-rope" && (pr.age >= 50 || pr.exp === "new")) alt = "stair-climb";
+  const walks = Object.values(pk).filter(t => t === "walk").length; let wi = 0;
   return Object.entries(pk).map(([d, type]) => {
+    const useAlt = type === "walk" && alt && (walks > 1 ? (wi++ % 2 === 1) : wn % 2 === 1), A = useAlt ? CARDIO_ALT[alt] : null;
     const items = type === "hiit"
       ? [{ slot: null, role: "cardio", ex: "home-hiit", key: "cardio", alt: true, sets: 1, reps: "20 min", rest: 0, vig: true }]
+      : A ? [{ slot: null, role: "cardio", ex: alt, key: "cardio", alt: true, sets: 1, reps: A.reps, rest: 0, vig: !!A.vig }]
       : [{ slot: null, role: "cardio", ex: walkEx, key: "cardio", alt: true, sets: 1, reps: pr.age >= 60 ? "20–30 min" : "30–40 min", rest: 0 }];
     if (pr.age >= 60) items.push({ slot: "balance", role: "core", ex: "sl-balance", key: "home", alt: null, sets: 2, reps: "20–30 s / side", rest: 30 });
-    return { id: "c" + d, dow: +d, cardio: true, ab: type === "hiit" ? "HIIT" : "Walk", name: type === "hiit" ? "HIIT Cardio" : "Cardio Walk", focus: type === "hiit" ? "Vigorous intervals, about 20 minutes" : "Steady, moderate cardio", items };
+    return { id: "c" + d, dow: +d, cardio: true, ab: type === "hiit" ? "HIIT" : A ? A.ab : "Walk", name: type === "hiit" ? "HIIT Cardio" : A ? A.name : "Cardio Walk", focus: type === "hiit" ? "Vigorous intervals, about 20 minutes" : A ? A.focus : "Steady, moderate cardio", items };
   });
 }
 function weeklyCardio(pr) {
@@ -1458,11 +2078,12 @@ function prog(pr, dow, s) { let tot = 0, done = 0; s.items.forEach((it, i) => { 
 
 /* ---------- animation loop ---------- */
 const ANIMS = new Map(); let rafOn = false;
+const IO = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => { const a = ANIMS.get(e.target); if (a) a.vis = e.isIntersecting; }), { rootMargin: "120px" }) : null;
 function figHTML(exId, big) { return `<div class="${big ? "" : "fig"}" data-fig="${exId}" data-big="${big ? 1 : 0}"><svg viewBox="0 0 240 220">${RIG.svgAt(ANIM[exId], RIG.midT(ANIM[exId]), fem())}</svg></div>`; }
 const fem = () => !!(P() && P().sex === "f");
 function scanFigs() {
-  ANIMS.clear();
-  document.querySelectorAll("[data-fig]").forEach((el, i) => ANIMS.set(el, { id: el.dataset.fig, big: el.dataset.big === "1", t0: performance.now() - i * 333, last: 0 }));
+  ANIMS.clear(); if (IO) IO.disconnect();
+  document.querySelectorAll("[data-fig]").forEach((el, i) => { ANIMS.set(el, { id: el.dataset.fig, big: el.dataset.big === "1", t0: performance.now() - i * 333, last: 0, vis: !IO }); if (IO) IO.observe(el); });
   if (!rafOn) { rafOn = true; requestAnimationFrame(loop); }
 }
 function loop(now) {
@@ -1471,6 +2092,7 @@ function loop(now) {
   const f = fem();
   ANIMS.forEach((a, el) => {
     if (!el.isConnected) { ANIMS.delete(el); return; }
+    if (!a.vis) return;
     const inSheet = !!el.closest("#sheet") || !!el.closest("#wiz");
     if (sheetOpen && !inSheet) return;
     const iv = a.big ? 16 : 66;
@@ -1571,11 +2193,13 @@ function moveCard(pr, d, isT) {
     <div class="small" style="margin:4px 0 10px">Move this workout to <b>${DAYF[r.to]}</b>. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `<br><span class="muted">${r.over.map(abOf).join(", ")} won't fit this week.</span>` : ""}</div>
     <button class="btn sm" data-act="moveOn" data-dow="${d}">Move to ${DAYF[r.to]} →</button></div>`;
 }
-const VGROUP = { glutes: "Glutes", glute_med: "Glutes", quads: "Quads", hams: "Hamstrings", lats: "Back", upperback: "Back", chest: "Chest", delt_f: "Shoulders", delt_s: "Shoulders", delt_r: "Shoulders", biceps: "Arms", triceps: "Arms", abs: "Core", obliques: "Core", calves: "Calves" };
+const VGROUP = { glutes: "Glutes", glute_med: "Glutes", quads: "Quads", hams: "Hamstrings", lats: "Back", upperback: "Back", traps: "Back", chest: "Chest", delt_f: "Shoulders", delt_s: "Shoulders", delt_r: "Shoulders", biceps: "Biceps", triceps: "Triceps", forearms: "Forearms", abs: "Core", obliques: "Core", calves: "Calves" };
+const VORDER = ["Glutes", "Quads", "Hamstrings", "Calves", "Back", "Chest", "Shoulders", "Biceps", "Triceps", "Forearms", "Core"];
 function weeklySets(pr) {
   const ds = dayList(pr), tally = {};
+  VORDER.forEach(g => tally[g] = 0);
   ds.forEach((d, i) => { const s = PLAN.sessions[i % PLAN.sessions.length]; s.items.forEach(it => { if (it.role === "warm" || it.role === "cardio") return; const g = new Set(EX[it.ex].P.map(m => VGROUP[m]).filter(Boolean)); g.forEach(x => tally[x] = (tally[x] || 0) + it.sets); }); });
-  return Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  return VORDER.map(g => [g, tally[g]]);
 }
 function viewPlan() {
   const pr = P(), tdw = todayDow();
@@ -1589,31 +2213,39 @@ function viewPlan() {
       <p class="small muted" style="margin:8px 0 0">These are your usual days. Your ${PLAN.sessions.length} sessions run in order on them. To change just this week, open a rest day in Today and tap Train, or open a workout and tap Move. The other days shift by themselves.</p></div>
     ${weekPlan(pr).moved ? `<div class="card note"><b>This week is rearranged.</b> <span class="muted">Your usual days come back on Sunday.</span><div style="margin-top:8px"><button class="btn sm" data-act="resetWeek">Undo changes this week</button></div></div>` : ""}
     ${rows}
-    <div class="card"><h3>Cardio days</h3><p class="small muted" style="margin-top:-4px">WHO recommends 150–300 minutes of moderate cardio a week (or 75–150 vigorous) on top of 2+ strength days. Rest days get walks${(pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new" ? ", plus one HIIT session" : ""}.</p>
+    <div class="card"><h3>Cardio days</h3><p class="small muted" style="margin-top:-4px">WHO recommends 150–300 minutes of moderate cardio a week (or 75–150 vigorous) on top of 2+ strength days. Rest days get walks or another steady option (bike, stairs or skipping)${(pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new" ? ", plus one HIIT session" : ""}.</p>
       <div class="seg" style="--n:2;margin-top:4px"><button class="${pr.cardio !== "off" ? "on" : ""}" data-act="cardio" data-v="auto">Add cardio days<small>recommended</small></button><button class="${pr.cardio === "off" ? "on" : ""}" data-act="cardio" data-v="off">Strength only<small>no cardio days</small></button></div>
       <div class="vbar" style="grid-template-columns:96px 1fr 60px"><span>This week</span><div class="tr"><i style="width:${cpct}%"></i><u style="left:50%"></u></div><b style="text-align:right">~${cm} min</b></div>
       <div class="small muted">Moderate-equivalent minutes (1 minute of HIIT counts as 2). The line marks 150.${cm < 150 ? " Add a brisk walk on busy days to reach it." : ""}</div>
       <a class="small" href="${SOURCES.who.u}" target="_blank" rel="noopener">Source: ${esc(SOURCES.who.t)}</a></div>
-    <div class="card"><h3>Weekly sets per muscle</h3><p class="small muted" style="margin-top:-4px">ACSM's 2026 position stand suggests about 10 sets per muscle group per week for growth. The line marks 10.</p>
-      ${ws.map(([g, n]) => `<div class="vbar"><span>${g}</span><div class="tr"><i style="width:${Math.min(100, n / mx * 100)}%"></i><u style="left:${10 / mx * 100}%"></u></div><b style="text-align:right">${n}</b></div>`).join("")}
+    <div class="card"><h3>Weekly sets per muscle</h3><p class="small muted" style="margin-top:-4px">Every muscle group gets direct work each week. ACSM's 2026 position stand suggests about 10 sets per muscle group per week for growth; the line marks 10. Small muscles like forearms and calves also work during the bigger lifts.</p>
+      ${ws.every(([, n]) => n > 0) ? `<div class="small" style="color:var(--a);font-weight:600;margin-bottom:6px">✓ All ${ws.length} muscle groups trained this week</div>` : `<div class="small" style="color:#ff9a9a;font-weight:600;margin-bottom:6px">Not trained this week: ${ws.filter(([, n]) => !n).map(([g]) => g).join(", ")}. Add a training day to cover them.</div>`}
+      ${ws.map(([g, n]) => `<div class="vbar"><span>${g}</span><div class="tr"><i style="width:${Math.min(100, n / mx * 100)}%"></i><u style="left:${10 / mx * 100}%"></u></div><b style="text-align:right${n ? "" : ";color:#ff9a9a"}">${n}</b></div>`).join("")}
       <a class="small" href="${SOURCES.acsm.u}" target="_blank" rel="noopener">Source: ${esc(SOURCES.acsm.t)}</a></div>
     <div class="card"><h3>How to progress</h3><ul class="small" style="padding-left:18px;margin:0">
       <li style="margin-bottom:6px"><b>Pick a weight</b> where the last 1–3 reps feel hard but your form stays clean. Going to total failure isn't needed.</li>
       <li style="margin-bottom:6px"><b>Double progression:</b> when you hit the top of the rep range on every set, add the smallest weight step next time.</li>
       <li style="margin-bottom:6px"><b>Rest</b> as the timer shows; it starts when you tick a set.</li>
+      <li style="margin-bottom:6px"><b>Exercise variety:</b> your main lifts stay the same so you can track progress, while arm, shoulder, back, chest-fly and core exercises rotate each session and each week. Every exercise in the library comes round regularly.</li>
       <li style="margin-bottom:6px"><b>Every 6–8 weeks</b> take an easier week: same exercises, half the sets.</li>
       <li><b>Gym, dumbbells or home?</b> ACSM's 2026 review found equipment type didn't consistently change results, and bodyweight and home training work too. Swap freely.</li></ul></div>`;
 }
 function viewLibrary() {
   const chips = CATS.map(c => `<button class="pill${c === CAT ? " on" : ""}" data-act="cat" data-c="${c}">${c}</button>`).join("");
-  const seen = new Set(), rows = [];
-  Object.entries(SLOTS).forEach(([k, sl]) => {
-    if (k === "warmup") return;
-    if (CAT !== "All" && sl.cat !== CAT) return;
-    KEYS.forEach(key => { const id = sl[key]; if (seen.has(id)) return; seen.add(id); const ex = EX[id];
-      rows.push(`<button class="row" data-act="lib" data-ex="${id}" data-slot="${k}">${figHTML(id)}<div class="rmain"><div class="rname">${esc(ex.name)}</div><div class="rmeta">${ex.P.map(m => MUSCLE_NAMES[m]).join(", ")}</div>${tagFor(key)}</div><div class="rprog">›</div></button>`); });
+  const out = [];
+  CATS.filter(c => c !== "All" && (CAT === "All" || c === CAT)).forEach(cat => {
+    const slots = Object.entries(SLOTS).filter(([k, sl]) => sl.cat === cat && k !== "warmup" && k !== "balance");
+    const nEx = new Set(slots.flatMap(([, sl]) => KEYS.map(k => sl[k]))).size;
+    out.push(`<h3 style="margin:18px 0 2px">${cat}</h3><div class="small muted" style="margin-bottom:6px">${slots.length} movements · ${nEx} exercises</div>`);
+    slots.forEach(([k, sl], i) => {
+      const seen = new Set();
+      out.push(`<div class="rnum" style="margin:10px 0 4px">${i + 1} · ${esc(sl.label)}</div><div class="list" style="margin:0">`);
+      KEYS.forEach(key => { const id = sl[key]; if (seen.has(id)) return; seen.add(id); const ex = EX[id];
+        out.push(`<button class="row" data-act="lib" data-ex="${id}" data-slot="${k}">${figHTML(id)}<div class="rmain"><div class="rname">${esc(ex.name)}</div><div class="rmeta">${ex.P.map(m => MUSCLE_NAMES[m]).join(", ")}</div>${tagFor(key)}</div><div class="rprog">›</div></button>`); });
+      out.push(`</div>`);
+    });
   });
-  return `<h2>Exercises</h2><p class="sub">Every movement has three versions: gym machine, dumbbells, and home (bodyweight).</p><div class="chips">${chips}</div><div class="list">${rows.join("")}</div>`;
+  return `<h2>Exercises</h2><p class="sub">Every muscle group has at least four movements, and each movement has a gym, dumbbell and home version. Your plan rotates through them week to week.</p><div class="chips">${chips}</div>${out.join("")}`;
 }
 function viewMe() {
   const pr = P(), g = GOALS[pr.goal], w = pr.weight;
@@ -1627,7 +2259,7 @@ function viewMe() {
     cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting improved bone density in postmenopausal women with low bone mass.", ["bone"]));
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
-    cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Lateral raises appear twice a week, and pulling work at least matches pushing work to keep your shoulders healthy."));
+    cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises or upright rows) appears twice a week, and pulling work at least matches pushing work to keep your shoulders healthy."));
     cards.push(card("Don't skip legs", "Squats and hinges stay in the plan. Legs are your biggest muscles, and training them supports strength, athletic balance and metabolic health."));
     cards.push(card("Belly fat", "Crunches won't burn fat from your stomach. A controlled study of abdominal exercise found no reduction in belly fat. Fat loss comes from an overall calorie deficit, and lifting keeps your muscle while you lose it.", ["spot"]));
     cards.push(card("Shoulder & back care", "Balance pressing with rows and face pulls. Brace and hinge from the hips, and don't ego-lift. Going to total failure isn't required for results.", ["acsm"]));
