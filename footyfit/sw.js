@@ -1,5 +1,5 @@
 /* Football Fitness offline worker: caches the app so it opens without signal. Only touches its own caches. */
-const CACHE = "footyfit-382d417f37";
+const CACHE = "footyfit-ab4aefa909";
 const ASSETS = [
   "./",
   "./index.html",

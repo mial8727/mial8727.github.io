@@ -829,7 +829,11 @@
   load();
   if (inFrame) $("#previewNote").hidden = false;
   if ("serviceWorker" in navigator && !inFrame && (location.protocol === "https:" || location.hostname === "localhost")) {
-    window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+      // FitForm used to live at the site root and its worker covered this folder too; retire it.
+      try { navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { if (r.scope === location.origin + "/") r.unregister(); }); }); } catch (e) {}
+    });
   }
   route();
 })();
