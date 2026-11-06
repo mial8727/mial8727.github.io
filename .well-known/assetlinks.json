@@ -4,15 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "io.github.mial8727.fitform",
-      "sha256_cert_fingerprints": ["B1:46:64:AB:02:9B:FB:DA:F0:33:7D:B2:A6:00:1A:AA:05:89:FF:36:07:CF:25:85:BA:57:C3:09:C1:5F:BD:B5"]
-    }
-  },
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "io.github.mial8727.twa",
-      "sha256_cert_fingerprints": ["B1:46:64:AB:02:9B:FB:DA:F0:33:7D:B2:A6:00:1A:AA:05:89:FF:36:07:CF:25:85:BA:57:C3:09:C1:5F:BD:B5"]
+      "sha256_cert_fingerprints": ["F0:E6:F4:F1:60:B2:B5:A8:FB:91:C5:B3:A0:A5:13:BE:72:FE:73:22:F1:03:53:AA:95:19:C1:1F:44:46:7B:8C"]
     }
   }
 ]
