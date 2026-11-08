@@ -932,6 +932,19 @@ const ANIM = (() => {
       { hip: [120, 121], tr: 0, hd: -8, aN: [178, 180], aF: [174, 176], fN: [124, 200] },
       { hip: [104, 121], tr: 95, hd: 12, aN: [2, 0], aF: [-2, -2], fN: [124, 200] }], props: [] };
 
+  /* shoulder emphasis: second side-delt and rear-delt movements */
+  const seatF = { hipY: 150, tlf: 0.32, l: [10, 0] };
+  const seatPads = [{ t: "pad", x: 90, y: 152, w: 60, h: 8 }, { t: "line", p: [120, 160, 120, 206], w: 5 }];
+  A["machine-lateral"] = { v: "front", frames: [{ ...seatF, a: [8, 6] }, { ...seatF, a: [86, 64] }],
+    props: [{ t: "pad", x: 96, y: 86, w: 48, h: 64, z: "b" }, ...seatPads, { t: "roller", at: "eL", r: 6 }, { t: "roller", at: "eR", r: 6 }] };
+  A["seated-db-lateral"] = { v: "front", frames: [{ ...seatF, a: [10, 10] }, { ...seatF, a: [86, 88] }],
+    props: [...seatPads, { t: "db", at: "wL", off: [0, 2] }, { t: "db", at: "wR", off: [0, 2] }] };
+  A["bottle-y-raise"] = { v: "front", frames: [{ a: [10, 10] }, { a: [148, 150] }],
+    props: [{ t: "bottle", at: "wL" }, { t: "bottle", at: "wR" }] };
+  A["reverse-pec-deck"] = { v: "front", frames: [A["pec-deck"].frames[1], A["pec-deck"].frames[0]], props: A["pec-deck"].props };
+  A["rear-delt-row"] = { frames: [A["cs-db-row"].frames[0], { ...A["cs-db-row"].frames[1], hrN: [-6, 16] }], props: A["cs-db-row"].props };
+  A["bottle-reverse-fly"] = { v: "front", frames: A["db-reverse-fly"].frames, props: [{ t: "bottle", at: "wL" }, { t: "bottle", at: "wR" }] };
+
   return A;
 })();
 
@@ -1166,6 +1179,42 @@ const EX = {
     steps: ["Stand holding light dumbbells at your sides.", "Lean very slightly forward.", "Raise your arms out to shoulder height, leading with your elbows.", "Lower slowly."],
     tips: ["Pinkies level with or slightly above thumbs", "Stop at shoulder height"], avoid: ["Heavy swinging", "Shrugging your shoulders up"],
     yt: "dumbbell lateral raise proper form" },
+  "machine-lateral": { name: "Machine Lateral Raise", type: "gym", equip: "Lateral raise machine", kind: "isolation",
+    P: ["delt_s"], S: ["traps"],
+    brief: "Pads at your elbows guide your arms out to the sides, so the side shoulders do all the work. It's easy to push close to failure safely.",
+    steps: ["Sit with your shoulders lined up with the machine's pivot and your elbows against the pads.", "Hold the handles lightly and sit tall.", "Raise your elbows out to the sides until they reach shoulder height.", "Lower slowly, stopping just before the weight rests."],
+    tips: ["Lead with your elbows", "Pause 1 second at the top"], avoid: ["Shrugging your shoulders up", "Leaning to swing the weight"],
+    yt: "machine lateral raise form" },
+  "seated-db-lateral": { name: "Seated Dumbbell Lateral Raise", type: "db", equip: "Light dumbbells + bench", kind: "isolation",
+    P: ["delt_s"], S: ["traps"],
+    brief: "A lateral raise sitting on a bench. Sitting stops you from using your legs to swing the weights, so every rep works the side shoulders.",
+    steps: ["Sit tall at the end of a bench, dumbbells at your sides, elbows slightly bent.", "Raise your arms out to the sides, leading with your elbows.", "Stop when your arms reach shoulder height.", "Lower slowly."],
+    tips: ["Light weight, strict form", "Think of pushing your hands out wide, not up"], avoid: ["Rocking your torso", "Raising above shoulder height with heavy weights"],
+    yt: "seated dumbbell lateral raise form" },
+  "bottle-y-raise": { name: "Bottle Y-Raise", type: "bw", equip: "Two water bottles", kind: "isolation",
+    P: ["delt_s"], S: ["delt_f", "traps"],
+    brief: "Raising your arms up and out into a Y shape, thumbs up, works the side shoulders through a long range and the muscles that keep your shoulder blades healthy.",
+    steps: ["Stand tall holding a bottle in each hand at your sides, thumbs pointing forward.", "Raise your arms up and out at an angle until they form a Y above your head.", "Keep your shoulders down, away from your ears.", "Lower slowly."],
+    tips: ["Light bottles are plenty", "Do 12–20 slow reps"], avoid: ["Arching your back", "Shrugging"],
+    yt: "Y raise shoulder exercise" },
+  "reverse-pec-deck": { name: "Reverse Pec Deck", type: "gym", equip: "Pec deck / rear delt machine", kind: "isolation",
+    P: ["delt_r"], S: ["upperback", "traps"],
+    brief: "Sitting facing the pec deck, you sweep the handles back and out. It's one of the best exercises for the rear shoulders, which give the shoulders a rounded 3D look from the side and back.",
+    steps: ["Set the handles to the rear position and sit facing the pad, chest against it.", "Hold the handles with straight but soft arms at shoulder height.", "Sweep your arms out and back until they line up with your body.", "Return slowly."],
+    tips: ["Lead with the backs of your hands", "Keep your shoulders down"], avoid: ["Squeezing your shoulder blades hard together (that shifts the work to the upper back)", "Swinging"],
+    yt: "reverse pec deck rear delt form" },
+  "rear-delt-row": { name: "Chest-Supported Rear Delt Row", type: "db", equip: "Dumbbells + adjustable bench", kind: "isolation",
+    P: ["delt_r"], S: ["upperback", "biceps"],
+    brief: "A row lying face down on an incline bench with your elbows flared wide. The wide elbows move the work from the lats to the rear shoulders.",
+    steps: ["Lie face down on a bench set to about 30–45°, dumbbells hanging straight down.", "Turn your palms to face behind you.", "Row the dumbbells up with your elbows pointing out to the sides, until your upper arms are level with your shoulders.", "Lower slowly."],
+    tips: ["Elbows wide, about 90° from your body", "Light weight, slow lowering"], avoid: ["Tucking your elbows (that turns it into a back row)", "Lifting your chest off the pad"],
+    yt: "chest supported rear delt row" },
+  "bottle-reverse-fly": { name: "Bottle Reverse Fly", type: "bw", equip: "Two water bottles", kind: "isolation",
+    P: ["delt_r"], S: ["upperback", "traps"],
+    brief: "Bent forward with a water bottle in each hand, you open your arms out to the sides. It's a simple home exercise for the rear shoulders and upper back.",
+    steps: ["Hold a bottle in each hand and hinge forward with a flat back, knees soft.", "Let your arms hang under your shoulders, elbows slightly bent.", "Open your arms out to the sides until they're level with your body.", "Lower slowly."],
+    tips: ["Lead with the backs of your hands", "Do 15–20 slow reps"], avoid: ["Rounding your back", "Shrugging"],
+    yt: "bent over reverse fly at home" },
   "face-pull": { name: "Cable Face Pull", type: "gym", equip: "Cable + rope", kind: "isolation",
     P: ["delt_r"], S: ["upperback", "traps"],
     brief: "Pulling a rope to your face trains the rear shoulders and upper back. It's great for posture and shoulder health.",
@@ -1804,6 +1853,8 @@ const SLOTS = {
   ohp:      { label: "Shoulder press",   cat: "Shoulders", gym: "machine-shoulder-press", db: "db-shoulder-press", home: "pike-pushup" },
   lateral:  { label: "Lateral raise",    cat: "Shoulders", gym: "cable-lateral",       db: "db-lateral", home: "bottle-lateral" },
   reardelt: { label: "Rear shoulders",   cat: "Shoulders", gym: "face-pull",           db: "db-reverse-fly", home: "prone-yt" },
+  lateral2: { label: "Lateral raise variation", cat: "Shoulders", gym: "machine-lateral", db: "seated-db-lateral", home: "bottle-y-raise" },
+  reardelt2: { label: "Rear-shoulder variation", cat: "Shoulders", gym: "reverse-pec-deck", db: "rear-delt-row", home: "bottle-reverse-fly" },
   arnold:   { label: "Press variation",  cat: "Shoulders", gym: "landmine-press",      db: "arnold-press", home: "elevated-pike" },
   uprow:    { label: "Upright row",      cat: "Shoulders", gym: "cable-uprow",         db: "db-uprow", home: "backpack-uprow" },
   biceps:   { label: "Biceps curl",      cat: "Biceps",    gym: "cable-curl",          db: "db-curl", home: "backpack-curl" },
@@ -1845,8 +1896,9 @@ const POOLS = {
   chest: ["press", "fly", "incline", "crossover"],
   fly:  ["fly", "crossover"],
   shp:  ["ohp", "arnold"],
-  shs:  ["lateral", "uprow"],
-  shx:  ["ohp", "lateral", "arnold", "reardelt", "uprow"],
+  shs:  ["lateral", "lateral2", "uprow"],                // side shoulders (width)
+  rd:   ["reardelt", "reardelt2"],                       // rear shoulders
+  shx:  ["ohp", "lateral", "arnold", "reardelt", "lateral2", "uprow", "reardelt2"],
   core: ["coreflex", "coreanti", "legraise", "rotation", "plank"]
 };
 
@@ -1857,23 +1909,23 @@ const TEMPLATES = {
     2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Glutes, quads, back, chest, shoulders, biceps, core", items: [["thrust", "main"], ["legpress", "sec"], ["@vp", "sec"], ["@chest", "acc"], ["abduct", "acc"], ["@shx", "acc"], ["@bi", "acc"], ["@core", "core"]] },
          { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hamstrings, glutes, back, triceps, calves, forearms, core", items: [["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["@tri", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
     3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, calves, core", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["calf", "acc"], ["@core", "core"]] },
-         { ab: "Back", id: "u1", name: "Back, Shoulders & Arms", focus: "Back, chest, shoulders, biceps, triceps", items: [["@vp", "main"], ["@chest", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "Back", id: "u1", name: "Back, Shoulders & Arms", focus: "Back, chest, shoulders, biceps, triceps", items: [["@vp", "main"], ["@chest", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
          { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Quads, glutes, back, forearms, core", items: [["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
     4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, traps, core", items: [["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["shrug", "acc"], ["@core", "core"]] },
-         { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Back width and thickness, shoulders, biceps", items: [["@vp", "main"], ["@hp", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@core", "core"]] },
+         { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Back width and thickness, shoulders, biceps", items: [["@vp", "main"], ["@hp", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@core", "core"]] },
          { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers, calves", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["calf", "acc"], ["@core", "core"]] },
          { ab: "Arms", id: "u2", name: "Upper Body & Arms", focus: "Back, chest, shoulders, biceps, triceps, forearms", items: [["@hp", "main"], ["@chest", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
   upper: {
     title: "Upper Body · V-Shape",
-    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, shoulders, biceps, calves, core", items: [["press", "main"], ["@hp", "main"], ["squat", "sec"], ["@shs", "acc"], ["@bi", "acc"], ["calf", "acc"], ["@core", "core"]] },
-         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, shoulders, triceps, forearms, core", items: [["incline", "main"], ["@vp", "main"], ["hinge", "sec"], ["@shx", "acc"], ["@tri", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
-    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, shoulders, triceps, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["calf", "acc"], ["@core", "core"]] },
-         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hip hinge, biceps, forearms", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "acc"], ["reardelt", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
-         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, legs, chest fly, arms", items: [["incline", "main"], ["@vp", "sec"], ["legpress", "sec"], ["@fly", "acc"], ["legcurl", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
-    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Strength: press & row, shoulders, arms", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
-         { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, traps", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["shrug", "acc"], ["@core", "core"]] },
-         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["reardelt", "acc"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"]] },
+    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, side & rear shoulders, biceps, calves", items: [["press", "main"], ["@hp", "main"], ["squat", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, side & rear shoulders, triceps, forearms", items: [["incline", "main"], ["@vp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@tri", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, side shoulders, triceps, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "pri"], ["@tri", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hinge, side & rear shoulders, biceps", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, legs, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "sec"], ["legpress", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Press & row, shoulder press, side & rear shoulders, biceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
+         { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, side shoulders", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
+         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "acc"], ["@bi", "acc"]] },
          { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   }
 };
@@ -1938,7 +1990,9 @@ const tagFor = k => `<span class="tag ${k}">${KEYNAME[k] || "Cardio"}</span>`;
 function lowRep(r) { const m = /^(\d+)/.exec(r); return m ? +m[1] : 99; }
 function dose(pr, role, exId) {
   if (role === "main" && EX[exId].kind === "isolation") role = "sec";   // isolation moves never get heavy main-lift dosing
+  const pri = role === "pri"; if (pri) role = "acc";                       // "pri" = priority accessory: one extra set
   const g = GOALS[pr.goal][role]; let [sets, reps, rest] = g;
+  if (pri) sets = Math.min(sets + 1, 4);
   if (pr.exp === "new") { sets = Math.max(2, sets - 1); if (role === "main" && pr.goal === "strength") reps = "6–8"; }
   if (pr.age >= 60) { sets = Math.max(2, sets - 1); if (lowRep(reps) < 8) reps = "8–12"; rest = Math.min(180, rest + 30); }
   else if (pr.age < 18 && lowRep(reps) < 6) reps = "6–10";
@@ -2354,7 +2408,7 @@ function viewMe() {
     cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting improved bone density in postmenopausal women with low bone mass.", ["bone"]));
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
-    cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises or upright rows) appears twice a week, and pulling work at least matches pushing work to keep your shoulders healthy."));
+    cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
     cards.push(card("Don't skip legs", "Squats and hinges stay in the plan. Legs are your biggest muscles, and training them supports strength, athletic balance and metabolic health."));
     cards.push(card("Belly fat", "Crunches won't burn fat from your stomach. A controlled study of abdominal exercise found no reduction in belly fat. Fat loss comes from an overall calorie deficit, and lifting keeps your muscle while you lose it.", ["spot"]));
     cards.push(card("Shoulder & back care", "Balance pressing with rows and face pulls. Brace and hinge from the hips, and don't ego-lift. Going to total failure isn't required for results.", ["acsm"]));
