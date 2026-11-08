@@ -945,6 +945,13 @@ const ANIM = (() => {
   A["rear-delt-row"] = { frames: [A["cs-db-row"].frames[0], { ...A["cs-db-row"].frames[1], hrN: [-6, 16] }], props: A["cs-db-row"].props };
   A["bottle-reverse-fly"] = { v: "front", frames: A["db-reverse-fly"].frames, props: [{ t: "bottle", at: "wL" }, { t: "bottle", at: "wR" }] };
 
+  /* seated calf raise (soleus): knees bent, heels drop below the toes then rise */
+  const scF = [{ hip: [92, 154], tr: 4, hN: [128, 152], fN: [134, 196], tN: -20 }, { hip: [92, 154], tr: 4, hN: [128, 148], fN: [134, 186], tN: 35 }];
+  const scBits = [{ t: "bench", x: 48, y: 160, w: 66 }, { t: "box", x: 140, y: 196, w: 22 }];
+  A["seated-calf"] = { frames: scF, props: [...scBits, { t: "roller", at: "kN", off: [2, -9], r: 7 }, { t: "line", p: [150, 120, 150, 206], w: 5 }] };
+  A["seated-db-calf"] = { frames: scF, props: [...scBits, { t: "db", at: "kN", off: [0, -9] }] };
+  A["seated-backpack-calf"] = { frames: scF, props: [...scBits, { t: "bag", at: "kN", off: [0, -24] }] };
+
   return A;
 })();
 
@@ -1299,6 +1306,24 @@ const EX = {
     steps: ["Walk slowly for a minute and let your breathing settle.", "Stretch each muscle group you trained today (listed above) for about 30 seconds.", "Relax into each stretch. It should feel like a gentle pull, never pain.", "Finish with a few slow, deep breaths."],
     tips: ["Breathe out as you ease into each stretch", "Hold still; no bouncing"], avoid: ["Bouncing", "Pushing into pain"],
     yt: "full body cool down stretch after workout" },
+  "seated-calf": { name: "Seated Calf Raise", type: "gym", equip: "Seated calf raise machine", kind: "isolation",
+    P: ["calves"], S: [],
+    brief: "Calf raises with your knees bent. Bending the knees takes the upper calf (gastrocnemius) out of the movement, so the soleus underneath does the work. The soleus makes up much of the lower leg's size.",
+    steps: ["Sit with the balls of your feet on the platform and the pad snug on your thighs, just above the knees.", "Release the safety and let your heels drop as low as they comfortably go.", "Push up onto your toes as high as you can and squeeze.", "Lower slowly to a full stretch."],
+    tips: ["Pause 1–2 seconds at the bottom stretch", "Higher reps (12–20) work well"], avoid: ["Bouncing out of the bottom", "Short half reps"],
+    yt: "seated calf raise form soleus" },
+  "seated-db-calf": { name: "Seated Dumbbell Calf Raise", type: "db", equip: "Dumbbells + bench, a step or plate under your toes", kind: "isolation",
+    P: ["calves"], S: [],
+    brief: "Sitting with dumbbells resting on your knees, you raise your heels. The bent knees put the work on the soleus, the deeper calf muscle.",
+    steps: ["Sit on a bench with the balls of your feet on a step or plate, heels free.", "Rest a dumbbell on each knee and hold it in place.", "Let your heels drop, then push up onto your toes as high as you can.", "Lower slowly."],
+    tips: ["Full stretch at the bottom", "Do 15–20 reps"], avoid: ["Bouncing", "Lifting the dumbbells with your hands"],
+    yt: "seated dumbbell calf raise" },
+  "seated-backpack-calf": { name: "Seated Backpack Calf Raise", type: "bw", equip: "A loaded backpack, a chair and a thick book or step", kind: "isolation",
+    P: ["calves"], S: [],
+    brief: "Sitting on a chair with a loaded backpack on your knees, you raise your heels from a book or step. It trains the soleus at home.",
+    steps: ["Sit on a chair with the balls of your feet on a thick book or step.", "Rest a loaded backpack on your knees and hold it there.", "Drop your heels, then push up onto your toes as high as you can.", "Lower slowly."],
+    tips: ["Do one leg at a time if it's too easy", "Do 15–25 reps"], avoid: ["Rushing", "Short half reps"],
+    yt: "seated calf raise at home" },
   "sl-balance": { name: "Single-Leg Balance", type: "bw", equip: "None (near a wall for safety)", kind: "isolation", uni: true,
     P: ["glute_med"], S: ["calves", "abs"],
     brief: "Standing on one leg trains balance. WHO guidelines recommend balance work for adults 65+ on 3 or more days a week.",
@@ -1840,7 +1865,8 @@ const SLOTS = {
   backext:  { label: "Back extension",   cat: "Glutes",    gym: "back-extension",      db: "db-good-morning", home: "superman" },
   legcurl:  { label: "Leg curl",         cat: "Legs",      gym: "leg-curl",            db: "db-leg-curl", home: "slider-curl" },
   legext:   { label: "Quad isolation",   cat: "Legs",      gym: "leg-extension",       db: "db-stepup", home: "wall-sit" },
-  calf:     { label: "Calves",           cat: "Legs",      gym: "machine-calf",        db: "db-calf", home: "sl-calf" },
+  calf:     { label: "Calves (standing)", cat: "Legs",     gym: "machine-calf",        db: "db-calf", home: "sl-calf" },
+  calf2:    { label: "Calves (seated)",  cat: "Legs",      gym: "seated-calf",         db: "seated-db-calf", home: "seated-backpack-calf" },
   pulldown: { label: "Vertical pull",    cat: "Back",      gym: "lat-pulldown",        db: "db-pullover", home: "prone-wpull" },
   row:      { label: "Row",              cat: "Back",      gym: "cable-row",           db: "db-row", home: "inverted-row" },
   bentrow:  { label: "Bent-over row",    cat: "Back",      gym: "bb-row",              db: "cs-db-row", home: "backpack-row" },
@@ -1888,8 +1914,10 @@ const SLOTS_60 = { squat: { gym: "leg-press", db: "box-squat", home: "box-squat"
 /* ---------- rotation pools: "@pool" in a template picks a different movement each session and each week,
    so every exercise for that muscle comes round regularly ---------- */
 const POOLS = {
-  bi:   ["biceps", "hammer", "preacher", "inclinecurl"],
-  tri:  ["triceps", "triohp", "skull", "closepress"],
+  bi:   ["inclinecurl", "preacher", "biceps", "hammer"],   // long head + short head one week, both heads + brachialis the next
+  tri:  ["triohp", "triceps", "skull", "closepress"],     // overhead/lying (long head) alternates with pushdown/close-grip
+  calf: ["calf", "calf2"],                               // standing (gastrocnemius) / seated (soleus)
+  legacc: ["legcurl", "legext"],                         // 2-day plans: knee-bending hamstrings / rectus femoris on alternate weeks
   fore: ["wristcurl", "grip", "revcurl", "revwrist"],
   vp:   ["pulldown", "straightarm"],
   hp:   ["row", "bentrow"],
@@ -1907,26 +1935,26 @@ const TEMPLATES = {
   glutes: {
     title: "Glutes & Back",
     2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Glutes, quads, back, chest, shoulders, biceps, core", items: [["thrust", "main"], ["legpress", "sec"], ["@vp", "sec"], ["@chest", "acc"], ["abduct", "acc"], ["@shx", "acc"], ["@bi", "acc"], ["@core", "core"]] },
-         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hamstrings, glutes, back, triceps, calves, forearms, core", items: [["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["@tri", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
-    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, calves, core", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hamstrings, glutes, thighs, back, triceps, calves, forearms", items: [["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["@legacc", "acc"], ["@tri", "acc"], ["@calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, calves, core", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["@calf", "acc"], ["@core", "core"]] },
          { ab: "Back", id: "u1", name: "Back, Shoulders & Arms", focus: "Back, chest, shoulders, biceps, triceps", items: [["@vp", "main"], ["@chest", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
-         { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Quads, glutes, back, forearms, core", items: [["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+         { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Quads, glutes, back, lower back, forearms, core", items: [["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["legext", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
     4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, traps, core", items: [["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["shrug", "acc"], ["@core", "core"]] },
          { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Back width and thickness, shoulders, biceps", items: [["@vp", "main"], ["@hp", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@core", "core"]] },
-         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers, calves", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers, calves", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["@calf", "acc"], ["@core", "core"]] },
          { ab: "Arms", id: "u2", name: "Upper Body & Arms", focus: "Back, chest, shoulders, biceps, triceps, forearms", items: [["@hp", "main"], ["@chest", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
   upper: {
     title: "Upper Body · V-Shape",
-    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, side & rear shoulders, biceps, calves", items: [["press", "main"], ["@hp", "main"], ["squat", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["calf", "acc"], ["@core", "core"]] },
-         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, side & rear shoulders, triceps, forearms", items: [["incline", "main"], ["@vp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@tri", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
-    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, side shoulders, triceps, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "pri"], ["@tri", "acc"], ["calf", "acc"], ["@core", "core"]] },
-         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hinge, side & rear shoulders, biceps", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
-         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, legs, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "sec"], ["legpress", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
+    2: [ { ab: "FB A", id: "a", name: "Full Body A", focus: "Chest, back, legs, side & rear shoulders, biceps, calves", items: [["press", "main"], ["@hp", "main"], ["squat", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "FB B", id: "b", name: "Full Body B", focus: "Upper chest, lats, hinge, side shoulders, triceps, forearms, thighs", items: [["incline", "main"], ["@vp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@tri", "pri"], ["@fore", "acc"], ["@legacc", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, side shoulders, triceps, hamstrings, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "pri"], ["@tri", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hinge, side & rear shoulders, biceps, quads", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["legext", "acc"], ["@fore", "acc"]] },
+         { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, split squat, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "sec"], ["split", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
     4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Press & row, shoulder press, side & rear shoulders, biceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
          { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, side shoulders", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
-         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "acc"], ["@bi", "acc"]] },
-         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
+         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"]] },
+         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   }
 };
 
@@ -2367,7 +2395,7 @@ function viewPlan() {
       <div class="vbar" style="grid-template-columns:96px 1fr 60px"><span>This week</span><div class="tr"><i style="width:${cpct}%"></i><u style="left:50%"></u></div><b style="text-align:right">~${cm} min</b></div>
       <div class="small muted">Moderate-equivalent minutes (1 minute of HIIT counts as 2). The line marks 150.${cm < 150 ? " Add a brisk walk on busy days to reach it." : ""}</div>
       <a class="small" href="${SOURCES.who.u}" target="_blank" rel="noopener">Source: ${esc(SOURCES.who.t)}</a></div>
-    <div class="card"><h3>Weekly sets per muscle</h3><p class="small muted" style="margin-top:-4px">Every muscle group gets direct work each week. ACSM's 2026 position stand suggests about 10 sets per muscle group per week for growth; the line marks 10. Small muscles like forearms and calves also work during the bigger lifts.</p>
+    <div class="card"><h3>Weekly sets per muscle</h3><p class="small muted" style="margin-top:-4px">Every muscle group gets direct work each week. ACSM's 2026 position stand suggests about 10 sets per muscle group per week for growth; the line marks 10. Small muscles like forearms and calves also work during the bigger lifts.${pr.days === 2 ? " With 2 training days, a few smaller areas (leg curl / leg extension, standing / seated calves) take turns week by week. Train 3–4 days to hit every area every week." : ""}</p>
       ${ws.every(([, n]) => n > 0) ? `<div class="small" style="color:var(--a);font-weight:600;margin-bottom:6px">✓ All ${ws.length} muscle groups trained this week</div>` : `<div class="small" style="color:#ff9a9a;font-weight:600;margin-bottom:6px">Not trained this week: ${ws.filter(([, n]) => !n).map(([g]) => g).join(", ")}. Add a training day to cover them.</div>`}
       ${ws.map(([g, n]) => `<div class="vbar"><span>${g}</span><div class="tr"><i style="width:${Math.min(100, n / mx * 100)}%"></i><u style="left:${10 / mx * 100}%"></u></div><b style="text-align:right${n ? "" : ";color:#ff9a9a"}">${n}</b></div>`).join("")}
       <a class="small" href="${SOURCES.acsm.u}" target="_blank" rel="noopener">Source: ${esc(SOURCES.acsm.t)}</a></div>
