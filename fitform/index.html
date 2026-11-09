@@ -954,6 +954,30 @@ const ANIM = (() => {
   A["seated-db-calf"] = { frames: scF, props: [...scBits, { t: "db", at: "kN", off: [0, -9] }] };
   A["seated-backpack-calf"] = { frames: scF, props: [...scBits, { t: "bag", at: "kN", off: [0, -24] }] };
 
+  /* inner thighs (adductors) */
+  A["adduction-machine"] = { v: "front", frames: [A["abductor-machine"].frames[1], A["abductor-machine"].frames[0]],
+    props: [...A["abductor-machine"].props.filter(p => p.t !== "roller"), { t: "roller", at: "kL", off: [8, 0], r: 6 }, { t: "roller", at: "kR", off: [-8, 0], r: 6 }] };
+  A["db-sumo-squat"] = { v: "front", frames: [
+      { hipY: 122, l: [22, -6], a: [4, -30], tlf: 1 },
+      { hipY: 150, l: [54, -20], a: [4, -30], tlf: 0.62 }],
+    props: [{ t: "db", at: "wL", off: [8, 9], v: true }] };
+  A["copenhagen-plank"] = { frames: [
+      { hip: [102, 194], tr: -66, hN: [80, 201], hF: [102, 186], lN: [104, 92], lF: [96, 92], tN: 0, tF: 0 },
+      { hip: [104, 182], tr: -78, hN: [80, 201], hF: [104, 174], lN: [87, 92], lF: [92, 96], tN: 0, tF: 0 }],
+    props: [{ t: "box", x: 132, y: 189, w: 74 }] };
+  /* impact for bone + power: small jumps */
+  A["pogo-hops"] = { loop: true, dur: 210, frames: [
+      { hip: [120, 118], tr: 0, aN: [8, 14], aF: [-8, 6], fN: [124, 196], tN: 40 },
+      { hip: [120, 108], tr: 0, aN: [12, 20], aF: [-4, 10], fN: [124, 186], tN: 55 }], props: [] };
+  A["jump-squat"] = { loop: true, dur: 430, frames: [
+      { hip: [102, 158], tr: 30, hd: -16, aN: [-38, -28], fN: [124, 200], tN: 0 },
+      { hip: [121, 110], tr: 0, hd: -4, aN: [150, 160], fN: [122, 188], tN: 60 }], props: [] };
+  A["box-jump"] = { frames: [
+      { hip: [98, 156], tr: 34, hd: -16, aN: [-40, -30], fN: [118, 200], fF: [118, 200], tN: 0, tF: 0 },
+      { hip: [128, 96], tr: 14, hd: -6, aN: [120, 140], fN: [140, 146], fF: [144, 146], tN: 30, tF: 30 },
+      { hip: [150, 104], tr: 22, hd: -10, aN: [40, 64], fN: [170, 158], fF: [174, 158], tN: 0, tF: 0 }],
+    props: [{ t: "box", x: 150, y: 162, w: 56 }] };
+
   return A;
 })();
 
@@ -1326,6 +1350,46 @@ const EX = {
     steps: ["Sit on a chair with the balls of your feet on a thick book or step.", "Rest a loaded backpack on your knees and hold it there.", "Drop your heels, then push up onto your toes as high as you can.", "Lower slowly."],
     tips: ["Do one leg at a time if it's too easy", "Do 15–25 reps"], avoid: ["Rushing", "Short half reps"],
     yt: "seated calf raise at home" },
+  "adduction-machine": { name: "Hip Adduction Machine", type: "gym", equip: "Hip adduction (inner thigh) machine", kind: "isolation",
+    P: ["adductors"], S: ["glutes"],
+    brief: "Squeezing your legs together against the pads trains the inner-thigh muscles. Strong adductors help keep your knees stable in squats and protect against groin strains.",
+    steps: ["Sit with your back against the pad and the leg pads on the inside of your knees, legs apart.", "Hold the handles and sit tall.", "Squeeze your legs together until the pads nearly touch.", "Let them open slowly to a comfortable stretch."],
+    tips: ["Control the opening; that's where most of the work is", "Pause 1 second with legs together"], avoid: ["Letting the weight slam open", "Starting with a stretch that's too wide"],
+    yt: "hip adduction machine form" },
+  "db-sumo-squat": { name: "Dumbbell Sumo Squat", type: "db", equip: "One dumbbell", kind: "compound",
+    P: ["adductors", "glutes", "quads"], S: [],
+    brief: "A squat with a wide stance and toes turned out, holding one dumbbell between your legs. The wide stance works the inner thighs much more than a normal squat.",
+    steps: ["Stand with your feet wide, toes turned out about 45°, holding a dumbbell by one end between your legs.", "Keep your chest up.", "Sit straight down, pushing your knees out over your toes.", "Drive up through your heels and squeeze your glutes at the top."],
+    tips: ["Knees track over the toes", "Go as deep as your hips allow with a flat back"], avoid: ["Knees caving in", "Leaning forward"],
+    yt: "dumbbell sumo squat form" },
+  "copenhagen-plank": { name: "Copenhagen Plank", type: "bw", equip: "A bench, sofa or sturdy chair", kind: "isolation",
+    P: ["adductors"], S: ["obliques", "abs"],
+    brief: "A side plank with your top leg resting on a bench, so your inner thigh holds you up. It's one of the best-researched exercises for strong, injury-resistant adductors.",
+    steps: ["Lie on your side next to a bench, propped on your forearm, with your top knee resting on the bench.", "Lift your hips until your body is straight from head to knee.", "Bring your bottom leg up to meet the bench if you can, or let it hang.", "Hold, then lower slowly. Switch sides."],
+    tips: ["Start with the knee on the bench (easier)", "Progress to the foot on the bench (harder)"], avoid: ["Hips sagging", "Holding your breath"],
+    safety: "Stop if you feel sharp pain in the groin or knee.",
+    yt: "copenhagen plank short lever" },
+  "pogo-hops": { name: "Pogo Hops", type: "bw", equip: "None. A firm floor and trainers", kind: "compound",
+    P: ["calves"], S: ["quads", "glutes"],
+    brief: "Quick, small hops on the balls of your feet. Short bursts of impact like this help build and keep bone density in the hips and legs, alongside lifting.",
+    steps: ["Stand tall, feet hip-width, on a firm surface in trainers.", "Hop quickly and lightly on the balls of your feet, knees almost straight.", "Stay springy: spend as little time on the ground as possible.", "Rest, then repeat for the sets shown."],
+    tips: ["Small, quick hops", "Land softly and quietly"], avoid: ["Landing on your heels", "Big tiring jumps"],
+    safety: "Skip jumping if you're pregnant or recently gave birth, if you leak urine when jumping, or if it hurts your joints. Do calf raises instead.",
+    yt: "pogo hops how to" },
+  "jump-squat": { name: "Jump Squat", type: "bw", equip: "None", kind: "compound",
+    P: ["quads", "glutes"], S: ["calves"],
+    brief: "A quarter squat followed by a jump straight up. It builds leg power, and the landing gives your bones a healthy impact load.",
+    steps: ["Stand with feet shoulder-width.", "Dip into a quarter squat and swing your arms back.", "Jump straight up, swinging your arms up.", "Land softly on the balls of your feet and sink into the next dip."],
+    tips: ["Quality over quantity: stop when jumps get lower", "Land quietly with knees over toes"], avoid: ["Knees caving in on landing", "Stiff-legged landings"],
+    safety: "Skip jumping if you're pregnant or recently gave birth, if you leak urine when jumping, or if it hurts your joints. Do calf raises instead.",
+    yt: "jump squat proper landing" },
+  "box-jump": { name: "Low Box Jump", type: "gym", equip: "Low plyo box or step (20–40 cm)", kind: "compound",
+    P: ["quads", "glutes"], S: ["calves", "hams"],
+    brief: "Jumping onto a low box and stepping back down. It trains power and loads the bones, and the box keeps the landing gentle.",
+    steps: ["Stand facing a low, stable box about a foot away.", "Swing your arms and jump up, landing softly with both feet on the box.", "Stand up tall on the box.", "Step down, one foot at a time. Don't jump down."],
+    tips: ["Start low; height isn't the goal", "Land in a quarter squat, quietly"], avoid: ["Jumping down backwards", "Boxes that can slide"],
+    safety: "Skip jumping if you're pregnant or recently gave birth, if you leak urine when jumping, or if it hurts your joints. Do calf raises instead.",
+    yt: "box jump for beginners low box" },
   "sl-balance": { name: "Single-Leg Balance", type: "bw", equip: "None (near a wall for safety)", kind: "isolation", uni: true,
     P: ["glute_med"], S: ["calves", "abs"],
     brief: "Standing on one leg trains balance. WHO guidelines recommend balance work for adults 65+ on 3 or more days a week.",
@@ -1862,6 +1926,8 @@ const SLOTS = {
   legpress: { label: "Leg press / step-up", cat: "Legs",   gym: "leg-press",           db: "db-stepup", home: "reverse-lunge" },
   hinge:    { label: "Hip hinge",        cat: "Glutes",    gym: "bb-rdl",              db: "db-rdl", home: "sl-rdl" },
   split:    { label: "Split squat",      cat: "Glutes",    gym: "smith-split",         db: "db-bulgarian", home: "bw-split" },
+  adduct:   { label: "Inner thighs",     cat: "Legs",      gym: "adduction-machine",   db: "db-sumo-squat", home: "copenhagen-plank" },
+  jump:     { label: "Jumps (bone & power)", cat: "Legs",  gym: "box-jump",            db: "jump-squat", home: "pogo-hops" },
   abduct:   { label: "Hip abduction",    cat: "Glutes",    gym: "abductor-machine",    db: "band-abduction", home: "standing-abduction" },
   kickback: { label: "Glute isolation",  cat: "Glutes",    gym: "cable-kickback",      db: "sl-bridge", home: "donkey-kick" },
   backext:  { label: "Back extension",   cat: "Glutes",    gym: "back-extension",      db: "db-good-morning", home: "superman" },
@@ -1918,8 +1984,10 @@ const SLOTS_60 = { squat: { gym: "leg-press", db: "box-squat", home: "box-squat"
 const POOLS = {
   bi:   ["inclinecurl", "preacher", "biceps", "hammer"],   // long head + short head one week, both heads + brachialis the next
   tri:  ["triohp", "triceps", "skull", "closepress"],     // overhead/lying (long head) alternates with pushdown/close-grip
-  calf: ["calf", "calf2"],                               // standing (gastrocnemius) / seated (soleus)
-  legacc: ["legcurl", "legext"],                         // 2-day plans: knee-bending hamstrings / rectus femoris on alternate weeks
+  calf: ["calf", "calf2"],
+  jump: ["jump"],                               // standing (gastrocnemius) / seated (soleus)
+  legacc: ["legcurl", "legext"],
+  hip:  ["abduct", "adduct"],                           // 2-day glute plan: outer / inner thighs on alternate weeks                         // 2-day plans: knee-bending hamstrings / rectus femoris on alternate weeks
   fore: ["wristcurl", "grip", "revcurl", "revwrist"],
   vp:   ["pulldown", "straightarm"],
   hp:   ["row", "bentrow"],
@@ -1936,14 +2004,14 @@ const POOLS = {
 const TEMPLATES = {
   glutes: {
     title: "Glutes & Back",
-    2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Glutes, quads, back, chest, shoulders, biceps, core", items: [["thrust", "main"], ["legpress", "sec"], ["@vp", "sec"], ["@chest", "acc"], ["abduct", "acc"], ["@shx", "acc"], ["@bi", "acc"], ["@core", "core"]] },
-         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Hamstrings, glutes, thighs, back, triceps, calves, forearms", items: [["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["@legacc", "acc"], ["@tri", "acc"], ["@calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
-    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, calves, core", items: [["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+    2: [ { ab: "G+B", id: "a", name: "Glutes & Back", focus: "Jumps, glutes, quads, back, chest, shoulders, inner/outer thighs", items: [["@jump", "pow"], ["thrust", "main"], ["legpress", "sec"], ["@vp", "sec"], ["@chest", "acc"], ["@hip", "acc"], ["@shs", "acc"], ["@bi", "acc"], ["@core", "core"]] },
+         { ab: "Hams", id: "b", name: "Hamstrings & Upper Body", focus: "Jumps, hamstrings, glutes, thighs, back, triceps, calves", items: [["@jump", "pow"], ["hinge", "main"], ["split", "sec"], ["@hp", "sec"], ["@legacc", "acc"], ["@tri", "acc"], ["@calf", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    3: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Jumps, glutes, hamstrings, side glutes, calves, core", items: [["@jump", "pow"], ["thrust", "main"], ["hinge", "sec"], ["split", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["@calf", "acc"], ["@core", "core"]] },
          { ab: "Back", id: "u1", name: "Back, Shoulders & Arms", focus: "Back, chest, shoulders, biceps, triceps", items: [["@vp", "main"], ["@chest", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
-         { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Quads, glutes, back, lower back, forearms, core", items: [["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["kickback", "acc"], ["legext", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
-    4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Glutes, hamstrings, side glutes, traps, core", items: [["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["shrug", "acc"], ["@core", "core"]] },
+         { ab: "G+Q", id: "g2", name: "Glutes, Quads & Back", focus: "Jumps, quads, glutes, inner thighs, back, forearms", items: [["@jump", "pow"], ["squat", "main"], ["thrust", "sec"], ["@hp", "sec"], ["adduct", "acc"], ["legext", "acc"], ["backext", "acc"], ["@fore", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "G+H", id: "g1", name: "Glutes & Hamstrings", focus: "Jumps, glutes, hamstrings, side glutes, traps", items: [["@jump", "pow"], ["thrust", "main"], ["hinge", "sec"], ["legcurl", "acc"], ["abduct", "acc"], ["backext", "acc"], ["shrug", "acc"], ["@core", "core"]] },
          { ab: "Back", id: "u1", name: "Back & Shoulders", focus: "Back width and thickness, shoulders, biceps", items: [["@vp", "main"], ["@hp", "sec"], ["@shp", "sec"], ["@shs", "acc"], ["@rd", "acc"], ["@bi", "acc"], ["@core", "core"]] },
-         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Squat, split squat, glute finishers, calves", items: [["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "G+Q", id: "g2", name: "Glutes & Quads", focus: "Jumps, squat, split squat, glute finisher, inner thighs, calves", items: [["@jump", "pow"], ["squat", "main"], ["split", "sec"], ["kickback", "acc"], ["legext", "acc"], ["adduct", "acc"], ["@calf", "acc"], ["@core", "core"]] },
          { ab: "Arms", id: "u2", name: "Upper Body & Arms", focus: "Back, chest, shoulders, biceps, triceps, forearms", items: [["@hp", "main"], ["@chest", "sec"], ["@shs", "acc"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
   upper: {
@@ -1967,7 +2035,7 @@ const GOALS = {
   strength: { name: "Get stronger", short: "Strength", icon: "🏋️", main: [4, "4–6", 180], sec: [3, "6–8", 120], acc: [3, "8–12", 75], core: [3, "8–12", 60], cardio: { min: "10 min easy", opt: true } },
   health:   { name: "Fitness & health", short: "Health", icon: "❤️", main: [3, "8–12", 90], sec: [2, "10–12", 75], acc: [2, "12–15", 60], core: [2, "10–15", 45], cardio: { min: "15 min", opt: false } }
 };
-const TIMED = { "side-plank": "20–40 s", "sl-balance": "20–30 s", "wall-sit": "30–60 s", "suitcase-carry": "30–40 s", "plank": "30–45 s",
+const TIMED = { "pogo-hops": "15–20 hops", "jump-squat": "5–8 jumps", "box-jump": "5 jumps", "copenhagen-plank": "15–30 s / side", "side-plank": "20–40 s", "sl-balance": "20–30 s", "wall-sit": "30–60 s", "suitcase-carry": "30–40 s", "plank": "30–45 s",
   "dead-hang": "20–40 s", "farmer-carry": "30–40 s", "jug-carry": "30–40 s" };
 
 /* ---------- sources ---------- */
@@ -2019,6 +2087,7 @@ function keyOf(pr, slot, id) { const sd = slot && slotDef(pr, slot); const k = s
 const tagFor = k => `<span class="tag ${k}">${KEYNAME[k] || "Cardio"}</span>`;
 function lowRep(r) { const m = /^(\d+)/.exec(r); return m ? +m[1] : 99; }
 function dose(pr, role, exId) {
+  if (role === "pow") return { sets: pr.goal === "health" || pr.exp === "new" ? 2 : 3, reps: TIMED[exId] || "5–8", rest: 60 };   // short jump sets
   if (role === "main" && EX[exId].kind === "isolation") role = "sec";   // isolation moves never get heavy main-lift dosing
   const pri = role === "pri"; if (pri) role = "acc";                       // "pri" = priority accessory: one extra set
   const g = GOALS[pr.goal][role]; let [sets, reps, rest] = g;
@@ -2043,6 +2112,7 @@ function buildPlan(pr, wn = weekNo()) {
     const used = new Set(), usedSlots = new Set(), items = [];
     items.push({ slot: "warmup", role: "warm", ex: "warmup", alt: null, sets: 1, reps: pr.age >= 40 ? "8–10 min" : "5–8 min", rest: 0 });
     s.items.forEach(([k, role]) => {
+      if (k === "@jump" && pr.age >= 60) return;
       let slot = resolve(k), subFrom = null;
       const sub = pr.subs && pr.subs[slot];   // "swap for a similar exercise"
       if (sub && SLOTS[sub] && !usedSlots.has(sub) && !s.items.some(([k2]) => k2 === sub)) { subFrom = slot; slot = sub; }
@@ -2186,7 +2256,7 @@ function prog(pr, dow, s) {
 }
 
 /* ---------- "feeling good?" extra exercises: up to 2 per session, logged as sid:x0 / sid:x1 ---------- */
-const XSKIP = new Set(["warmup", "cooldown", "balance", "cardio", "cardio2", "squat", "hinge", "thrust", "legpress", "split", "press", "incline", "ohp", "bentrow", "closepress", "arnold"]);
+const XSKIP = new Set(["jump", "warmup", "cooldown", "balance", "cardio", "cardio2", "squat", "hinge", "thrust", "legpress", "split", "press", "incline", "ohp", "bentrow", "closepress", "arnold"]);
 const STRETCHES = {
   Glutes: "Figure-4: lie on your back, cross one ankle over the other knee and pull both legs toward you.",
   Quads: "Standing quad stretch: hold one ankle behind you, knees together, hips pushed slightly forward.",
@@ -2303,7 +2373,7 @@ function bodySVG(Pm, Sm) {
 }
 
 /* ---------- swap for a similar exercise ---------- */
-const SUBSKIP = new Set(["warmup", "cooldown", "balance", "cardio", "cardio2"]);
+const SUBSKIP = new Set(["jump", "warmup", "cooldown", "balance", "cardio", "cardio2"]);
 function similarSlots(pr, slot) {
   const sd0 = slotDef(pr, slot); if (!sd0 || SUBSKIP.has(slot)) return [];
   const ex0 = EX[sd0[pickOrder(pr, slot)[0]]], P0 = new Set(ex0.P), cat0 = SLOTS[slot].cat;
@@ -2547,7 +2617,8 @@ function viewMe() {
     cards.push(card("Why glutes & back", "Hip thrusts, step-ups, split squats and deadlift-style hinges are among the highest glute-activation exercises in research reviews. Back work (pulldowns, rows) builds posture and a defined upper-body shape.", ["glute", "thrust"]));
     cards.push(card("Will lifting make me bulky?", "No. Women and men gain muscle at similar rates relative to where they start, but muscle builds slowly for everyone. You shape your body gradually with training and food. It doesn't happen by accident.", ["sex"]));
     cards.push(card("Training and your cycle", "An umbrella review found no clear evidence that menstrual-cycle phase meaningfully changes strength or training results. Train by feel: on low-energy days use lighter weights and keep the habit.", ["cycle"]));
-    cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting improved bone density in postmenopausal women with low bone mass.", ["bone"]));
+    cards.push(card("Toned arms & inner thighs", "You can't burn fat from one spot by training it. What you can do is build the muscle underneath (triceps, shoulders, inner and outer thighs, glutes) while overall fat loss reveals it. " + (pr.focus === "glutes" ? (pr.days === 2 ? "Your plan trains all of these, with inner and outer thighs on alternate weeks." : "Your plan trains all of these every week.") : "The Glutes & Back focus trains all of these every week; switch focus in your profile if that's your goal.") + "", ["spot"]));
+    cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting combined with jumping-and-landing exercises improved bone density in postmenopausal women with low bone mass. " + (pr.focus === "glutes" ? "That's why your lower-body days start with a few short sets of small jumps. Skip them" : "The Glutes & Back focus adds a few short sets of small jumps to each lower-body day. Skip jumps") + " (do calf raises instead) if you're pregnant, recently gave birth, leak urine when jumping, or they hurt your joints. They're left out automatically at 60+.", ["bone"]));
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
     cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
