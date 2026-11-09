@@ -66,6 +66,8 @@ details.pickw{margin-top:12px} details.pickw summary{cursor:pointer;color:var(--
 .list{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px}
 .row.complete{border-color:#1e5a3a;background:#111a15}
+.hg{display:grid;grid-template-columns:50px repeat(7,1fr) 36px;gap:4px;align-items:center;font-size:11px;color:var(--mut)}.hg i{height:18px;border-radius:5px;background:#252931}.hg i.s{background:var(--a)}.hg i.c{background:#2f6f8f}.hg i.t{box-shadow:0 0 0 2px #ffffff55}.hg i.f{opacity:.35}.hg b{text-align:right;color:var(--tx)}.hg .h{text-align:center}
+.lift{display:grid;grid-template-columns:1fr 92px 66px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.lift:first-of-type{border-top:0}.lift .up{color:var(--a);font-weight:600}.lift .dn{color:#ff9a9a;font-weight:600}
 .xrow{display:flex;gap:8px;align-items:center}.xrow .row{flex:1;min-width:0}.xrow .btn{flex:none}
 .xadd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .fig{width:78px;height:72px;flex:none;border-radius:10px;background:#121418;overflow:hidden}
@@ -2038,13 +2040,17 @@ function poolPicker(tpl, wn) {
 function buildPlan(pr, wn = weekNo()) {
   const T = TEMPLATES[pr.focus], tpl = T[pr.days], resolve = poolPicker(tpl, wn);
   const sessions = tpl.map(s => {
-    const used = new Set(), items = [];
+    const used = new Set(), usedSlots = new Set(), items = [];
     items.push({ slot: "warmup", role: "warm", ex: "warmup", alt: null, sets: 1, reps: pr.age >= 40 ? "8–10 min" : "5–8 min", rest: 0 });
     s.items.forEach(([k, role]) => {
-      const slot = resolve(k), sd = slotDef(pr, slot), order = pickOrder(pr, slot);
+      let slot = resolve(k), subFrom = null;
+      const sub = pr.subs && pr.subs[slot];   // "swap for a similar exercise"
+      if (sub && SLOTS[sub] && !usedSlots.has(sub) && !s.items.some(([k2]) => k2 === sub)) { subFrom = slot; slot = sub; }
+      usedSlots.add(slot);
+      const sd = slotDef(pr, slot), order = pickOrder(pr, slot);
       const key = order.find(k => !used.has(sd[k])) || order[0], ex = sd[key];
       used.add(ex);
-      items.push(Object.assign({ slot, role, ex, key, alt: true }, dose(pr, role, ex)));
+      items.push(Object.assign({ slot, role, ex, key, alt: true, subFrom }, dose(pr, role, ex)));
     });
     if (pr.age >= 60) items.push({ slot: "balance", role: "core", ex: "sl-balance", alt: null, sets: 2, reps: "20–30 s / side", rest: 30 });
     const c = GOALS[pr.goal].cardio, ck = pickOrder(pr, "cardio", pr.equip === "gym" ? "gym" : "db")[0], cex = slotDef(pr, "cardio")[ck];
@@ -2296,6 +2302,114 @@ function bodySVG(Pm, Sm) {
   return `<svg viewBox="0 0 250 246" role="img" aria-label="Muscles worked"><g>${front}</g><g transform="translate(130 0)">${back}</g><text class="figlbl" x="60" y="242" text-anchor="middle">FRONT</text><text class="figlbl" x="190" y="242" text-anchor="middle">BACK</text></svg>`;
 }
 
+/* ---------- swap for a similar exercise ---------- */
+const SUBSKIP = new Set(["warmup", "cooldown", "balance", "cardio", "cardio2"]);
+function similarSlots(pr, slot) {
+  const sd0 = slotDef(pr, slot); if (!sd0 || SUBSKIP.has(slot)) return [];
+  const ex0 = EX[sd0[pickOrder(pr, slot)[0]]], P0 = new Set(ex0.P), cat0 = SLOTS[slot].cat;
+  const pooled = k => Object.values(POOLS).some(pl => pl.includes(k) && pl.includes(slot));
+  return Object.keys(SLOTS).filter(k => k !== slot && !SUBSKIP.has(k)).map(k => {
+    const ex = slotDef(pr, k)[pickOrder(pr, k)[0]], e = EX[ex], ov = e.P.filter(m => P0.has(m)).length;
+    if (!e.P.includes(ex0.P[0])) return null;   // must train the same main muscle
+    return { slot: k, ex, score: ov * 2 + (e.P[0] === ex0.P[0] ? 2 : 0) + (pooled(k) ? 3 : 0) + (SLOTS[k].cat === cat0 ? 2 : 0) + (e.kind === ex0.kind ? 1 : 0) - e.P.filter(m => !P0.has(m)).length };
+  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 5);
+}
+
+/* ---------- progress (Profile tab) ---------- */
+const wkStart = ds => { const d = new Date(ds + "T12:00:00"); d.setDate(d.getDate() - d.getDay()); return d; };
+const wnOf = ds => Math.round(wkStart(ds).getTime() / 6048e5);
+const isWork = (sid, ex) => sid[0] !== "c" && ex !== "warmup" && !["cardio", "stretch"].includes(EX[ex].kind);
+/* every logged item with at least one ticked set; older logs (before exercises were stored) are matched to that week's plan */
+function history(pr) {
+  const out = [], cache = {};
+  Object.entries(pr.log || {}).forEach(([ds, L]) => Object.entries(L || {}).forEach(([k, e]) => {
+    if (!e || !(e.d || []).some(Boolean)) return;
+    const [sid, idx] = k.split(":"); let ex = e.x;
+    if (!ex) {
+      const wn = wnOf(ds), PL = cache[wn] = cache[wn] || buildPlan(pr, wn), s = [...PL.sessions, ...(PL.cardioSessions || [])].find(x => x.id === sid);
+      if (s && idx[0] === "x") { const slot = (((pr.extra || {})[ds] || {})[sid] || [])[+idx.slice(1)], sd = slot && slotDef(pr, slot); ex = sd && sd[pickOrder(pr, slot)[0]]; }
+      else if (s) ex = (s.items[+idx] || {}).ex;
+    }
+    if (ex && EX[ex]) out.push({ ds, sid, idx, ex, d: e.d, w: e.w || [] });
+  }));
+  return out.sort((a, b) => a.ds < b.ds ? -1 : a.ds > b.ds ? 1 : 0);
+}
+function spark(pts, w = 92, h = 26) {
+  if (pts.length < 2) return `<svg width="${w}" height="${h}"></svg>`;
+  const lo = Math.min(...pts), hi = Math.max(...pts), r = hi - lo || 1;
+  const xy = pts.map((v, i) => [2 + i * (w - 4) / (pts.length - 1), h - 3 - (v - lo) / r * (h - 6)]);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--a)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="2.6" fill="var(--a)"/></svg>`;
+}
+const fmtN = v => (Math.round(v * 10) / 10).toString();
+const shortDate = ds => { const d = new Date(ds + "T12:00:00"); return d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
+function progressHTML(pr) {
+  const H = history(pr), cur = weekNo(), target = dayList(pr).length;
+  const wk = {}, days = {}; let totalSets = 0;
+  H.forEach(h => {
+    if (isWork(h.sid, h.ex)) { totalSets += h.d.filter(Boolean).length; (wk[wnOf(h.ds)] = wk[wnOf(h.ds)] || new Set()).add(h.ds + "|" + h.sid); days[h.ds] = "s"; }
+    else if (!days[h.ds]) days[h.ds] = "c";
+  });
+  const cnt = w => (wk[w] || new Set()).size, total = Object.values(wk).reduce((a, x) => a + x.size, 0);
+  let streak = cnt(cur) >= target ? 1 : 0; for (let w = cur - 1; cnt(w) >= target; w--) streak++;
+  const tiles = `<div class="targets">
+      <div class="tgt"><b>${cnt(cur)} / ${target}</b><span>workouts this week</span></div>
+      <div class="tgt"><b>${streak ? "🔥 " + streak : "0"}</b><span>${streak === 1 ? "week" : "weeks"} in a row on plan</span></div>
+      <div class="tgt"><b>${total}</b><span>workouts logged</span></div>
+      <div class="tgt"><b>${totalSets}</b><span>sets completed</span></div></div>`;
+  // last 8 weeks calendar
+  const today = ymd(new Date()), sun = dateForDow(0), rows = [];
+  for (let k = 7; k >= 0; k--) {
+    const ws = new Date(sun); ws.setDate(sun.getDate() - 7 * k);
+    const cells = Array.from({ length: 7 }, (_, d) => { const dd = new Date(ws); dd.setDate(ws.getDate() + d); const ds = ymd(dd); return `<i class="${days[ds] || ""}${ds === today ? " t" : ""}${ds > today ? " f" : ""}"></i>`; }).join("");
+    const n = cnt(cur - k);
+    rows.push(`<span>${shortDate(ymd(ws))}</span>${cells}<b style="color:${n >= target ? "var(--a)" : "var(--tx)"}">${n}/${target}</b>`);
+  }
+  const cal = `<div class="card"><h3>Last 8 weeks</h3><div class="hg"><span></span>${DAY.map(d => `<span class="h">${d[0]}</span>`).join("")}<span></span>${rows.join("")}</div>
+      <div class="small muted" style="margin-top:8px"><i class="dot" style="background:var(--a)"></i>Strength &nbsp; <i class="dot" style="background:#2f6f8f"></i>Cardio only &nbsp; · right column: workouts / planned</div></div>`;
+  // strength progress: best set per session for each exercise
+  const lifts = {};
+  H.forEach(h => { if (!isWork(h.sid, h.ex) || TIMED[h.ex]) return;
+    const vals = h.w.map((v, i) => h.d[i] ? parseFloat(v) : NaN).filter(v => v > 0); if (!vals.length) return;
+    const L = lifts[h.ex] = lifts[h.ex] || {}; L[h.ds] = Math.max(L[h.ds] || 0, ...vals); });
+  const lrows = Object.entries(lifts).map(([ex, by]) => { const ds = Object.keys(by).sort(); return { ex, pts: ds.map(d => by[d]), last: ds[ds.length - 1] }; })
+    .sort((a, b) => b.pts.length - a.pts.length || (a.last < b.last ? 1 : -1)).slice(0, 8);
+  const strength = `<div class="card"><h3>Strength</h3>${lrows.length ? `<p class="small muted" style="margin-top:-4px">Best set each session${lrows.length > 1 ? ", your most-logged exercises first" : ""}.</p>` + lrows.map(r => {
+      const u = EX[r.ex].type === "bw" ? "reps" : "kg", d = r.pts[r.pts.length - 1] - r.pts[0];
+      return `<div class="lift"><div><div class="rname">${esc(EX[r.ex].name)}</div><div class="small muted">${fmtN(r.pts[r.pts.length - 1])} ${u} · ${r.pts.length} session${r.pts.length > 1 ? "s" : ""}</div></div>${spark(r.pts)}<div class="small" style="text-align:right">${r.pts.length < 2 ? "" : d > 0 ? `<span class="up">+${fmtN(d)} ${u}</span>` : d < 0 ? `<span class="dn">${fmtN(d)} ${u}</span>` : "same"}</div></div>`; }).join("")
+    : `<p class="small muted" style="margin:0">Enter the weight (or reps) for your sets on the Today tab and tick them. Your progress on each exercise shows up here.</p>`}</div>`;
+  // body weight
+  const bw = (pr.bw || []).slice(-30);
+  let chart = "";
+  if (bw.length >= 2) {
+    const W = 300, Hh = 96, ks = bw.map(b => b.kg), lo = Math.min(...ks) - 0.5, hi = Math.max(...ks) + 0.5, t0 = new Date(bw[0].d).getTime(), t1 = new Date(bw[bw.length - 1].d).getTime() || t0 + 1;
+    const pts = bw.map(b => [10 + (new Date(b.d).getTime() - t0) / ((t1 - t0) || 1) * (W - 20), 8 + (hi - b.kg) / (hi - lo) * (Hh - 16)]);
+    chart = `<svg viewBox="0 0 ${W} ${Hh}" style="width:100%;height:auto;display:block;margin:6px 0"><polyline points="${pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ")}" fill="none" stroke="var(--a)" stroke-width="2.2" stroke-linejoin="round"/>${pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="var(--a)"/>`).join("")}</svg>
+      <div class="small muted" style="display:flex;justify-content:space-between"><span>${shortDate(bw[0].d)} · ${fmtN(bw[0].kg)} kg</span><span>${shortDate(bw[bw.length - 1].d)} · ${fmtN(bw[bw.length - 1].kg)} kg</span></div>`;
+  }
+  const dW = bw.length >= 2 ? bw[bw.length - 1].kg - bw[0].kg : 0;
+  const body = `<div class="card"><h3>Body weight</h3>
+      ${bw.length >= 2 ? `<div style="font:700 22px var(--head)">${dW > 0 ? "+" : ""}${fmtN(dW)} kg</div><div class="small muted">since ${shortDate(bw[0].d)}</div>${chart}`
+        : `<p class="small muted" style="margin-top:-4px">Weigh yourself once a week, same day and time (for example Friday morning, before breakfast), to see your trend.${bw.length === 1 ? ` First entry: ${fmtN(bw[0].kg)} kg on ${shortDate(bw[0].d)}.` : ""}</p>`}
+      <div style="display:flex;gap:8px;margin-top:10px"><input id="bwIn" type="text" inputmode="decimal" placeholder="${esc(String(pr.weight || "kg"))}" aria-label="Today's body weight in kg" style="flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);padding:0 12px;font:600 16px inherit"><button class="btn a" data-act="bwSave">Save today's weight</button></div></div>`;
+  // this week by muscle: sets done vs planned
+  const done = {}; H.forEach(h => { if (wnOf(h.ds) !== cur || !isWork(h.sid, h.ex)) return; const n = h.d.filter(Boolean).length; new Set(EX[h.ex].P.map(m => VGROUP[m]).filter(Boolean)).forEach(g => done[g] = (done[g] || 0) + n); });
+  const planned = Object.fromEntries(weeklySets(pr));
+  const musc = `<div class="card"><h3>This week by muscle</h3><p class="small muted" style="margin-top:-4px">Sets you've ticked so far, out of your plan.</p>
+      ${VORDER.map(g => { const pl = planned[g] || 0, dn = done[g] || 0; return `<div class="vbar" style="grid-template-columns:96px 1fr 46px"><span>${g}</span><div class="tr"><i style="width:${pl ? Math.min(100, dn / pl * 100) : 0}%"></i></div><b style="text-align:right">${dn}/${pl}</b></div>`; }).join("")}</div>`;
+  return `<h3 style="margin-top:20px">Your progress</h3>${tiles}${cal}${strength}${body}${musc}`;
+}
+
+/* ---------- contact ---------- */
+const CONTACT = "tamreen.apps@gmail.com";
+const mailto = (subj, body) => `mailto:${CONTACT}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+function contactHTML() {
+  return `<div class="card"><h3>Contact us</h3><p class="small muted" style="margin-top:-4px">Questions, ideas, or something not working? Tap a button to open your email app with a message to Tamreen Apps.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn a" href="${mailto("FitForm feedback", "Hi Tamreen Apps,\n\n")}">Send feedback</a>
+      <a class="btn" href="${mailto("FitForm problem report", "What happened:\n\nWhat I expected:\n\nSteps to make it happen again:\n\n---\nDevice and browser: " + navigator.userAgent)}">Report a problem</a></div>
+    <div class="small" style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Or write to <b>${CONTACT}</b><button class="btn sm" data-act="copyMail">Copy address</button></div>
+    <p class="small muted" style="margin:8px 0 0">The problem report adds your browser and phone model so we can find the bug. You can delete it before sending.</p></div>`;
+}
+
 /* ---------- views ---------- */
 let TAB = "today", VIEWDAY = todayDow(), CAT = "All", PLAN = null, WIPE = false, NOTE = "";
 const PRIVACY_URL = "privacy.html";
@@ -2327,7 +2441,7 @@ function viewToday() {
     const rows = disp.map(({ it, i }) => {
       const ex = EX[it.ex], e = peek(pr, VIEWDAY, s.id, i), dn = e.d.slice(0, it.sets).filter(Boolean).length, full = dn >= it.sets;
       const meta = isTimed(it) ? esc(it.reps) : `${it.sets} × ${esc(it.reps)} · rest ${fmtRest(it.rest)}`;
-      const k = itemLabel(it, s, i);
+      const k = itemLabel(it, s, i) + (it.subFrom ? " · swapped" : "");
       return `<button class="row${full ? " complete" : ""}" data-act="open" data-idx="${i}">${figHTML(it.ex)}
         <div class="rmain">${it.opt ? `<div class="opt">Optional finisher</div>` : `<div class="rnum">${k}</div>`}<div class="rname">${esc(ex.name)}</div><div class="rmeta">${meta}${pr.last[it.ex] && !isTimed(it) ? " · last " + esc(pr.last[it.ex]) + (EX[it.ex].type === "bw" ? " reps" : " kg") : ""}</div>${it.alt ? tagFor(it.key) : ""}</div>
         <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + it.sets}</div></button>`;
@@ -2452,6 +2566,8 @@ function viewMe() {
   return `<div class="card" style="display:flex;gap:14px;align-items:center;margin-top:16px"><div class="av ${pr.sex}" style="width:56px;height:56px;font-size:26px;border-radius:16px">${esc((pr.name || (pr.sex === "f" ? "F" : "M")).slice(0, 1).toUpperCase())}</div>
       <div style="flex:1"><div style="font:700 24px var(--head);text-transform:uppercase">${esc(pr.name || "My profile")}</div><div class="muted small">${pr.sex === "f" ? "Female" : "Male"} · ${pr.age} yrs · ${pr.weight} kg · ${pr.exp === "new" ? "New to lifting" : pr.exp === "some" ? "Some experience" : "Experienced"}</div></div>
       <button class="btn sm" data-act="edit">Edit</button></div>
+    ${progressHTML(pr)}
+    <h3 style="margin-top:20px">Settings</h3>
     <div class="card"><h3>Your program</h3>
       <div class="kv"><span class="muted">Goal</span><b>${g.icon} ${esc(g.name)}</b></div>
       <div class="kv"><span class="muted">Focus</span><b>${esc(TEMPLATES[pr.focus].title)}</b></div>
@@ -2469,6 +2585,7 @@ function viewMe() {
     <div class="card" style="border-color:#5b2626;background:#1f1111"><b>Health check</b><div class="small">If you have a heart or blood-pressure condition, a joint injury, any other medical condition, or you haven't exercised in a long time, check with your doctor first. Stop any exercise that causes sharp pain.</div></div>
     <div class="card"><h3>Sources</h3><ul class="srcs" style="padding-left:18px;margin:0">${Object.values(SOURCES).map(s => `<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
       <p class="small muted" style="margin-bottom:0">YouTube buttons open a YouTube search for that exercise from reputable coaches, so the link always works.</p></div>
+    ${contactHTML()}
     <div class="card"><h3>Privacy</h3><div class="small">FitForm has no accounts and collects no personal data. Your profile (name, sex, age, weight, goal), ticks and weights are stored only in this browser on this device. Nothing is sent to us or to anyone else. YouTube buttons open YouTube, which has its own privacy policy. Uninstalling the app or clearing this site's data erases everything.</div>
       ${PRIVACY_URL ? `<a class="small" href="${PRIVACY_URL}" target="_blank" rel="noopener" style="display:block;margin-top:8px">Read the full privacy policy</a>` : ""}
       <button class="btn danger sm" style="margin-top:10px" data-act="wipe">${WIPE ? "Tap again to erase all profiles and logs" : "Erase all my data on this device"}</button></div>
@@ -2515,6 +2632,13 @@ function renderSheet() {
         ${Array.from({ length: it.sets }, (_, k) => { const ph = e.w[k] || (k && e.w[k - 1]) || last || unit; return `<div class="set"><span class="lbl">Set ${k + 1}</span><input type="text" inputmode="decimal" data-act="w" data-i="${k}" value="${esc(e.w[k] || "")}" placeholder="${esc(ph)}" aria-label="Weight for set ${k + 1}"><button class="tick${e.d[k] ? " on" : ""}" data-act="tick" data-i="${k}" aria-label="Set ${k + 1} done">✓</button></div>`; }).join("")}</div>`;
     }
   }
+  const subCard = it && !it.extra && !NOWORK.includes(it.role) && it.slot !== "balance" && id === inPlan ? (() => {
+    const base = it.subFrom || it.slot, alts = similarSlots(pr, base).filter(c => c.slot !== it.slot), baseEx = slotDef(pr, base)[pickOrder(pr, base)[0]];
+    return `<div class="card"><h3>Swap for a similar exercise</h3>
+      <p class="small muted" style="margin-top:-4px">Don't like this one, or the equipment is busy? Pick another exercise for the same main muscles. It replaces ${esc(EX[baseEx].name)} everywhere in your plan.</p>
+      ${it.subFrom ? `<div class="xadd"><div class="rmain"><div class="small muted">Swapped from</div><div class="rname">${esc(EX[baseEx].name)}</div></div><button class="btn sm" data-act="unsub" data-slot="${base}">Undo</button></div>` : ""}
+      <div class="list" style="margin:8px 0 0">${alts.map(c => `<div class="xrow"><div class="row">${figHTML(c.ex)}<div class="rmain"><div class="rname">${esc(EX[c.ex].name)}</div><div class="rmeta">${EX[c.ex].P.map(m => MUSCLE_NAMES[m]).join(", ")}</div></div></div><button class="btn sm a" data-act="sub" data-from="${base}" data-slot="${c.slot}">Use</button></div>`).join("")}</div></div>`;
+  })() : "";
   const ml = arr => arr.map(m => `<div><i class="dot" style="background:${ex.P.includes(m) ? "var(--a)" : "var(--a2)"}"></i>${MUSCLE_NAMES[m]}</div>`).join("");
   $("#sheetIn").innerHTML = `
     <div class="sbar"><button class="iconbtn" data-act="close" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="t">${s ? esc(s.name) + " · " + (itemLabel(it, s, SH.ctx.idx) || "Finish") : "Exercise guide"}</div></div>
@@ -2528,6 +2652,7 @@ function renderSheet() {
       <a class="btn yt wide" style="margin-top:12px" href="${yt(ex.yt)}" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 20 14"><rect width="20" height="14" rx="4" fill="#FF0000"/><path d="M8 4l5 3-5 3z" fill="#fff"/></svg>Watch on YouTube</a></div>
     <div class="card"><h3>How to do it</h3><ol class="steps">${ex.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>
     <div class="two"><div class="card" style="margin:0"><h3>Tips</h3><ul class="cl good">${ex.tips.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div><div class="card" style="margin:0"><h3>Avoid</h3><ul class="cl bad">${ex.avoid.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
+    ${subCard}
     ${ex.P.length || ex.S.length ? `<div class="card"><h3>Muscles worked</h3><div class="muscles">${bodySVG(ex.P, ex.S)}<div class="mlist">${ex.P.length ? `<h4>Main</h4>${ml(ex.P)}` : ""}${ex.S.length ? `<h4>Also works</h4>${ml(ex.S)}` : ""}</div></div></div>` : ""}`;
   scanFigs();
 }
@@ -2639,6 +2764,21 @@ document.addEventListener("click", ev => {
     case "lib": openLib(el.dataset.ex, el.dataset.slot); break;
     case "close": closeSheet(); break;
     case "view": SH.view = el.dataset.ex; renderSheet(); break;
+    case "sub": case "unsub": {
+      pr.subs = pr.subs || {}; const from = el.dataset.from || el.dataset.slot;
+      if (el.dataset.act === "unsub" || el.dataset.slot === from) delete pr.subs[from]; else pr.subs[from] = el.dataset.slot;
+      if (SH.ctx) { const L = pr.log[logKey(SH.ctx.dow)], k = SH.ctx.sid + ":" + SH.ctx.idx; if (L && L[k] && !(L[k].d || []).some(Boolean)) delete L[k]; }
+      save(); PLAN = buildPlan(pr);
+      if (SH.ctx) { const it2 = itemAt(pr, SH.ctx.dow, sessById(SH.ctx.sid), SH.ctx.idx); if (it2) { SH.slot = it2.slot; SH.base = SH.view = it2.ex; } }
+      renderSheet(); $("#sheet").scrollTop = 0; break;
+    }
+    case "bwSave": {
+      const inp = $("#bwIn"), kg = parseFloat(((inp && inp.value) || "").replace(",", "."));
+      if (!(kg >= 25 && kg <= 300)) { if (inp) { inp.focus(); inp.placeholder = "Enter kg, e.g. 78.5"; } break; }
+      const d = ymd(new Date()); pr.bw = (pr.bw || []).filter(b => b.d !== d); pr.bw.push({ d, kg: Math.round(kg * 10) / 10 }); pr.bw.sort((a, b) => a.d < b.d ? -1 : 1);
+      pr.weight = Math.round(kg); save(); NOTE = `Saved ${fmtN(kg)} kg for today. Your protein targets now use this weight.`; render(); break;
+    }
+    case "copyMail": { try { navigator.clipboard.writeText(CONTACT).then(() => { el.textContent = "Copied"; }, () => {}); } catch (e) {} break; }
     case "swap": { pr.swaps = pr.swaps || {}; pr.swaps[SH.slot] = el.dataset.key; save(); PLAN = buildPlan(pr); SH.base = SH.view; renderSheet(); break; }
     case "equip": case "equipAll": {
       const had = Object.keys(pr.swaps || {}).length; pr.equip = el.dataset.v; pr.swaps = {}; save();
@@ -2660,7 +2800,7 @@ document.addEventListener("click", ev => {
     case "resetWeek": delete pr.wk; save(); render(); break;
     case "tick": {
       if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, e = entry(pr, dow, sid, idx), i = +el.dataset.i; e.d[i] = !e.d[i];
-      const it = itemAt(pr, dow, sessById(sid), idx);
+      const it = itemAt(pr, dow, sessById(sid), idx); if (it) e.x = it.ex;
       if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && inp.placeholder !== "kg" && inp.placeholder !== "reps") { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
       save(); renderSheet(); break;
     }
@@ -2696,7 +2836,7 @@ document.addEventListener("input", ev => {
   const el = ev.target, pr = P();
   if (el.dataset && el.dataset.act === "w" && SH.ctx && pr) {
     const { dow, sid, idx } = SH.ctx, e = entry(pr, dow, sid, idx), i = +el.dataset.i;
-    const v = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); e.w[i] = v; if (v) pr.last[SH.view] = v; save();
+    const v = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); e.w[i] = v; e.x = SH.view; if (v) pr.last[SH.view] = v; save();
     document.querySelectorAll("#sheetIn input[data-act='w']").forEach(inp => { const k = +inp.dataset.i; if (k > i && !e.w[k] && v) inp.placeholder = v; });
   }
 });

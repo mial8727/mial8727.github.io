@@ -1,5 +1,5 @@
 /* FitForm offline cache: lives in /fitform/ and only touches its own pages and caches */
-const CACHE = "fitform-app-0eec3f65a4";
+const CACHE = "fitform-app-77884ef784";
 const ASSETS = ["./", "index.html", "privacy.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png", "fonts/barlow-condensed-latin-600-normal.woff2", "fonts/barlow-condensed-latin-700-normal.woff2", "fonts/inter-latin-400-normal.woff2", "fonts/inter-latin-500-normal.woff2", "fonts/inter-latin-600-normal.woff2", "fonts/inter-latin-700-normal.woff2"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("fitform-app-") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
