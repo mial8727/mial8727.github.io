@@ -47,6 +47,7 @@ details.pickw{margin-top:12px} details.pickw summary{cursor:pointer;color:var(--
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 16px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:600;font-size:14px}
 .btn.a{background:var(--a);color:#0b2618;border-color:var(--a)}
 .btn.sm{padding:7px 11px;font-size:13px;border-radius:10px}
+a.btn{text-decoration:none;color:inherit}a.btn.a{color:#06210f}
 .btn.wide{width:100%}
 .btn.danger{color:#ff9a9a;border-color:#5b2626}
 .btn.yt{background:#2a1212;border-color:#5b2626;color:#fff}
@@ -118,6 +119,11 @@ details.pickw{margin-top:12px} details.pickw summary{cursor:pointer;color:var(--
 .set{display:grid;grid-template-columns:54px 1fr 54px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
 .set:first-of-type{border-top:0}
 .set .lbl{font-weight:600;color:var(--mut)}
+.set.kg{grid-template-columns:44px 1fr 12px 66px 50px;gap:8px}.set.kg .x{color:var(--mut2);text-align:center}.set.kg .tick{width:50px}
+.set.hd{padding:0 0 2px;border-top:0;font-size:12px;color:var(--mut);font-weight:600}.set.hd span{text-align:center}
+.set.s1{grid-template-columns:54px 1fr 54px}
+.nextb{margin:0 0 12px}
+.adv{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin:8px 0 6px;font-size:14px}.adv.up{border-color:var(--a)}.adv.up div{color:var(--a)}.adv b{color:inherit}
 .set input{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card2);padding:0 12px;font-size:16px}
 .set input:focus{outline:2px solid var(--a);border-color:transparent}
 .tick{width:54px;height:44px;border-radius:12px;border:2px solid var(--line);display:grid;place-items:center;font-size:20px;font-weight:700;color:var(--mut2)}
@@ -134,6 +140,9 @@ nav.tabs svg{width:23px;height:23px}
 .sheet.open ~ .timer{bottom:calc(14px + var(--sab))}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.kv:first-child{border-top:0}
+.kv.tog{align-items:center}.tg{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex:none}.tg button{padding:6px 12px;border-radius:8px;font-weight:600;font-size:13px;color:var(--mut)}.tg button.on{background:var(--a);color:#06210f}
+.remgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.remgrid label{display:flex;flex-direction:column;gap:4px}.remgrid input,.remgrid select{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);padding:0 10px;font:600 15px inherit;width:100%}
+details.fold{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:12px 0;padding:0 14px}details.fold>summary{list-style:none;cursor:pointer;padding:14px 0;font:700 17px var(--head);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}details.fold>summary::-webkit-details-marker{display:none}details.fold>summary::after{content:"▾";color:var(--a);font-size:16px}details.fold[open]>summary::after{content:"▴"}details.fold>summary small{font:500 12.5px var(--body,inherit);text-transform:none;color:var(--mut);margin-left:8px}details.fold .card{background:var(--card2)}
 .weekrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px}
 .weekrow .wd{width:44px;flex:none;font-family:var(--head);font-size:18px;font-weight:700;text-transform:uppercase}
 .weekrow.rest{opacity:.6}.weekrow.today{border-color:var(--a)}
@@ -2035,6 +2044,12 @@ const GOALS = {
   strength: { name: "Get stronger", short: "Strength", icon: "🏋️", main: [4, "4–6", 180], sec: [3, "6–8", 120], acc: [3, "8–12", 75], core: [3, "8–12", 60], cardio: { min: "10 min easy", opt: true } },
   health:   { name: "Fitness & health", short: "Health", icon: "❤️", main: [3, "8–12", 90], sec: [2, "10–12", 75], acc: [2, "12–15", 60], core: [2, "10–15", 45], cardio: { min: "15 min", opt: false } }
 };
+/* what each exercise logs: kg (+ reps), reps, seconds, or just a tick */
+const TICKONLY = new Set(["box-jump", "jump-squat", "pogo-hops"]);
+const NOLOAD = new Set(["hanging-knee-raise", "ab-wheel"]);                 // gym moves done with bodyweight
+const unitOf = id => TICKONLY.has(id) ? "none" : id === "dead-hang" || (EX[id].type === "bw" && / s\b/.test(TIMED[id] || "")) ? "sec" : EX[id].type === "bw" || NOLOAD.has(id) ? "reps" : "kg";
+const UNIT = { kg: "kg", reps: "reps", sec: "s", none: "" };
+const repRange = r => { const m = /(\d+)(?:–(\d+))?/.exec(r || ""); return m ? [+m[1], +(m[2] || m[1])] : [8, 12]; };
 const TIMED = { "pogo-hops": "15–20 hops", "jump-squat": "5–8 jumps", "box-jump": "5 jumps", "copenhagen-plank": "15–30 s / side", "side-plank": "20–40 s", "sl-balance": "20–30 s", "wall-sit": "30–60 s", "suitcase-carry": "30–40 s", "plank": "30–45 s",
   "dead-hang": "20–40 s", "farmer-carry": "30–40 s", "jug-carry": "30–40 s" };
 
@@ -2068,7 +2083,8 @@ const KEY = "fitform.v1";
 let store = null;
 try { store = window.localStorage; store.setItem("__t", "1"); store.removeItem("__t"); } catch (e) { store = null; }
 let S = (() => { try { const v = store && JSON.parse(store.getItem(KEY) || "null"); if (v && v.profiles) return v; } catch (e) {} return { profiles: {}, active: null }; })();
-const save = () => { try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let SAVES = 0;
+const save = () => { SAVES++; try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const P = () => S.profiles[S.active] || null;
 
 /* ---------- dates ---------- */
@@ -2107,7 +2123,7 @@ function poolPicker(tpl, wn) {
   return k => { if (k[0] !== "@") return k; const pool = POOLS[k.slice(1)], n = seen[k] = (seen[k] ?? -1) + 1; return pool[(wn * cnt[k] + n) % pool.length]; };
 }
 function buildPlan(pr, wn = weekNo()) {
-  const T = TEMPLATES[pr.focus], tpl = T[pr.days], resolve = poolPicker(tpl, wn);
+  const T = TEMPLATES[pr.focus], tpl = T[pr.days], resolve = poolPicker(tpl, wn), easy = isEasy(pr, wn);
   const sessions = tpl.map(s => {
     const used = new Set(), usedSlots = new Set(), items = [];
     items.push({ slot: "warmup", role: "warm", ex: "warmup", alt: null, sets: 1, reps: pr.age >= 40 ? "8–10 min" : "5–8 min", rest: 0 });
@@ -2126,9 +2142,26 @@ function buildPlan(pr, wn = weekNo()) {
     const c = GOALS[pr.goal].cardio, ck = pickOrder(pr, "cardio", pr.equip === "gym" ? "gym" : "db")[0], cex = slotDef(pr, "cardio")[ck];
     items.push({ slot: "cardio", role: "cardio", ex: cex, key: ck, alt: true, sets: 1, reps: c.min, rest: 0, opt: c.opt });
     items.push({ slot: "cooldown", role: "cool", ex: "cooldown", alt: null, sets: 1, reps: "5 min", rest: 0 });
+    if (easy) items.forEach(it => { if (!NOWORK.includes(it.role)) it.sets = Math.max(1, Math.round(it.sets / 2)); });
+    fitTime(pr, items);
     return { id: s.id, ab: s.ab, name: s.name, focus: s.focus, items };
   });
-  return { title: T.title, sessions, cardioSessions: cardioSessions(pr, wn) };
+  return { title: T.title, sessions, cardioSessions: cardioSessions(pr, wn), easy };
+}
+/* every 7th week of training is an easy week: same exercises, half the sets */
+const startOf = pr => pr.start || weekStart();
+const weekIdx = (pr, wn = weekNo()) => wn - wnOf(startOf(pr));
+const isEasy = (pr, wn = weekNo()) => pr.easy !== "off" && weekIdx(pr, wn) > 0 && weekIdx(pr, wn) % 7 === 6;
+/* "time I have": drop the smallest extras first, then trim sets, until the session fits */
+function fitTime(pr, items) {
+  const cap = +pr.len; if (!cap) return;
+  const over = () => estMin(pr, { items }) > cap;
+  const drop = role => { for (let i = items.length - 1; i >= 0 && over(); i--) if (items[i].role === role && items[i].slot !== "balance") items.splice(i, 1); };
+  ["acc", "core", "pri", "pow"].forEach(drop);
+  const cd = items.find(it => it.role === "cardio" && !it.opt); if (cd && over()) cd.reps = "10 min";
+  for (let pass = 0; pass < 2 && over(); pass++) for (let i = items.length - 1; i >= 0 && over(); i--) if (["sec", "main"].includes(items[i].role) && items[i].sets > 2) items[i].sets--;
+  const work = () => items.filter(it => ["main", "sec"].includes(it.role)).length;
+  for (let i = items.length - 1; i >= 0 && over() && work() > 2; i--) if (items[i].role === "sec") items.splice(i, 1);
 }
 /* rest-day cardio: walks, plus one HIIT for fat-loss/health goals */
 function cardioPick(pr) {
@@ -2174,10 +2207,12 @@ function dayList(pr) { return (pr.dayList && pr.dayList.length ? pr.dayList : DE
 /* ---------- this week's schedule: one-off moves, back to the usual days every Sunday ---------- */
 const weekStart = () => ymd(dateForDow(0));
 const nums = o => Object.keys(o).map(Number).sort((a, b) => a - b);
+/* the day of the week the plan started, if that was this week (nothing before it counts as missed) */
+const firstDow = pr => pr.start && pr.start > weekStart() ? new Date(pr.start + "T12:00:00").getDay() : null;
 function defaultWeek(pr) {
-  const m = {}, c = {};
-  dayList(pr).forEach((d, i) => m[d] = PLAN.sessions[i % PLAN.sessions.length].id);
-  (PLAN.cardioSessions || []).forEach(x => { if (!(x.dow in m)) c[x.dow] = x.id; });
+  const m = {}, c = {}, f = firstDow(pr);
+  dayList(pr).filter(d => f === null || d >= f).forEach((d, i) => m[d] = PLAN.sessions[(f === null ? dayList(pr).indexOf(d) : i) % PLAN.sessions.length].id);
+  (PLAN.cardioSessions || []).forEach(x => { if (!(x.dow in m) && (f === null || x.dow >= f)) c[x.dow] = x.id; });
   return { m, c, moved: false };
 }
 function weekPlan(pr) {
@@ -2215,6 +2250,7 @@ function pickFor(pr, d) {
   const w = weekPlan(pr), td = todayDow(), pend = pendingDays(pr, w).filter(x => x !== d);
   const between = pend.filter(x => x >= td && x < d), missed = pend.filter(x => x < td), after = pend.filter(x => x > d);
   const src = between.length ? between[between.length - 1] : missed.length ? missed[0] : after.length ? after[0] : null;
+  if (src === null && firstDow(pr) !== null) { const used = new Set(Object.values(w.m)), nx = PLAN.sessions.find(x => !used.has(x.id)); return nx ? { sid: nx.id, src: null } : null; }
   return src === null ? null : { sid: w.m[src], src };
 }
 function planTrainOn(pr, d, sid, src) {
@@ -2311,6 +2347,11 @@ function suggestExtras(pr, dow, s) {
   cands.forEach(c => { if (out.length < 4 && !out.includes(c)) out.push(c); });
   return out;
 }
+function dispOrder(pr, dow, s) {
+  const disp = s.items.map((it, i) => ({ it, i })), at = disp.findIndex(d => d.it.role === "cardio" || d.it.role === "cool");
+  disp.splice(at < 0 ? disp.length : at, 0, ...extraItems(pr, dow, s).map((it, j) => ({ it, i: "x" + j })));
+  return disp;
+}
 function extrasCard(pr, dow, s) {
   const xs = extraItems(pr, dow, s), full = xs.length >= 2, sug = full ? [] : suggestExtras(pr, dow, s);
   const added = xs.map((it, j) => `<div class="xadd"><div class="rmain"><div class="rname">${esc(EX[it.ex].name)}</div><div class="rmeta">${it.sets} × ${esc(it.reps)} · in your list above</div></div><button class="btn sm" data-act="rmX" data-j="${j}">Remove</button></div>`).join("");
@@ -2390,7 +2431,7 @@ const wkStart = ds => { const d = new Date(ds + "T12:00:00"); d.setDate(d.getDat
 const wnOf = ds => Math.round(wkStart(ds).getTime() / 6048e5);
 const isWork = (sid, ex) => sid[0] !== "c" && ex !== "warmup" && !["cardio", "stretch"].includes(EX[ex].kind);
 /* every logged item with at least one ticked set; older logs (before exercises were stored) are matched to that week's plan */
-function history(pr) {
+function historyOf(pr) {
   const out = [], cache = {};
   Object.entries(pr.log || {}).forEach(([ds, L]) => Object.entries(L || {}).forEach(([k, e]) => {
     if (!e || !(e.d || []).some(Boolean)) return;
@@ -2400,9 +2441,39 @@ function history(pr) {
       if (s && idx[0] === "x") { const slot = (((pr.extra || {})[ds] || {})[sid] || [])[+idx.slice(1)], sd = slot && slotDef(pr, slot); ex = sd && sd[pickOrder(pr, slot)[0]]; }
       else if (s) ex = (s.items[+idx] || {}).ex;
     }
-    if (ex && EX[ex]) out.push({ ds, sid, idx, ex, d: e.d, w: e.w || [] });
+    if (ex && EX[ex]) out.push({ ds, sid, idx, ex, d: e.d, w: e.w || [], r: e.r || [] });
   }));
   return out.sort((a, b) => a.ds < b.ds ? -1 : a.ds > b.ds ? 1 : 0);
+}
+let HC = null;
+const histC = pr => (HC && HC.pr === pr && HC.n === SAVES) ? HC.h : (HC = { pr, n: SAVES, h: historyOf(pr) }).h;
+/* the most recent earlier session with this exercise (never today's own sets) */
+function lastFor(pr, id, ds) {
+  let best = null; histC(pr).forEach(h => { if (h.ex !== id || h.ds >= ds) return; if (!best || h.ds > best.ds || (h.ds === best.ds && h.d.filter(Boolean).length > best.d.filter(Boolean).length)) best = h; });
+  return best;
+}
+const stepOf = id => EX[id].type === "db" ? 2 : 2.5;
+const repsTxt = a => a.join(", ");
+/* double progression: top of the rep range on every set -> add the smallest step next time */
+function advice(pr, it, ds) {
+  const id = it.ex, u = unitOf(id); if (u === "none") return null;
+  const L = lastFor(pr, id, ds); if (!L) return null;
+  const [lo, hi] = repRange(it.reps), idx = L.d.map((x, i) => x ? i : -1).filter(i => i >= 0), easy = PLAN && PLAN.easy;
+  if (u === "kg") {
+    const ws = idx.map(i => parseFloat(L.w[i])).filter(v => v > 0); if (!ws.length) return null;
+    const top = Math.max(...ws), at = idx.filter(i => parseFloat(L.w[i]) === top), reps = at.map(i => parseInt(L.r[i])).filter(n => n > 0);
+    const was = `${fmtN(top)} kg${reps.length ? " × " + repsTxt(reps) : ""}`;
+    if (easy) return { kg: top, up: false, last: was, msg: `Easy week: keep ${fmtN(top)} kg and stop each set 2–3 reps before it gets hard.` };
+    if (reps.length < at.length) return { kg: top, up: false, last: was, msg: `Log your reps too, so FitForm can tell you when to go heavier.` };
+    if (reps.every(n => n >= hi) && idx.length >= Math.min(2, it.sets)) { const nx = top + stepOf(id); return { kg: nx, up: true, last: was, msg: `You hit ${hi}+ reps on every set. Try <b>${fmtN(nx)} kg</b> today (or the next weight up).` }; }
+    if (reps.every(n => n < lo - 2)) { const nx = Math.max(0, top - stepOf(id)); return { kg: nx, up: false, last: was, msg: `That was heavy. Try <b>${fmtN(nx)} kg</b> and get at least ${lo} reps.` }; }
+    return { kg: top, up: false, last: was, msg: `Stay at <b>${fmtN(top)} kg</b> and beat ${repsTxt(reps)} reps. At ${hi} on every set, go heavier.` };
+  }
+  const vs = idx.map(i => parseFloat(L.w[i])).filter(v => v > 0); if (!vs.length) return null;
+  const was = vs.map(fmtN).join(", ") + " " + UNIT[u], short = fmtN(Math.max(...vs)) + " " + UNIT[u];
+  if (easy) return { kg: null, up: false, last: was, short, msg: `Easy week: do a little less than last time.` };
+  if (vs.every(n => n >= hi)) return { kg: null, up: true, last: was, short, msg: u === "sec" ? `You held ${hi} s on every set. Hold longer, or try the harder version in the tips.` : `You hit ${hi}+ on every set. Make it harder: slow the lowering to 3 seconds, add a pause, or add weight (see the tips).` };
+  return { kg: null, up: false, last: was, short, msg: `Beat last time: ${was}.` };
 }
 function spark(pts, w = 92, h = 26) {
   if (pts.length < 2) return `<svg width="${w}" height="${h}"></svg>`;
@@ -2413,7 +2484,7 @@ function spark(pts, w = 92, h = 26) {
 const fmtN = v => (Math.round(v * 10) / 10).toString();
 const shortDate = ds => { const d = new Date(ds + "T12:00:00"); return d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
 function progressHTML(pr) {
-  const H = history(pr), cur = weekNo(), target = dayList(pr).length;
+  const H = histC(pr), cur = weekNo(), target = dayList(pr).length;
   const wk = {}, days = {}; let totalSets = 0;
   H.forEach(h => {
     if (isWork(h.sid, h.ex)) { totalSets += h.d.filter(Boolean).length; (wk[wnOf(h.ds)] = wk[wnOf(h.ds)] || new Set()).add(h.ds + "|" + h.sid); days[h.ds] = "s"; }
@@ -2428,23 +2499,23 @@ function progressHTML(pr) {
       <div class="tgt"><b>${totalSets}</b><span>sets completed</span></div></div>`;
   // last 8 weeks calendar
   const today = ymd(new Date()), sun = dateForDow(0), rows = [];
-  for (let k = 7; k >= 0; k--) {
+  for (let k = Math.max(0, Math.min(7, cur - wnOf(startOf(pr)))); k >= 0; k--) {
     const ws = new Date(sun); ws.setDate(sun.getDate() - 7 * k);
     const cells = Array.from({ length: 7 }, (_, d) => { const dd = new Date(ws); dd.setDate(ws.getDate() + d); const ds = ymd(dd); return `<i class="${days[ds] || ""}${ds === today ? " t" : ""}${ds > today ? " f" : ""}"></i>`; }).join("");
     const n = cnt(cur - k);
     rows.push(`<span>${shortDate(ymd(ws))}</span>${cells}<b style="color:${n >= target ? "var(--a)" : "var(--tx)"}">${n}/${target}</b>`);
   }
-  const cal = `<div class="card"><h3>Last 8 weeks</h3><div class="hg"><span></span>${DAY.map(d => `<span class="h">${d[0]}</span>`).join("")}<span></span>${rows.join("")}</div>
+  const cal = `<div class="card"><h3>${cur - wnOf(startOf(pr)) >= 7 ? "Last 8 weeks" : "Since you started"}</h3><div class="hg"><span></span>${DAY.map(d => `<span class="h">${d[0]}</span>`).join("")}<span></span>${rows.join("")}</div>
       <div class="small muted" style="margin-top:8px"><i class="dot" style="background:var(--a)"></i>Strength &nbsp; <i class="dot" style="background:#2f6f8f"></i>Cardio only &nbsp; · right column: workouts / planned</div></div>`;
   // strength progress: best set per session for each exercise
   const lifts = {};
-  H.forEach(h => { if (!isWork(h.sid, h.ex) || TIMED[h.ex]) return;
+  H.forEach(h => { if (!isWork(h.sid, h.ex) || TIMED[h.ex] || unitOf(h.ex) === "none") return;
     const vals = h.w.map((v, i) => h.d[i] ? parseFloat(v) : NaN).filter(v => v > 0); if (!vals.length) return;
     const L = lifts[h.ex] = lifts[h.ex] || {}; L[h.ds] = Math.max(L[h.ds] || 0, ...vals); });
   const lrows = Object.entries(lifts).map(([ex, by]) => { const ds = Object.keys(by).sort(); return { ex, pts: ds.map(d => by[d]), last: ds[ds.length - 1] }; })
     .sort((a, b) => b.pts.length - a.pts.length || (a.last < b.last ? 1 : -1)).slice(0, 8);
   const strength = `<div class="card"><h3>Strength</h3>${lrows.length ? `<p class="small muted" style="margin-top:-4px">Best set each session${lrows.length > 1 ? ", your most-logged exercises first" : ""}.</p>` + lrows.map(r => {
-      const u = EX[r.ex].type === "bw" ? "reps" : "kg", d = r.pts[r.pts.length - 1] - r.pts[0];
+      const u = UNIT[unitOf(r.ex)], d = r.pts[r.pts.length - 1] - r.pts[0];
       return `<div class="lift"><div><div class="rname">${esc(EX[r.ex].name)}</div><div class="small muted">${fmtN(r.pts[r.pts.length - 1])} ${u} · ${r.pts.length} session${r.pts.length > 1 ? "s" : ""}</div></div>${spark(r.pts)}<div class="small" style="text-align:right">${r.pts.length < 2 ? "" : d > 0 ? `<span class="up">+${fmtN(d)} ${u}</span>` : d < 0 ? `<span class="dn">${fmtN(d)} ${u}</span>` : "same"}</div></div>`; }).join("")
     : `<p class="small muted" style="margin:0">Enter the weight (or reps) for your sets on the Today tab and tick them. Your progress on each exercise shows up here.</p>`}</div>`;
   // body weight
@@ -2467,6 +2538,50 @@ function progressHTML(pr) {
   const musc = `<div class="card"><h3>This week by muscle</h3><p class="small muted" style="margin-top:-4px">Sets you've ticked so far, out of your plan.</p>
       ${VORDER.map(g => { const pl = planned[g] || 0, dn = done[g] || 0; return `<div class="vbar" style="grid-template-columns:96px 1fr 46px"><span>${g}</span><div class="tr"><i style="width:${pl ? Math.min(100, dn / pl * 100) : 0}%"></i></div><b style="text-align:right">${dn}/${pl}</b></div>`; }).join("")}</div>`;
   return `<h3 style="margin-top:20px">Your progress</h3>${tiles}${cal}${strength}${body}${musc}`;
+}
+
+/* ---------- settings bits ---------- */
+const lenSeg = pr => `<div class="seg" style="--n:3;margin:4px 0 8px">${[[45, "45 min"], [60, "60 min"], [0, "No limit"]].map(([v, l]) => `<button class="${(+pr.len || 0) === v ? "on" : ""}" data-act="len" data-v="${v}">${l}</button>`).join("")}</div>`;
+const togRow = (pr, k, label, a, b, dflt) => { const v = pr[k] || dflt; return `<div class="kv tog"><span>${label}</span><span class="tg">${[a, b].map(([val, l]) => `<button class="${v === val ? "on" : ""}" data-act="pref" data-k="${k}" data-v="${val}">${l}</button>`).join("")}</span></div>`; };
+
+/* ---------- reminders: repeating calendar events on the training days ---------- */
+const APP_URL = "https://mial8727.github.io/fitform/", DAYCODE = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const remOf = pr => Object.assign({ t: "18:00", a: 30 }, pr.rem || {});
+function calEvent(pr) {
+  const r = remOf(pr), [h, mi] = r.t.split(":").map(Number), ds = dayList(pr), now = new Date();
+  let st = null; for (let k = 0; k < 8 && !st; k++) { const d = new Date(now); d.setDate(now.getDate() + k); d.setHours(h, mi, 0, 0); if (ds.includes(d.getDay()) && d > now) st = d; }
+  const mins = Math.max(30, ...PLAN.sessions.map(x => estMin(pr, x))), en = new Date(st.getTime() + mins * 60000);
+  return { st, en, a: r.a, rrule: "FREQ=WEEKLY;BYDAY=" + ds.map(d => DAYCODE[d]).join(","), title: "FitForm workout", desc: "Your workout for today is in FitForm: " + APP_URL };
+}
+const calDT = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+function gcalURL(pr) {
+  const ev = calEvent(pr); let tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(ev.title) + "&dates=" + calDT(ev.st) + "/" + calDT(ev.en) + (tz ? "&ctz=" + encodeURIComponent(tz) : "") + "&details=" + encodeURIComponent(ev.desc) + "&recur=" + encodeURIComponent("RRULE:" + ev.rrule);
+}
+function icsText(pr) {
+  const ev = calEvent(pr), n = new Date(), stamp = n.getUTCFullYear() + pad(n.getUTCMonth() + 1) + pad(n.getUTCDate()) + "T" + pad(n.getUTCHours()) + pad(n.getUTCMinutes()) + "00Z";
+  const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Tamreen Apps//FitForm//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT", "UID:fitform-" + pr.id + "-" + Date.now() + "@tamreen.apps", "DTSTAMP:" + stamp,
+    "DTSTART:" + calDT(ev.st), "DTEND:" + calDT(ev.en), "RRULE:" + ev.rrule, "SUMMARY:" + ev.title, "DESCRIPTION:" + ev.desc.replace(/([,;])/g, "\\$1"), "URL:" + APP_URL,
+    "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + ev.title, "TRIGGER:" + (ev.a ? "-PT" + ev.a + "M" : "PT0M"), "END:VALARM", "END:VEVENT", "END:VCALENDAR"];
+  return L.join("\r\n") + "\r\n";
+}
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function saveFile(text, name, type) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+function remHTML(pr) {
+  const r = remOf(pr), days = dayList(pr).map(d => DAYF[d]).join(", ");
+  return `<div class="card" id="rem"><h3>Reminders</h3><p class="small muted" style="margin-top:-4px">Add your workouts to your phone's calendar as a repeating event on <b style="color:var(--tx)">${days}</b>. Your calendar sends the reminder.</p>
+    <div class="remgrid"><label><span class="small muted">Workout time</span><input type="time" id="remT" data-act="remT" value="${esc(r.t)}"></label>
+      <label><span class="small muted">Remind me</span><select id="remA" data-act="remA">${[[0, "At the start"], [15, "15 min before"], [30, "30 min before"], [60, "1 hour before"], [120, "2 hours before"]].map(([v, l]) => `<option value="${v}"${+r.a === v ? " selected" : ""}>${l}</option>`).join("")}</select></label></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn a" data-act="gcal" href="${esc(gcalURL(pr))}" target="_blank" rel="noopener">Google Calendar</a><button class="btn" data-act="ics">${isIOS() ? "iPhone Calendar" : "Other calendar (.ics)"}</button></div>
+    <p class="small muted" style="margin:8px 0 0">Google Calendar uses your calendar's usual alert time. The ${isIOS() ? "iPhone" : ".ics"} option includes the alert you chose${isIOS() ? "" : " and works with Samsung, Outlook and Apple calendars"}. If you change your training days, add it again and delete the old event.</p></div>`;
+}
+function backupHTML() {
+  return `<div class="card"><h3>Backup</h3><p class="small muted" style="margin-top:-4px">Your plan and logs live only on this phone. Save a backup file (to Drive, Files or email) so you can restore it after changing phones or reinstalling.${S.backup ? ` Last backup: ${shortDate(S.backup)}.` : ""}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn a" data-act="backup">Save a backup</button><button class="btn" data-act="restore">Restore from a file</button></div>
+    <input type="file" id="restoreIn" accept=".json,application/json" style="display:none"></div>`;
 }
 
 /* ---------- contact ---------- */
@@ -2505,26 +2620,27 @@ function viewToday() {
       ${canPlan ? trainCard(pr, VIEWDAY, isT) : ""}`;
   } else {
     const p = prog(pr, VIEWDAY, s), pct = p.tot ? Math.round(p.done / p.tot * 100) : 0;
-    const xs = extraItems(pr, VIEWDAY, s), disp = s.items.map((it, i) => ({ it, i }));
-    const at = disp.findIndex(d => d.it.role === "cardio" || d.it.role === "cool");
-    disp.splice(at < 0 ? disp.length : at, 0, ...xs.map((it, j) => ({ it, i: "x" + j })));
+    const xs = extraItems(pr, VIEWDAY, s), disp = dispOrder(pr, VIEWDAY, s);
     const rows = disp.map(({ it, i }) => {
       const ex = EX[it.ex], e = peek(pr, VIEWDAY, s.id, i), dn = e.d.slice(0, it.sets).filter(Boolean).length, full = dn >= it.sets;
       const meta = isTimed(it) ? esc(it.reps) : `${it.sets} × ${esc(it.reps)} · rest ${fmtRest(it.rest)}`;
       const k = itemLabel(it, s, i) + (it.subFrom ? " · swapped" : "");
       return `<button class="row${full ? " complete" : ""}" data-act="open" data-idx="${i}">${figHTML(it.ex)}
-        <div class="rmain">${it.opt ? `<div class="opt">Optional finisher</div>` : `<div class="rnum">${k}</div>`}<div class="rname">${esc(ex.name)}</div><div class="rmeta">${meta}${pr.last[it.ex] && !isTimed(it) ? " · last " + esc(pr.last[it.ex]) + (EX[it.ex].type === "bw" ? " reps" : " kg") : ""}</div>${it.alt ? tagFor(it.key) : ""}</div>
+        <div class="rmain">${it.opt ? `<div class="opt">Optional finisher</div>` : `<div class="rnum">${k}</div>`}<div class="rname">${esc(ex.name)}</div><div class="rmeta">${meta}${isTimed(it) ? "" : (() => { const ad = advice(pr, it, logKey(VIEWDAY)); return !ad ? "" : ad.up && ad.kg !== null ? ` · <span style="color:var(--a)">try ${fmtN(ad.kg)} kg ↑</span>` : " · last " + esc(ad.short || ad.last.replace(/ × .*/, "")); })()}</div>${it.alt ? tagFor(it.key) : ""}</div>
         <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + it.sets}</div></button>`;
     }).join("");
-    body = `<div class="card sess"><div class="kicker">${lbl} · ${s.cardio ? "Cardio day" : esc(GOALS[pr.goal].name)}</div><div class="name">${esc(s.name)}</div><div class="muted">${esc(s.focus)}</div>
+    body = `<div class="card sess"><div class="kicker">${lbl} · ${s.cardio ? "Cardio day" : PLAN.easy ? "Easy week · half the sets" : esc(GOALS[pr.goal].name)}</div><div class="name">${esc(s.name)}</div><div class="muted">${esc(s.focus)}</div>
       <div class="meta">${s.cardio ? `<span class="pill">Optional, but good for your heart</span>` : `<span class="pill">⏱ ~${estMin(pr, { items: [...s.items, ...xs] })} min</span><span class="pill">${s.items.filter(x => !NOWORK.includes(x.role)).length + xs.length} exercises</span><span class="pill">${EQNAME[pr.equip]}</span>`}</div>
-      <div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="color:var(--a);font-weight:600;margin-top:8px">Session complete. Great work!</div>` : ""}</div>
+      <div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px"><span style="color:var(--a);font-weight:600">Session complete. Great work!</span><button class="btn sm a" data-act="summary">Summary</button></div>` : ""}</div>
       <div class="list">${rows}</div><p class="small muted">${s.cardio ? "Cardio days fill your rest days so you reach the weekly cardio target. Turn them off in the Plan tab." : "Tap an exercise for the moving demo, how-to, YouTube guide and the gym, dumbbell or home version."}</p>
-      ${s.cardio ? "" : extrasCard(pr, VIEWDAY, s)}
+      ${s.cardio ? "" : xs.length || p.done >= Math.ceil(p.tot * 0.6) ? extrasCard(pr, VIEWDAY, s) : `<p class="small muted" style="margin:4px 2px 12px">Feeling good near the end? Once you've done most of today's sets, you can add 1–2 extra exercises here.</p>`}
       ${!canPlan ? "" : s.cardio ? trainCard(pr, VIEWDAY, isT) : p.done ? "" : moveCard(pr, VIEWDAY, isT)}`;
   }
   const note = NOTE; NOTE = "";
-  return `${note ? `<div class="card note">${note}</div>` : ""}<div class="strip">${strip}</div>${body}`;
+  const fresh = pr.start === ymd(new Date()) && !Object.keys(pr.log || {}).length && isT;
+  const nx0 = nums(wk.m).find(x => x >= tdw), welcome = fresh ? `<div class="card note"><b>Welcome${pr.name ? ", " + esc(pr.name) : ""}!</b> Your plan starts today, so nothing counts as missed this week. ${nx0 === tdw ? "Your first workout is below." : nx0 !== undefined ? `Your first workout is on <b>${DAYF[nx0]}</b>, or start one today below.` : "Your usual days start on Sunday, or start a workout today below."}</div>` : "";
+  const easy = PLAN.easy && s && !s.cardio ? `<div class="card note"><b>Easy week.</b> <span class="muted">Every 7th week: same exercises, half the sets, so your body recovers and comes back stronger. Normal training returns next week.</span></div>` : "";
+  return `${note ? `<div class="card note">${note}</div>` : ""}${welcome}${easy}<div class="strip">${strip}</div>${body}`;
 }
 /* rest or cardio day: bring a workout to this day; the rest of the week re-spaces itself */
 function trainCard(pr, d, isT) {
@@ -2569,9 +2685,13 @@ function viewPlan() {
     <div class="card"><h3 style="margin-top:0">Equipment for the whole week</h3>
       <div class="seg" style="--n:3;margin:4px 0 8px">${KEYS.map(k => `<button class="${pr.equip === k ? "on" : ""}" data-act="equipAll" data-v="${k}">${KEYNAME[k]}<small>${{ gym: "machines & cables", db: "dumbbells & bench", home: "bodyweight" }[k]}</small></button>`).join("")}</div>
       <p class="small muted" style="margin:0">Switches every exercise in your plan at once${Object.keys(pr.swaps || {}).length ? `, including the ${Object.keys(pr.swaps).length} you changed by hand` : ""}. To change just one exercise, open it and pick its gym, dumbbell or home version.</p></div>
+    <div class="card"><h3 style="margin-top:0">Time per workout</h3>${lenSeg(pr)}
+      <p class="small muted" style="margin:0">Your workouts: ${PLAN.sessions.map(x => "~" + estMin(pr, x) + " min").join(" · ")}. ${+pr.len ? "Shorter times drop the smaller extra exercises first, then a set here and there. The main lifts stay." : "Pick 45 or 60 minutes on busy weeks. The main lifts always stay."}</p></div>
     <div class="card"><div class="kv"><span class="muted">Training days</span><b>${dayList(pr).map(d => DAY[d]).join(" · ")}</b></div>
       <div class="days" style="margin-top:8px">${DAY.map((d, i) => `<button class="${dayList(pr).includes(i) ? "on" : ""}" data-act="toggleDay" data-dow="${i}">${d}</button>`).join("")}</div>
-      <p class="small muted" style="margin:8px 0 0">These are your usual days. Your ${PLAN.sessions.length} sessions run in order on them. To change just this week, open a rest day in Today and tap Train, or open a workout and tap Move. The other days shift by themselves.</p></div>
+      <p class="small muted" style="margin:8px 0 0">These are your usual days. Your ${PLAN.sessions.length} sessions run in order on them. To change just this week, open a rest day in Today and tap Train, or open a workout and tap Move. The other days shift by themselves.</p>
+      <button class="btn sm" style="margin-top:10px" data-act="gorem">🔔 Add reminders to my calendar</button></div>
+    ${PLAN.easy ? `<div class="card note"><b>This is an easy week.</b> <span class="muted">Every 7th week: same exercises, half the sets. Normal training returns next week. You can turn easy weeks off in Profile.</span></div>` : ""}
     ${weekPlan(pr).moved ? `<div class="card note"><b>This week is rearranged.</b> <span class="muted">Your usual days come back on Sunday.</span><div style="margin-top:8px"><button class="btn sm" data-act="resetWeek">Undo changes this week</button></div></div>` : ""}
     ${rows}
     <div class="card"><h3>Cardio days</h3><p class="small muted" style="margin-top:-4px">WHO recommends 150–300 minutes of moderate cardio a week (or 75–150 vigorous) on top of 2+ strength days. Rest days get walks or another steady option (bike, stairs or skipping)${(pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new" ? ", plus one HIIT session" : ""}.</p>
@@ -2585,10 +2705,10 @@ function viewPlan() {
       <a class="small" href="${SOURCES.acsm.u}" target="_blank" rel="noopener">Source: ${esc(SOURCES.acsm.t)}</a></div>
     <div class="card"><h3>How to progress</h3><ul class="small" style="padding-left:18px;margin:0">
       <li style="margin-bottom:6px"><b>Pick a weight</b> where the last 1–3 reps feel hard but your form stays clean. Going to total failure isn't needed.</li>
-      <li style="margin-bottom:6px"><b>Double progression:</b> when you hit the top of the rep range on every set, add the smallest weight step next time.</li>
+      <li style="margin-bottom:6px"><b>Double progression:</b> when you hit the top of the rep range on every set, add the smallest weight step next time. Log your kg and reps and the workout screen tells you when.</li>
       <li style="margin-bottom:6px"><b>Rest</b> as the timer shows; it starts when you tick a set.</li>
       <li style="margin-bottom:6px"><b>Exercise variety:</b> your main lifts stay the same so you can track progress, while arm, shoulder, back, chest-fly and core exercises rotate each session and each week. Every exercise in the library comes round regularly.</li>
-      <li style="margin-bottom:6px"><b>Every 6–8 weeks</b> take an easier week: same exercises, half the sets.</li>
+      <li style="margin-bottom:6px"><b>Every 7th week</b> is an easy week, set automatically: same exercises, half the sets.</li>
       <li><b>Gym, dumbbells or home?</b> ACSM's 2026 review found equipment type didn't consistently change results, and bodyweight and home training work too. Swap freely.</li></ul></div>`;
 }
 function viewLibrary() {
@@ -2646,16 +2766,23 @@ function viewMe() {
       <div class="kv"><span class="muted">Equipment (whole plan)</span><b>${EQNAME[pr.equip]}</b></div>
       <div class="seg" style="--n:3;margin:6px 0 10px">${KEYS.map(k => `<button class="${pr.equip === k ? "on" : ""}" data-act="equip" data-v="${k}">${KEYNAME[k]}</button>`).join("")}</div>
       <div class="seg" style="margin-bottom:0"><button class="${pr.focus === "glutes" ? "on" : ""}" data-act="focus" data-f="glutes">Glutes & Back<small>lower-body emphasis</small></button><button class="${pr.focus === "upper" ? "on" : ""}" data-act="focus" data-f="upper">Upper body · V-shape<small>chest, shoulders, lats</small></button></div></div>
+    <div class="card"><h3>Workout settings</h3><div class="small muted">Time per workout</div>${lenSeg(pr)}
+      ${togRow(pr, "sound", "Sound when rest ends", ["on", "On"], ["off", "Off"], "on")}
+      ${togRow(pr, "screen", "Keep screen on while training", ["on", "On"], ["off", "Off"], "on")}
+      ${togRow(pr, "easy", "Easy week every 7th week", ["auto", "Auto"], ["off", "Off"], "auto")}
+      ${isIOS() ? `<p class="small muted" style="margin:6px 0 0">On iPhone, the sound plays only when the ring/silent switch is on ring.</p>` : ""}</div>
+    ${remHTML(pr)}
+    ${backupHTML()}
     <div class="card"><h3>Daily & weekly targets</h3><div class="targets">
       <div class="tgt"><b>${pLo}–${pHi} g</b><span>protein a day (${pr.goal === "fatloss" ? "1.6–2.2" : "1.4–2.0"} g per kg)</span></div>
       <div class="tgt"><b>~${perMeal} g</b><span>protein per meal, every 3–4 hours</span></div>
       <div class="tgt"><b>${stDays} days</b><span>strength training a week (minimum 2)</span></div>
       <div class="tgt"><b>150–300</b><span>minutes of moderate cardio a week</span></div></div>
       <a class="small" href="${SOURCES.protein.u}" target="_blank" rel="noopener" style="display:block;margin-top:8px">Protein: ${esc(SOURCES.protein.t)}</a><a class="small" href="${SOURCES.who.u}" target="_blank" rel="noopener">Activity: ${esc(SOURCES.who.t)}</a></div>
-    <h3 style="margin-top:20px">Made for you</h3>${cards.join("")}
+    <details class="fold"><summary><span>Tips made for you<small>${cards.length} tips</small></span></summary>${cards.join("")}<div style="height:4px"></div></details>
     <div class="card" style="border-color:#5b2626;background:#1f1111"><b>Health check</b><div class="small">If you have a heart or blood-pressure condition, a joint injury, any other medical condition, or you haven't exercised in a long time, check with your doctor first. Stop any exercise that causes sharp pain.</div></div>
-    <div class="card"><h3>Sources</h3><ul class="srcs" style="padding-left:18px;margin:0">${Object.values(SOURCES).map(s => `<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
-      <p class="small muted" style="margin-bottom:0">YouTube buttons open a YouTube search for that exercise from reputable coaches, so the link always works.</p></div>
+    <details class="fold"><summary><span>Sources<small>${Object.keys(SOURCES).length} studies & guidelines</small></span></summary><ul class="srcs small" style="padding-left:18px;margin:0">${Object.values(SOURCES).map(s => `<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
+      <p class="small muted">YouTube buttons open a YouTube search for that exercise from reputable coaches, so the link always works.</p></details>
     ${contactHTML()}
     <div class="card"><h3>Privacy</h3><div class="small">FitForm has no accounts and collects no personal data. Your profile (name, sex, age, weight, goal), ticks and weights are stored only in this browser on this device. Nothing is sent to us or to anyone else. YouTube buttons open YouTube, which has its own privacy policy. Uninstalling the app or clearing this site's data erases everything.</div>
       ${PRIVACY_URL ? `<a class="small" href="${PRIVACY_URL}" target="_blank" rel="noopener" style="display:block;margin-top:8px">Read the full privacy policy</a>` : ""}
@@ -2663,8 +2790,10 @@ function viewMe() {
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="profiles">Switch or add profile</button></div>
     <p class="small muted">Your profile, ticks and weights are saved in this browser on this device only.${store ? "" : " <b style='color:#ff9a9a'>This browser isn't allowing storage right now.</b>"}</p>`;
 }
+function ensureStart(pr) { if (pr.start) return; const ks = Object.keys(pr.log || {}).sort(); pr.start = ks[0] && ks[0] < weekStart() ? ks[0] : weekStart(); save(); }
 function render() {
   if (!P()) { openWizard(null); return; }
+  ensureStart(P());
   PLAN = buildPlan(P()); header();
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === TAB));
   let note = "";
@@ -2697,11 +2826,30 @@ function renderSheet() {
     if (isTimed(it) || id !== inPlan) {
       sets = id !== inPlan ? "" : `<div class="card"><div class="setsh" style="align-items:center"><div><b>${esc(it.reps)}</b><div class="small muted">${it.opt ? "Optional finisher" : it.role === "warm" ? "Warm-up" : it.role === "cool" ? "Cool-down stretch" : s.cardio ? (it.vig ? "Vigorous cardio" : "Moderate cardio") : "Cardio finisher"}</div></div><button class="tick${e.d[0] ? " on" : ""}" data-act="tick" data-i="0" aria-label="Mark done">✓</button></div></div>`;
     } else {
-      const last = pr.last[id], bw = EX[id].type === "bw", unit = bw ? "reps" : "kg";
+      const u = unitOf(id), ds = logKey(SH.ctx.dow), ad = advice(pr, it, ds), [lo, hi] = repRange(it.reps);
+      const help = u === "kg" ? "Enter kg and the reps you did, then tick the set to start your rest timer." : u === "reps" ? "Log the reps you did, then tick the set to start your rest timer." : u === "sec" ? "Log how many seconds you held, then tick the set." : "Tick each set when it's done. Quality over quantity.";
+      const adv = ad ? `<div class="adv${ad.up ? " up" : ""}"><span class="small muted">Last time: <b style="color:var(--tx)">${esc(ad.last)}</b></span><div>${ad.up ? "↑ " : ""}${ad.msg}</div></div>` : "";
+      const ph0 = u === "kg" ? (ad && ad.kg !== null ? fmtN(ad.kg) : "kg") : UNIT[u] || "";
+      const row = k => {
+        const ph = e.w[k] || (k && e.w[k - 1]) || ph0;
+        const tick = `<button class="tick${e.d[k] ? " on" : ""}" data-act="tick" data-i="${k}" aria-label="Set ${k + 1} done">✓</button>`;
+        if (u === "none") return `<div class="set s1"><span class="lbl">Set ${k + 1}</span><span class="muted">${esc(it.reps)}</span>${tick}</div>`;
+        const main = `<input type="text" inputmode="decimal" data-act="w" data-i="${k}" value="${esc(e.w[k] || "")}" placeholder="${esc(ph)}" aria-label="${u === "kg" ? "Weight" : u === "sec" ? "Seconds" : "Reps"} for set ${k + 1}">`;
+        if (u !== "kg") return `<div class="set"><span class="lbl">Set ${k + 1}</span>${main}${tick}</div>`;
+        return `<div class="set kg"><span class="lbl">Set ${k + 1}</span>${main}<span class="x">×</span><input type="text" inputmode="numeric" data-act="r" data-i="${k}" value="${esc((e.r || [])[k] || "")}" placeholder="${lo === hi ? lo : lo + "–" + hi}" aria-label="Reps for set ${k + 1}">${tick}</div>`;
+      };
       sets = `<div class="card"><div class="setsh"><b>${it.sets} × ${esc(it.reps)}</b><span class="muted small">Rest ${fmtRest(it.rest)} · ${DAYF[SH.ctx.dow]}</span></div>
-        <div class="small muted" style="margin:2px 0 8px">${last ? "Last time: <b style='color:var(--tx)'>" + esc(last) + " " + unit + "</b>. " : ""}${bw ? "Bodyweight: log the reps you did" : "Enter kg"}, then tick the set to start your rest timer.</div>
-        ${Array.from({ length: it.sets }, (_, k) => { const ph = e.w[k] || (k && e.w[k - 1]) || last || unit; return `<div class="set"><span class="lbl">Set ${k + 1}</span><input type="text" inputmode="decimal" data-act="w" data-i="${k}" value="${esc(e.w[k] || "")}" placeholder="${esc(ph)}" aria-label="Weight for set ${k + 1}"><button class="tick${e.d[k] ? " on" : ""}" data-act="tick" data-i="${k}" aria-label="Set ${k + 1} done">✓</button></div>`; }).join("")}</div>`;
+        ${adv}<div class="small muted" style="margin:2px 0 8px">${help}</div>
+        ${u === "kg" ? `<div class="set kg hd"><span></span><span>kg</span><span></span><span>reps</span><span></span></div>` : ""}
+        ${Array.from({ length: it.sets }, (_, k) => row(k)).join("")}</div>`;
     }
+  }
+  let nextBtn = "";
+  if (it && id === inPlan) {
+    const order = dispOrder(pr, SH.ctx.dow, s), pos = order.findIndex(d => String(d.i) === String(SH.ctx.idx)), nx = order[pos + 1];
+    const e2 = peek(pr, SH.ctx.dow, SH.ctx.sid, SH.ctx.idx), mine = e2.d.slice(0, it.sets).filter(Boolean).length >= it.sets, p2 = prog(pr, SH.ctx.dow, s);
+    nextBtn = nx ? `<button class="btn${mine ? " a" : ""} wide nextb" data-act="nextEx" data-idx="${nx.i}">${mine ? "Next" : "Skip to next"}: ${esc(EX[nx.it.ex].name)} →</button>`
+      : p2.done >= p2.tot && !s.cardio ? `<button class="btn a wide nextb" data-act="summary">Finish: see your summary</button>` : `<button class="btn wide nextb" data-act="close">Back to the workout list</button>`;
   }
   const subCard = it && !it.extra && !NOWORK.includes(it.role) && it.slot !== "balance" && id === inPlan ? (() => {
     const base = it.subFrom || it.slot, alts = similarSlots(pr, base).filter(c => c.slot !== it.slot), baseEx = slotDef(pr, base)[pickOrder(pr, base)[0]];
@@ -2717,7 +2865,7 @@ function renderSheet() {
     ${segHTML}${swapBtn}
     <div class="ex-title">${esc(ex.name)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="pill">🏋 ${esc(ex.equip)}</span><span class="pill">${ex.kind === "compound" ? "Compound" : ex.kind === "cardio" ? "Cardio" : ex.kind === "stretch" ? "Stretch" : "Isolation"}</span></div>
-    ${sets}
+    ${sets}${nextBtn}
     ${id === "cooldown" ? (() => { const gs = s ? groupsOf([...s.items, ...extraItems(pr, SH.ctx.dow, s)]) : VORDER; return `<div class="card"><h3>${s ? "Today's stretches" : "Stretches"}</h3><p class="small muted" style="margin-top:-4px">About 30 seconds each${s ? ", for the muscles you trained today" : ""}.</p><ol class="steps">${gs.map(g => `<li><b>${g}.</b> ${esc(STRETCHES[g])}</li>`).join("")}</ol></div>`; })() : ""}
     <div class="card"><h3>About</h3><div>${esc(ex.brief)}</div>
       <a class="btn yt wide" style="margin-top:12px" href="${yt(ex.yt)}" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 20 14"><rect width="20" height="14" rx="4" fill="#FF0000"/><path d="M8 4l5 3-5 3z" fill="#fff"/></svg>Watch on YouTube</a></div>
@@ -2728,13 +2876,56 @@ function renderSheet() {
   scanFigs();
 }
 
+/* ---------- keep the screen on and beep during a workout ---------- */
+let WL = null, AWAKE = 0, AC = null;
+function keepAwake() {
+  const pr = P(); AWAKE = Date.now(); if (!pr || pr.screen === "off" || WL || !("wakeLock" in navigator)) return;
+  try { navigator.wakeLock.request("screen").then(l => { WL = l; l.addEventListener("release", () => { WL = null; }); }).catch(() => {}); } catch (e) {}
+}
+const letSleep = () => { try { WL && WL.release(); } catch (e) {} WL = null; AWAKE = 0; };
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && AWAKE && Date.now() - AWAKE < 20 * 60e3) { WL = null; keepAwake(); } });
+setInterval(() => { if (WL && Date.now() - AWAKE > 20 * 60e3) letSleep(); }, 60e3);
+function audioOn() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) { AC = null; } }
+function beep() {
+  const pr = P(); if (!AC || (pr && pr.sound === "off")) return;
+  try { const t0 = AC.currentTime + 0.02; [0, 0.28, 0.56].forEach((d, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = "sine"; o.frequency.value = i === 2 ? 1320 : 880;
+    g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2); o.connect(g); g.connect(AC.destination); o.start(t0 + d); o.stop(t0 + d + 0.22); }); } catch (e) {}
+}
+
+/* ---------- workout summary ---------- */
+const sessKey = (dow, sid) => logKey(dow) + "|" + sid;
+function summaryHTML(pr, dow, s) {
+  const ds = logKey(dow), L = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
+  let sets = 0, vol = 0, exs = 0; const prs = [];
+  dispOrder(pr, dow, s).forEach(({ it, i }) => {
+    const e = L[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, it.sets).filter(Boolean).length; if (!dn) return;
+    if (!NOWORK.includes(it.role)) { exs++; sets += dn; }
+    if (unitOf(it.ex) === "kg") {
+      const ws = (e.d || []).map((x, k) => x ? parseFloat(e.w[k]) : NaN).filter(v => v > 0);
+      (e.d || []).forEach((x, k) => { if (x) vol += (parseFloat(e.w[k]) || 0) * (parseInt((e.r || [])[k]) || 0); });
+      if (ws.length) { const top = Math.max(...ws), before = histC(pr).filter(h => h.ex === it.ex && h.ds < ds).flatMap(h => h.w.map((v, k) => h.d[k] ? parseFloat(v) : NaN)).filter(v => v > 0);
+        if (before.length && top > Math.max(...before)) prs.push(`${esc(EX[it.ex].name)}: <b>${fmtN(top)} kg</b> (was ${fmtN(Math.max(...before))})`); }
+    }
+  });
+  const mins = info.a && info.b ? Math.max(1, Math.round((info.b - info.a) / 60000)) : null;
+  const w = weekPlan(pr), nx = nums(w.m).find(x => x > dow && !started(pr, x, w.m[x]));
+  return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">Workout done 🎉</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
+    <p class="muted" style="margin-top:0">${esc(s.name)} · ${DAYF[dow]}</p>
+    <div class="targets"><div class="tgt"><b>${mins ? mins + " min" : "—"}</b><span>workout time</span></div><div class="tgt"><b>${sets}</b><span>sets done</span></div>
+      <div class="tgt"><b>${exs}</b><span>exercises</span></div><div class="tgt"><b>${vol ? Math.round(vol).toLocaleString() + " kg" : "—"}</b><span>total lifted (kg × reps)</span></div></div>
+    ${prs.length ? `<div class="card" style="border-color:var(--a)"><h3 style="margin-top:0">New personal bests</h3>${prs.map(x => `<div class="small" style="margin:4px 0">🏆 ${x}</div>`).join("")}</div>` : ""}
+    <p class="small">${nx !== undefined ? `Next workout: <b>${esc(abOf(w.m[nx]))}</b> on ${DAYF[nx]}.` : "That's this week's workouts done. Rest well."} Eat some protein in the next few hours.</p>
+    <button class="btn a wide" data-act="closeModal">Done</button>`;
+}
+function showSummary(pr, dow, s) { letSleep(); stopTimer(); $("#modalIn").innerHTML = summaryHTML(pr, dow, s); $("#modal").classList.add("open"); }
+
 /* ---------- rest timer ---------- */
 const T = { end: 0, iv: null, go: null };
 function startTimer(sec) {
   if (!sec) return; T.end = Date.now() + sec * 1000; clearInterval(T.iv); clearTimeout(T.go);
   const el = $("#timer"); el.classList.remove("go"); el.classList.add("show"); $("#tLbl").textContent = "Rest";
   const tick = () => { const l = Math.max(0, Math.round((T.end - Date.now()) / 1000)); $("#tVal").textContent = Math.floor(l / 60) + ":" + pad(l % 60);
-    if (l <= 0) { clearInterval(T.iv); el.classList.add("go"); $("#tLbl").textContent = "Rest over"; $("#tVal").textContent = "Next set"; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} T.go = setTimeout(() => el.classList.remove("show", "go"), 5000); } };
+    if (l <= 0) { clearInterval(T.iv); el.classList.add("go"); $("#tLbl").textContent = "Rest over"; $("#tVal").textContent = "Next set"; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} beep(); T.go = setTimeout(() => el.classList.remove("show", "go"), 5000); } };
   tick(); T.iv = setInterval(tick, 250);
 }
 const stopTimer = () => { clearInterval(T.iv); clearTimeout(T.go); $("#timer").classList.remove("show", "go"); };
@@ -2761,6 +2952,7 @@ function renderWizard() {
   if (WSTEP === 4) body = `<h2>Your training</h2>
       <p style="font-weight:600;margin:4px 0 6px">Experience</p><div class="minis">${[["new", "New"], ["some", "Some"], ["exp", "Experienced"]].map(([k, l]) => `<button class="${W.exp === k ? "on" : ""}" data-act="wexp" data-v="${k}">${l}</button>`).join("")}</div>
       <p style="font-weight:600;margin:16px 0 6px">Days per week</p><div class="minis">${[2, 3, 4].map(d => `<button class="${W.days === d ? "on" : ""}" data-act="wdays" data-v="${d}">${d} days</button>`).join("")}</div>
+      <p style="font-weight:600;margin:16px 0 6px">Time per workout</p><div class="minis">${[[45, "45 min"], [60, "60 min"], [0, "No limit"]].map(([v, l]) => `<button class="${(+W.len || 0) === v ? "on" : ""}" data-act="wlen" data-v="${v}">${l}</button>`).join("")}</div>
       <p style="font-weight:600;margin:16px 0 6px">Where do you train?</p><div class="choice"><button class="cbtn${W.equip === "gym" ? " on" : ""}" data-act="wequip" data-v="gym"><div class="ic">🏢</div><div><b>Gym machines</b><span>Machines, cables and barbells first</span></div></button>
         <button class="cbtn${W.equip === "db" ? " on" : ""}" data-act="wequip" data-v="db"><div class="ic">🏋️</div><div><b>Dumbbells</b><span>Dumbbells and a bench first, at home or in the gym</span></div></button>
         <button class="cbtn${W.equip === "home" ? " on" : ""}" data-act="wequip" data-v="home"><div class="ic">🏠</div><div><b>Home · bodyweight</b><span>No equipment first. Add dumbbells or a backpack to progress</span></div></button></div>
@@ -2770,7 +2962,7 @@ function renderWizard() {
     body = `<h2>Your profile</h2><div class="card">
       <div class="kv"><span class="muted">Name</span><b>${esc(W.name || "—")}</b></div><div class="kv"><span class="muted">Sex</span><b>${W.sex === "f" ? "Female" : "Male"}</b></div>
       <div class="kv"><span class="muted">Age · weight</span><b>${W.age} yrs · ${W.weight} kg</b></div><div class="kv"><span class="muted">Goal</span><b>${esc(GOALS[W.goal].name)}</b></div>
-      <div class="kv"><span class="muted">Training</span><b>${W.days} days · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
+      <div class="kv"><span class="muted">Training</span><b>${W.days} days · ${+W.len ? W.len + " min" : "no time limit"} · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
       <p style="font-weight:600;margin:4px 0 6px">Program focus</p><div class="seg" style="margin-top:0"><button class="${W.focus === "glutes" ? "on" : ""}" data-act="wfocus" data-v="glutes">Glutes & Back<small>lower-body emphasis</small></button><button class="${W.focus === "upper" ? "on" : ""}" data-act="wfocus" data-v="upper">Upper body · V-shape<small>chest, shoulders, lats</small></button></div>
       <p class="small muted">${W.sex === "f" ? "Glutes & Back is the default for women here. Pick V-shape if you'd rather emphasise the upper body." : "V-shape is the default for men here. Pick Glutes & Back if you'd rather emphasise the lower body."}</p>
       ${W._edit ? `<button class="btn danger sm" data-act="wdelete">${W._del ? "Tap again to delete this profile" : "Delete profile"}</button>` : ""}`;
@@ -2799,6 +2991,7 @@ function wizNext() {
   if (old && old.days !== W.days) W.dayList = null;
   if (old && (old.days !== W.days || old.focus !== W.focus || old.goal !== W.goal)) delete W.wk;
   delete W._edit; delete W._del;
+  if (!old) W.start = ymd(new Date());
   S.profiles[W.id] = W; S.active = W.id; save();
   $("#wiz").classList.remove("open"); W = null; TAB = "today"; VIEWDAY = todayDow(); render(); window.scrollTo(0, 0);
 }
@@ -2869,12 +3062,38 @@ document.addEventListener("click", ev => {
       render(); window.scrollTo(0, 0); break;
     }
     case "resetWeek": delete pr.wk; save(); render(); break;
+    case "len": pr.len = +el.dataset.v; save(); NOTE = +pr.len ? `Workouts now fit about <b>${pr.len} minutes</b>. The main lifts stay; smaller extras and a few sets make way.` : "Time limit off: you get the full workouts again."; render(); break;
+    case "pref": pr[el.dataset.k] = el.dataset.v; save(); if (el.dataset.k === "screen" && el.dataset.v === "off") letSleep(); if (el.dataset.k === "sound" && el.dataset.v === "on") { audioOn(); beep(); } render(); break;
+    case "gorem": TAB = "me"; render(); setTimeout(() => { const r = $("#rem"); if (r) r.scrollIntoView({ block: "start" }); }, 30); break;
+    case "ics": {
+      const txt = icsText(pr);
+      if (isIOS()) { const url = "data:text/calendar;charset=utf-8," + encodeURIComponent(txt); const w = window.open(url, "_blank"); if (!w) location.href = url; }
+      else saveFile(txt, "fitform-workouts.ics", "text/calendar");
+      break;
+    }
+    case "backup": {
+      const data = JSON.stringify({ app: "FitForm", v: 1, saved: new Date().toISOString(), data: S }), name = "fitform-backup-" + ymd(new Date()) + ".json";
+      S.backup = ymd(new Date()); save();
+      let file = null; try { file = new File([data], name, { type: "application/json" }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: "FitForm backup" }).catch(() => {});
+      else saveFile(data, name, "application/json");
+      NOTE = "Backup file created. Keep it somewhere safe, like Google Drive, Files or your email."; render(); break;
+    }
+    case "restore": { const f = $("#restoreIn"); if (f) { f.value = ""; f.click(); } break; }
     case "tick": {
       if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, e = entry(pr, dow, sid, idx), i = +el.dataset.i; e.d[i] = !e.d[i];
       const it = itemAt(pr, dow, sessById(sid), idx); if (it) e.x = it.ex;
-      if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && inp.placeholder !== "kg" && inp.placeholder !== "reps") { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
-      save(); renderSheet(); break;
+      audioOn(); keepAwake();
+      if (e.d[i]) { pr.sess = pr.sess || {}; const sk = sessKey(dow, sid), o = pr.sess[sk] = pr.sess[sk] || {}; o.a = o.a || Date.now(); o.b = Date.now(); }
+      if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && /^\d+(\.\d+)?$/.test(inp.placeholder)) { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
+      save(); renderSheet();
+      const ss = sessById(sid), pg = ss && prog(pr, dow, ss), sk2 = sessKey(dow, sid);
+      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; save(); showSummary(pr, dow, ss); }
+      break;
     }
+    case "nextEx": { if (!SH.ctx) break; const dow = SH.ctx.dow, s2 = sessById(SH.ctx.sid), raw = el.dataset.idx, idx = raw[0] === "x" ? raw : +raw, it = s2 && itemAt(pr, dow, s2, idx); if (!it) break;
+      SH.ctx = { dow, sid: s2.id, idx }; SH.slot = it.slot; SH.base = SH.view = it.ex; renderSheet(); $("#sheet").scrollTop = 0; keepAwake(); break; }
+    case "summary": { const dow = SH.ctx ? SH.ctx.dow : VIEWDAY, s2 = SH.ctx ? sessById(SH.ctx.sid) : dayPlan(pr, VIEWDAY); if (s2) showSummary(pr, dow, s2); break; }
     case "t15": T.end += 15000; break;
     case "tskip": stopTimer(); break;
     case "cat": CAT = el.dataset.c; render(); break;
@@ -2890,6 +3109,7 @@ document.addEventListener("click", ev => {
     case "wexp": W.exp = el.dataset.v; renderWizard(); break;
     case "wdays": W.days = +el.dataset.v; renderWizard(); break;
     case "wequip": W.equip = el.dataset.v; renderWizard(); break;
+    case "wlen": W.len = +el.dataset.v; renderWizard(); break;
     case "wfocus": W.focus = el.dataset.v; renderWizard(); break;
     case "wnext": wizNext(); break;
     case "wback": wizRead(); WSTEP--; WERR = ""; renderWizard(); break;
@@ -2909,6 +3129,23 @@ document.addEventListener("input", ev => {
     const { dow, sid, idx } = SH.ctx, e = entry(pr, dow, sid, idx), i = +el.dataset.i;
     const v = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); e.w[i] = v; e.x = SH.view; if (v) pr.last[SH.view] = v; save();
     document.querySelectorAll("#sheetIn input[data-act='w']").forEach(inp => { const k = +inp.dataset.i; if (k > i && !e.w[k] && v) inp.placeholder = v; });
+  }
+  if (el.dataset && el.dataset.act === "r" && SH.ctx && pr) {
+    const { dow, sid, idx } = SH.ctx, e = entry(pr, dow, sid, idx), i = +el.dataset.i;
+    e.r = e.r || []; e.r[i] = el.value.replace(/[^0-9]/g, "").slice(0, 3); e.x = SH.view; save();
+  }
+});
+document.addEventListener("change", ev => {
+  const el = ev.target, pr = P(); if (!el || !el.id) return;
+  if ((el.id === "remT" || el.id === "remA") && pr) { pr.rem = remOf(pr); if (el.id === "remT" && /^\d\d:\d\d$/.test(el.value)) pr.rem.t = el.value; if (el.id === "remA") pr.rem.a = +el.value; save(); const g = document.querySelector('[data-act="gcal"]'); if (g) g.href = gcalURL(pr); }
+  if (el.id === "restoreIn" && el.files && el.files[0]) {
+    el.files[0].text().then(t => {
+      let d = null; try { d = JSON.parse(t); } catch (e) {}
+      const src = d && d.data && d.data.profiles ? d.data : null;
+      if (!src || !Object.keys(src.profiles).length) { NOTE = "<b>That file isn't a FitForm backup.</b> Choose the .json file you saved from FitForm."; render(); return; }
+      Object.assign(S.profiles, src.profiles); if (!S.profiles[S.active]) S.active = src.active in S.profiles ? src.active : Object.keys(S.profiles)[0];
+      save(); NOTE = `Restored ${Object.keys(src.profiles).length} profile${Object.keys(src.profiles).length > 1 ? "s" : ""} with their plans and logs.`; VIEWDAY = todayDow(); render();
+    }).catch(() => { NOTE = "Couldn't read that file."; render(); });
   }
 });
 document.addEventListener("keydown", ev => { if (ev.key === "Enter" && $("#wiz").classList.contains("open") && ev.target.tagName === "INPUT") wizNext(); if (ev.key === "Escape" && $("#sheet").classList.contains("open")) closeSheet(); });
