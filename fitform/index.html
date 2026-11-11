@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="description" content="Personal strength-training plans with animated exercise demos, gym and dumbbell options, and evidence-based advice.">
-<style>@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/inter-latin-700-normal.woff2) format("woff2")}@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}</style>
+<style>@font-face{font-family:"Cairo";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/cairo-arabic-400-normal.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFC}@font-face{font-family:"Cairo";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/cairo-arabic-600-normal.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFC}@font-face{font-family:"Cairo";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/cairo-arabic-700-normal.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FEFC}@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/inter-latin-700-normal.woff2) format("woff2")}@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}</style>
 <style>
 :root{
   --bg:#0E0F11; --card:#16181C; --card2:#1D2026; --line:#2A2E35; --tx:#F3F4F6; --mut:#9CA3AF; --mut2:#6B7280;
@@ -151,6 +151,22 @@ details.fold{background:var(--card);border:1px solid var(--line);border-radius:1
 .vbar .tr i{position:absolute;inset:0 auto 0 0;background:var(--a);border-radius:99px}
 .vbar .tr u{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;opacity:.5}
 .info{border-left:3px solid var(--a);padding:10px 12px;background:var(--card);border-radius:0 12px 12px 0;margin:10px 0}
+/* Arabic / right-to-left */
+html[lang=ar]{--head:"Cairo","Barlow Condensed",system-ui,sans-serif;--body:"Cairo","Inter",system-ui,sans-serif}
+html[lang=ar] *{letter-spacing:0!important}html[lang=ar] h2,html[lang=ar] .sess .name{line-height:1.3}html[lang=ar] h3{line-height:1.4}
+html[dir=rtl] .row,html[dir=rtl] .weekrow,html[dir=rtl] .cbtn,html[dir=rtl] .prow,html[dir=rtl] .who{text-align:right}
+html[dir=rtl] .stage .lbl{left:auto;right:10px}
+html[dir=rtl] .steps li{padding:0 38px 11px 0}html[dir=rtl] .steps li::before{left:auto;right:0}
+html[dir=rtl] .cl li{padding:3px 26px 3px 0}html[dir=rtl] .cl li::before{left:auto;right:0}
+html[dir=rtl] .info{border-left:0;border-right:3px solid var(--a);border-radius:12px 0 0 12px}
+html[dir=rtl] ul[style*="padding-left"]{padding-left:0!important;padding-right:18px}
+html[dir=rtl] [style*="text-align:right"]{text-align:left!important}
+html[dir=rtl] .tr,html[dir=rtl] .sess .bar{transform:scaleX(-1)}
+html[dir=rtl] .sbar .iconbtn svg{transform:scaleX(-1)}
+html[dir=rtl] .set input{text-align:center}
+html[lang=ar] .set.kg{grid-template-columns:58px 1fr 10px 60px 46px;gap:7px}html[lang=ar] .set.kg .tick{width:46px}html[lang=ar] .set .lbl{font-size:13px;white-space:nowrap}
+html[dir=rtl] details.fold>summary small{margin-left:0;margin-right:8px}
+.langpick{display:flex;gap:6px;justify-content:flex-end;margin:-4px 0 6px}.langpick button{padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px;color:var(--mut)}.langpick button.on{border-color:var(--a);color:var(--tx)}
 .info b{display:block;margin-bottom:2px}
 .info .src{display:block;font-size:12px;margin-top:4px}
 .targets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -212,6 +228,7 @@ details.fold{background:var(--card);border:1px solid var(--line);border-radius:1
 <div class="modal" id="modal"><div class="panel" id="modalIn"></div></div>
 <div class="wiz" id="wiz"><div class="inner" id="wizIn"></div></div>
 
+<script src="ar.js"></script>
 <script>
 /* ================= Animated figure rig (side + front views) ================= */
 const RIG = (() => {
@@ -2467,13 +2484,13 @@ function advice(pr, it, ds) {
     if (reps.length < at.length) return { kg: top, up: false, last: was, msg: `Log your reps too, so FitForm can tell you when to go heavier.` };
     if (reps.every(n => n >= hi) && idx.length >= Math.min(2, it.sets)) { const nx = top + stepOf(id); return { kg: nx, up: true, last: was, msg: `You hit ${hi}+ reps on every set. Try <b>${fmtN(nx)} kg</b> today (or the next weight up).` }; }
     if (reps.every(n => n < lo - 2)) { const nx = Math.max(0, top - stepOf(id)); return { kg: nx, up: false, last: was, msg: `That was heavy. Try <b>${fmtN(nx)} kg</b> and get at least ${lo} reps.` }; }
-    return { kg: top, up: false, last: was, msg: `Stay at <b>${fmtN(top)} kg</b> and beat ${repsTxt(reps)} reps. At ${hi} on every set, go heavier.` };
+    return { kg: top, up: false, last: was, msg: `Stay at <b>${fmtN(top)} kg</b> and beat <b>${repsTxt(reps)}</b> reps. At ${hi} on every set, go heavier.` };
   }
   const vs = idx.map(i => parseFloat(L.w[i])).filter(v => v > 0); if (!vs.length) return null;
   const was = vs.map(fmtN).join(", ") + " " + UNIT[u], short = fmtN(Math.max(...vs)) + " " + UNIT[u];
   if (easy) return { kg: null, up: false, last: was, short, msg: `Easy week: do a little less than last time.` };
   if (vs.every(n => n >= hi)) return { kg: null, up: true, last: was, short, msg: u === "sec" ? `You held ${hi} s on every set. Hold longer, or try the harder version in the tips.` : `You hit ${hi}+ on every set. Make it harder: slow the lowering to 3 seconds, add a pause, or add weight (see the tips).` };
-  return { kg: null, up: false, last: was, short, msg: `Beat last time: ${was}.` };
+  return { kg: null, up: false, last: was, short, msg: `Beat last time: <b>${vs.map(fmtN).join(", ")}</b> ${UNIT[u]}.` };
 }
 function spark(pts, w = 92, h = 26) {
   if (pts.length < 2) return `<svg width="${w}" height="${h}"></svg>`;
@@ -2482,7 +2499,7 @@ function spark(pts, w = 92, h = 26) {
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--a)" stroke-width="2" stroke-linejoin="round"/><circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="2.6" fill="var(--a)"/></svg>`;
 }
 const fmtN = v => (Math.round(v * 10) / 10).toString();
-const shortDate = ds => { const d = new Date(ds + "T12:00:00"); return d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
+const shortDate = ds => { const d = new Date(ds + "T12:00:00"); return d.toLocaleDateString(isAR() ? "ar-u-nu-latn-ca-gregory" : undefined, { day: "numeric", month: "short" }); };
 function progressHTML(pr) {
   const H = histC(pr), cur = weekNo(), target = dayList(pr).length;
   const wk = {}, days = {}; let totalSets = 0;
@@ -2505,7 +2522,7 @@ function progressHTML(pr) {
     const n = cnt(cur - k);
     rows.push(`<span>${shortDate(ymd(ws))}</span>${cells}<b style="color:${n >= target ? "var(--a)" : "var(--tx)"}">${n}/${target}</b>`);
   }
-  const cal = `<div class="card"><h3>${cur - wnOf(startOf(pr)) >= 7 ? "Last 8 weeks" : "Since you started"}</h3><div class="hg"><span></span>${DAY.map(d => `<span class="h">${d[0]}</span>`).join("")}<span></span>${rows.join("")}</div>
+  const cal = `<div class="card"><h3>${cur - wnOf(startOf(pr)) >= 7 ? "Last 8 weeks" : "Since you started"}</h3><div class="hg"><span></span>${DAY.map((d, i) => `<span class="h">${isAR() ? AR.dletter[i] : d[0]}</span>`).join("")}<span></span>${rows.join("")}</div>
       <div class="small muted" style="margin-top:8px"><i class="dot" style="background:var(--a)"></i>Strength &nbsp; <i class="dot" style="background:#2f6f8f"></i>Cardio only &nbsp; · right column: workouts / planned</div></div>`;
   // strength progress: best set per session for each exercise
   const lifts = {};
@@ -2538,6 +2555,49 @@ function progressHTML(pr) {
   const musc = `<div class="card"><h3>This week by muscle</h3><p class="small muted" style="margin-top:-4px">Sets you've ticked so far, out of your plan.</p>
       ${VORDER.map(g => { const pl = planned[g] || 0, dn = done[g] || 0; return `<div class="vbar" style="grid-template-columns:96px 1fr 46px"><span>${g}</span><div class="tr"><i style="width:${pl ? Math.min(100, dn / pl * 100) : 0}%"></i></div><b style="text-align:right">${dn}/${pl}</b></div>`; }).join("")}</div>`;
   return `<h3 style="margin-top:20px">Your progress</h3>${tiles}${cal}${strength}${body}${musc}`;
+}
+
+/* ---------- language: English source, Arabic via ar.js ---------- */
+const AR = window.FITFORM_AR || null;
+const isAR = () => !!AR && (S.lang || ((navigator.language || "").toLowerCase().startsWith("ar") ? "ar" : "en")) === "ar";
+const DAYEN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const gnd = t => t.replace(/\{([^{}|]*)\|([^{}|]*)\}/g, (_, m, f) => fem() ? f : m);   // {masculine|feminine}
+let TRX = null;
+function trStr(k) {
+  if (!AR) return null; const D = AR.ui; k = k.replace(/[\s\u00a0]+/g, " ").trim(); if (!k) return null;
+  if (k in D) return gnd(D[k]);
+  const nums = [], days = [];
+  const tk = k.replace(/\d+(?:[.,]\d+)*/g, m => { nums.push(m); return "{" + (nums.length - 1) + "}"; }).replace(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\b/g, m => { days.push(m); return "{d" + (days.length - 1) + "}"; });
+  const fill = v => gnd(v).replace(/\{d(\d)\}/g, (_, i) => AR.days[DAYEN.indexOf(days[+i])]).replace(/\{(\d)\}/g, (_, i) => nums[+i]);
+  if (tk !== k && tk in D) return fill(D[tk]);
+  if (!TRX) TRX = Object.keys(D).filter(x => x.includes("{x}")).map(x => [new RegExp("^" + x.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{x\}/g, "(.+?)").replace(/\{(\d)\}/g, "(\\d+(?:[.,]\\d+)*)").replace(/\{d(\d)\}/g, "(\\w+day)") + "$"), D[x], x]);
+  for (const [re, v, key] of TRX) { const m = re.exec(k); if (m) { const slots = (key.match(/\{(x|\d|d\d)\}/g) || []); let j = 1, out = gnd(v);
+      slots.forEach(sl => { const val = m[j++]; out = out.replace(sl, sl === "{x}" ? (trStr(val) || val) : /^\{d/.test(sl) ? AR.days[DAYEN.indexOf(val)] || val : val); }); return out; } }
+  const pm = /^(.*?)([.:,!?…]+)$/.exec(k); if (pm && pm[1] in D) return gnd(D[pm[1]]) + pm[2];
+  for (const [sep, join] of [[" · ", " · "], [", ", "، "]]) if (k.includes(sep)) { let any = false; const parts = k.split(sep).map(x => { const t = trStr(x); if (t !== null) any = true; return t ?? x; }); if (any) return parts.join(join); }
+  const dm = /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) (.+)$/.exec(k); if (dm) return AR.dshort[DAY.indexOf(dm[1])] + " " + ((AR.ab || {})[dm[2]] || trStr(dm[2]) || dm[2]);
+  if (AR.tok && /^[\d\s.,:×–~+↑·\-\/()]*[A-Za-z]/.test(k) && k.split(/[\d\s.,:×–~+↑·\-\/()]+/).every(w => !w || w in AR.tok)) return k.replace(/[A-Za-z]+/g, w => AR.tok[w]).replace(/, /g, "، ");
+  return null;
+}
+const L = s => isAR() ? (trStr(s) ?? s) : s;
+function trIn(root) {
+  if (!isAR() || !root) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentNode && n.parentNode.closest && n.parentNode.closest("svg,script,style,[data-notr]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n => { const v = n.nodeValue, k = v.trim(); if (!k) return;
+    let t = /[A-Za-z]/.test(k) ? trStr(k) : null; if (t === null && /\{[^{}]*\|/.test(k)) t = gnd(k);
+    if (t !== null) n.nodeValue = v.replace(k, t.replace(/→/g, "←").replace(/›/g, "‹")); else if (/[→›]/.test(k)) n.nodeValue = v.replace(/→/g, "←").replace(/›/g, "‹"); });
+  root.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el => ["placeholder", "aria-label", "title"].forEach(a => { const v = el.getAttribute(a); if (v && /[A-Za-z]/.test(v)) { const t = trStr(v); if (t !== null) el.setAttribute(a, t); } }));
+}
+/* swap the data (exercises, plans, muscles) to Arabic once, at start-up */
+function localize() {
+  const ar = isAR(); document.documentElement.lang = ar ? "ar" : "en"; document.documentElement.dir = ar ? "rtl" : "ltr"; if (!ar) return;
+  Object.entries(AR.ex || {}).forEach(([id, t]) => { if (EX[id]) Object.assign(EX[id], t); });
+  Object.entries(AR.slots || {}).forEach(([k, l]) => { if (SLOTS[k]) SLOTS[k].label = l; });
+  Object.assign(MUSCLE_NAMES, AR.muscles || {});
+  Object.entries(AR.goals || {}).forEach(([k, g]) => { if (GOALS[k]) Object.assign(GOALS[k], g); });
+  Object.values(TEMPLATES).forEach(T => { T.title = AR.ui[T.title] || T.title; [2, 3, 4].forEach(d => (T[d] || []).forEach(x => { x.name = AR.ui[x.name] || x.name; x.focus = AR.ui[x.focus] || x.focus; x.ab = (AR.ab || {})[x.ab] || x.ab; })); });
+  Object.keys(STRETCHES).forEach(g => { if ((AR.stretches || {})[g]) STRETCHES[g] = AR.stretches[g]; });
 }
 
 /* ---------- settings bits ---------- */
@@ -2604,7 +2664,7 @@ function header() {
   $("#av").className = "av " + (pr ? pr.sex : "");
   $("#av").textContent = pr ? (pr.name || (pr.sex === "f" ? "F" : "M")).slice(0, 1).toUpperCase() : "?";
   $("#hname").textContent = pr ? (pr.name || "My profile") : "FitForm";
-  if (pr) { const s = dayPlan(pr, todayDow()); $("#hsub").textContent = (s ? "Today: " + s.name : "Today: rest day") + " · " + PLAN.title; }
+  if (pr) { const s = dayPlan(pr, todayDow()); $("#hsub").textContent = (s ? L("Today:") + " " + L(s.name) : L("Today: rest day")) + " · " + PLAN.title; }
 }
 const itemLabel = (it, s, i) => it.extra ? "Extra" : it.role === "warm" ? "Start" : it.role === "cool" ? "Stretch" : it.opt ? "" : it.role === "cardio" ? (s.cardio ? "Cardio" : "Finish") : s.cardio ? "Balance" : "#" + i;
 function viewToday() {
@@ -2766,6 +2826,7 @@ function viewMe() {
       <div class="kv"><span class="muted">Equipment (whole plan)</span><b>${EQNAME[pr.equip]}</b></div>
       <div class="seg" style="--n:3;margin:6px 0 10px">${KEYS.map(k => `<button class="${pr.equip === k ? "on" : ""}" data-act="equip" data-v="${k}">${KEYNAME[k]}</button>`).join("")}</div>
       <div class="seg" style="margin-bottom:0"><button class="${pr.focus === "glutes" ? "on" : ""}" data-act="focus" data-f="glutes">Glutes & Back<small>lower-body emphasis</small></button><button class="${pr.focus === "upper" ? "on" : ""}" data-act="focus" data-f="upper">Upper body · V-shape<small>chest, shoulders, lats</small></button></div></div>
+    ${AR ? `<div class="card"><div class="kv tog"><span>Language</span><span class="tg" data-notr><button class="${isAR() ? "" : "on"}" data-act="lang" data-v="en">English</button><button class="${isAR() ? "on" : ""}" data-act="lang" data-v="ar">العربية</button></span></div></div>` : ""}
     <div class="card"><h3>Workout settings</h3><div class="small muted">Time per workout</div>${lenSeg(pr)}
       ${togRow(pr, "sound", "Sound when rest ends", ["on", "On"], ["off", "Off"], "on")}
       ${togRow(pr, "screen", "Keep screen on while training", ["on", "On"], ["off", "Off"], "on")}
@@ -2799,6 +2860,7 @@ function render() {
   let note = "";
   if (TAB === "me" || TAB === "library") { note = NOTE; NOTE = ""; }
   $("#view").innerHTML = (note ? `<div class="card note">${note}</div>` : "") + (TAB === "plan" ? viewPlan() : TAB === "library" ? viewLibrary() : TAB === "me" ? viewMe() : viewToday());
+  trIn($("#view")); trIn($("#tabs")); trIn(document.querySelector("header.top")); trIn($("#timer"));
   scanFigs();
 }
 
@@ -2873,6 +2935,7 @@ function renderSheet() {
     <div class="two"><div class="card" style="margin:0"><h3>Tips</h3><ul class="cl good">${ex.tips.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div><div class="card" style="margin:0"><h3>Avoid</h3><ul class="cl bad">${ex.avoid.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
     ${subCard}
     ${ex.P.length || ex.S.length ? `<div class="card"><h3>Muscles worked</h3><div class="muscles">${bodySVG(ex.P, ex.S)}<div class="mlist">${ex.P.length ? `<h4>Main</h4>${ml(ex.P)}` : ""}${ex.S.length ? `<h4>Also works</h4>${ml(ex.S)}` : ""}</div></div></div>` : ""}`;
+  trIn($("#sheetIn"));
   scanFigs();
 }
 
@@ -2917,15 +2980,15 @@ function summaryHTML(pr, dow, s) {
     <p class="small">${nx !== undefined ? `Next workout: <b>${esc(abOf(w.m[nx]))}</b> on ${DAYF[nx]}.` : "That's this week's workouts done. Rest well."} Eat some protein in the next few hours.</p>
     <button class="btn a wide" data-act="closeModal">Done</button>`;
 }
-function showSummary(pr, dow, s) { letSleep(); stopTimer(); $("#modalIn").innerHTML = summaryHTML(pr, dow, s); $("#modal").classList.add("open"); }
+function showSummary(pr, dow, s) { letSleep(); stopTimer(); $("#modalIn").innerHTML = summaryHTML(pr, dow, s); trIn($("#modalIn")); $("#modal").classList.add("open"); }
 
 /* ---------- rest timer ---------- */
 const T = { end: 0, iv: null, go: null };
 function startTimer(sec) {
   if (!sec) return; T.end = Date.now() + sec * 1000; clearInterval(T.iv); clearTimeout(T.go);
-  const el = $("#timer"); el.classList.remove("go"); el.classList.add("show"); $("#tLbl").textContent = "Rest";
+  const el = $("#timer"); el.classList.remove("go"); el.classList.add("show"); $("#tLbl").textContent = L("Rest");
   const tick = () => { const l = Math.max(0, Math.round((T.end - Date.now()) / 1000)); $("#tVal").textContent = Math.floor(l / 60) + ":" + pad(l % 60);
-    if (l <= 0) { clearInterval(T.iv); el.classList.add("go"); $("#tLbl").textContent = "Rest over"; $("#tVal").textContent = "Next set"; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} beep(); T.go = setTimeout(() => el.classList.remove("show", "go"), 5000); } };
+    if (l <= 0) { clearInterval(T.iv); el.classList.add("go"); $("#tLbl").textContent = L("Rest over"); $("#tVal").textContent = L("Next set"); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} beep(); T.go = setTimeout(() => el.classList.remove("show", "go"), 5000); } };
   tick(); T.iv = setInterval(tick, 250);
 }
 const stopTimer = () => { clearInterval(T.iv); clearTimeout(T.go); $("#timer").classList.remove("show", "go"); };
@@ -2940,7 +3003,7 @@ function openWizard(editId) {
 function renderWizard() {
   const dots = `<div class="dots">${Array.from({ length: WSTEPS }, (_, i) => `<i class="${i <= WSTEP ? "on" : ""}"></i>`).join("")}</div>`;
   let body = "";
-  if (WSTEP === 0) body = `<div class="brand" style="font-size:30px">FIT<b>FORM</b></div><h2>Let's build your profile</h2><p class="muted">Answer a few quick questions and you'll get a personal program with moving demos for every exercise, and a dumbbell or machine option for each.</p>
+  if (WSTEP === 0) body = `${AR ? `<div class="langpick" data-notr><button class="${isAR() ? "" : "on"}" data-act="lang" data-v="en">English</button><button class="${isAR() ? "on" : ""}" data-act="lang" data-v="ar">العربية</button></div>` : ""}<div class="brand" style="font-size:30px" data-notr>FIT<b>FORM</b></div><h2>Let's build your profile</h2><p class="muted">Answer a few quick questions and you'll get a personal program with moving demos for every exercise, and a dumbbell or machine option for each.</p>
       <label class="field"><span>Your name <span class="muted" style="font-weight:400">(optional)</span></span><input id="wName" type="text" maxlength="24" value="${esc(W.name || "")}" placeholder="e.g. Mohamed" autocomplete="off"></label>`;
   if (WSTEP === 1) body = `<h2>Your sex</h2><p class="muted">This sets your default focus and the advice you'll see. You can change the focus later.</p>
       <div class="sexpick"><button class="cbtn${W.sex === "f" ? " on" : ""}" data-act="wsex" data-v="f"><div data-fig="db-hipthrust" data-big="1" data-sex="f"><svg viewBox="0 0 240 220">${RIG.svgAt(ANIM["db-hipthrust"], 0, true)}</svg></div><b>Female</b><span>Glutes & back focus</span></button>
@@ -2973,6 +3036,7 @@ function renderWizard() {
     <div class="wnav">${canBack ? `<button class="btn" data-act="wback">Back</button>` : W._edit ? `<button class="btn" data-act="wgo" data-v="0">Edit answers</button>` : hasAny ? `<button class="btn" data-act="wcancel">Cancel</button>` : ""}
     <button class="btn a" data-act="wnext">${WSTEP === 5 ? (W._edit ? "Save profile" : "Create my plan") : "Next"}</button></div>
     ${W._edit ? `<button class="btn wide" style="margin-top:8px" data-act="wcancel">Cancel</button>` : ""}`;
+  trIn($("#wizIn"));
   scanFigs();
 }
 function wizRead() {
@@ -3001,6 +3065,7 @@ function openProfiles() {
   const list = Object.values(S.profiles).map(p => `<button class="prow${p.id === S.active ? " on" : ""}" data-act="pick" data-id="${p.id}"><div class="av ${p.sex}">${esc((p.name || (p.sex === "f" ? "F" : "M")).slice(0, 1).toUpperCase())}</div><div style="flex:1"><b>${esc(p.name || "Profile")}</b><div class="small muted">${p.sex === "f" ? "Female" : "Male"} · ${p.age} · ${esc(GOALS[p.goal].short)} · ${p.days} days</div></div>${p.id === S.active ? "✓" : ""}</button>`).join("");
   $("#modalIn").innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">Profiles</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
     <p class="small muted">Each person gets their own plan and log on this device.</p>${list}<button class="btn a wide" data-act="newProfile">+ Add a profile</button>`;
+  trIn($("#modalIn"));
   $("#modal").classList.add("open");
 }
 
@@ -3038,7 +3103,7 @@ document.addEventListener("click", ev => {
     }
     case "bwSave": {
       const inp = $("#bwIn"), kg = parseFloat(((inp && inp.value) || "").replace(",", "."));
-      if (!(kg >= 25 && kg <= 300)) { if (inp) { inp.focus(); inp.placeholder = "Enter kg, e.g. 78.5"; } break; }
+      if (!(kg >= 25 && kg <= 300)) { if (inp) { inp.focus(); inp.placeholder = L("Enter kg, e.g. 78.5"); } break; }
       const d = ymd(new Date()); pr.bw = (pr.bw || []).filter(b => b.d !== d); pr.bw.push({ d, kg: Math.round(kg * 10) / 10 }); pr.bw.sort((a, b) => a.d < b.d ? -1 : 1);
       pr.weight = Math.round(kg); save(); NOTE = `Saved ${fmtN(kg)} kg for today. Your protein targets now use this weight.`; render(); break;
     }
@@ -3062,6 +3127,7 @@ document.addEventListener("click", ev => {
       render(); window.scrollTo(0, 0); break;
     }
     case "resetWeek": delete pr.wk; save(); render(); break;
+    case "lang": if ((S.lang || (isAR() ? "ar" : "en")) !== el.dataset.v) { if (W && $("#wiz").classList.contains("open")) { wizRead(); S.wdraft = W; } S.lang = el.dataset.v; save(); location.reload(); } break;
     case "len": pr.len = +el.dataset.v; save(); NOTE = +pr.len ? `Workouts now fit about <b>${pr.len} minutes</b>. The main lifts stay; smaller extras and a few sets make way.` : "Time limit off: you get the full workouts again."; render(); break;
     case "pref": pr[el.dataset.k] = el.dataset.v; save(); if (el.dataset.k === "screen" && el.dataset.v === "off") letSleep(); if (el.dataset.k === "sound" && el.dataset.v === "on") { audioOn(); beep(); } render(); break;
     case "gorem": TAB = "me"; render(); setTimeout(() => { const r = $("#rem"); if (r) r.scrollIntoView({ block: "start" }); }, 30); break;
@@ -3155,7 +3221,8 @@ if ("1" === "1" && "serviceWorker" in navigator && (location.protocol === "https
 function retireRootWorker() { try { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => { if (r.scope === location.origin + "/") r.unregister(); })); caches.keys().then(ks => ks.filter(k => k.startsWith("fitform-") && !k.startsWith("fitform-app-")).forEach(k => caches.delete(k))); } catch (e) {} }
 if ("1" !== "1") try { const man = { name: "FitForm", short_name: "FitForm", display: "standalone", background_color: "#0E0F11", theme_color: "#0E0F11", start_url: location.href.split("#")[0], icons: [{ src: "data:image/png;base64,", sizes: "512x512", type: "image/png" }] };
   const l = document.createElement("link"); l.rel = "manifest"; l.href = URL.createObjectURL(new Blob([JSON.stringify(man)], { type: "application/manifest+json" })); document.head.appendChild(l); } catch (e) {}
-render();
+localize();
+if (S.wdraft) { const d = S.wdraft; delete S.wdraft; save(); W = d; WSTEP = 0; WERR = ""; renderWizard(); $("#wiz").classList.add("open"); } else render();
 </script>
 </body>
 </html>
