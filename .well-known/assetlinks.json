@@ -4,7 +4,10 @@
     "target": {
       "namespace": "android_app",
       "package_name": "io.github.mial8727.fitform",
-      "sha256_cert_fingerprints": ["F0:E6:F4:F1:60:B2:B5:A8:FB:91:C5:B3:A0:A5:13:BE:72:FE:73:22:F1:03:53:AA:95:19:C1:1F:44:46:7B:8C"]
+      "sha256_cert_fingerprints": [
+        "F0:E6:F4:F1:60:B2:B5:A8:FB:91:C5:B3:A0:A5:13:BE:72:FE:73:22:F1:03:53:AA:95:19:C1:1F:44:46:7B:8C",
+        "6F:17:35:1F:9E:4F:24:4D:F6:52:36:E0:2B:D0:A2:F8:28:91:68:1C:C8:7D:D7:19:64:89:78:01:97:A7:AE:93"
+      ]
     }
   }
 ]
