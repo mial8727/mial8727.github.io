@@ -2197,12 +2197,18 @@ const TEMPLATES = {
     3: [ { ab: "FB 1", id: "fb1", name: "Chest, Back & Squat", focus: "Chest, lats, squat, side shoulders, triceps, hamstrings, calves", items: [["press", "main"], ["@vp", "sec"], ["squat", "sec"], ["@shs", "pri"], ["@tri", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
          { ab: "FB 2", id: "fb2", name: "Shoulders, Back & Hinge", focus: "Shoulder press, rows, hinge, side & rear shoulders, biceps, quads", items: [["@shp", "main"], ["@hp", "main"], ["hinge", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["legext", "acc"], ["@fore", "acc"]] },
          { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, split squat, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "sec"], ["split", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
-    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Press & row, shoulder press, side & rear shoulders, biceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
+    4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Press & row, shoulder press, side & rear shoulders, biceps, triceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
          { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, side shoulders", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
-         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"]] },
-         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
+         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms, traps", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"], ["shrug", "acc"]] },
+         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   }
 };
+
+/* the men's 4-day plan before the Nov 2026 tweaks: used once to match old logged sets to their exercises */
+const UPPER4_OLD = [ { ab: "Up A", id: "ua", name: "Upper A", focus: "", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
+  { ab: "Lo A", id: "la", name: "Lower A", focus: "", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
+  { ab: "Up B", id: "ub", name: "Upper B", focus: "", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"]] },
+  { ab: "Lo B", id: "lb", name: "Lower B", focus: "", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ];
 
 /* ---------- goals: [sets, reps, rest seconds] per role ---------- */
 const GOALS = {
@@ -2247,6 +2253,8 @@ const toKg = (v, u) => u === "lb" ? v * LBK : v;
 const fromKg = (kg, u) => u === "lb" ? kg / LBK : kg;
 const roundU = (v, u) => u === "lb" ? Math.round(v) : Math.round(v * 2) / 2;
 const convW = (v, from, to) => from === to ? v : roundU(fromKg(toKg(v, from), to), to);                 // gym moves done with bodyweight
+const BARLOAD = new Set(Object.keys(EX).filter(id => EX[id].type !== "bw" && !PERHAND.has(id) && /barbell|ez (curl )?bar|smith machine|landmine|t-bar/i.test(EX[id].equip) && !/^cable|calf raise machine/i.test(EX[id].equip)));
+const BARLOOSE = new Set([...BARLOAD].filter(id => !/barbell|ez/i.test(EX[id].equip)));   // Smith, T-bar, landmine: bars differ
 const unitOf = id => TICKONLY.has(id) || EX[id].kind === "cardio" ? "none" : id === "dead-hang" || (EX[id].type === "bw" && / s\b/.test(TIMED[id] || "")) ? "sec" : EX[id].type === "bw" || NOLOAD.has(id) ? "reps" : "kg";
 const UNIT = { kg: "kg", reps: "reps", sec: "s", none: "" };
 const repRange = r => { const m = /(\d+)(?:–(\d+))?/.exec(r || ""); return m ? [+m[1], +(m[2] || m[1])] : [8, 12]; };
@@ -2493,6 +2501,34 @@ function peek(pr, dow, sid, idx) { const k = logKey(dow); return (pr.log[k] && p
 function entry(pr, dow, sid, idx) { const k = logKey(dow); pr.log[k] = pr.log[k] || {}; return (pr.log[k][sid + ":" + idx] = pr.log[k][sid + ":" + idx] || { d: [], w: [] }); }
 /* a set log belongs to one exercise: after a swap the new exercise starts clean */
 function entryX(pr, dow, sid, idx, id) { const e = entry(pr, dow, sid, idx); if (id && e.x && e.x !== id) { e.d = []; e.w = []; e.r = []; delete e.u; } if (id) e.x = id; return e; }
+/* Nov 2026: the men's 4-day plan changed (a leg curl left Lower B). Logged sets are matched to exercises by position, so
+   stamp each old set with its exercise first, then shift Lower B's later positions up by one. Runs once per profile. */
+function migrateLogs() {
+  let changed = false;
+  Object.values(S.profiles).forEach(pr => {
+    if (pr.tv >= 2) return;
+    pr.tv = 2; changed = true;
+    if (pr.focus !== "upper" || pr.days !== 4 || !pr.log) return;
+    const NEW = TEMPLATES.upper[4]; TEMPLATES.upper[4] = UPPER4_OLD.map((x, i) => Object.assign({}, NEW[i], { items: x.items }));
+    try {
+      Object.entries(pr.log).forEach(([ds, L]) => {
+        let PL; try { PL = buildPlan(pr, wnOf(ds)); } catch (e) { return; }
+        const moves = [];
+        Object.entries(L || {}).forEach(([k, e]) => {
+          const [sid, idx] = k.split(":"); if (!e || !/^\d+$/.test(idx)) return;
+          const n = +idx, s = PL.sessions.find(x => x.id === sid), it = s && s.items[n];
+          if (!e.x && it && ((e.d || []).some(Boolean) || (e.w || []).some(Boolean))) e.x = it.ex;
+          // positions: 0 warm-up, then the exercises, then cardio and cool-down
+          const to = sid === "lb" ? (n === 4 ? 99 : n > 4 ? n - 1 : null) : (sid === "ua" || sid === "ub") && n >= 8 ? n + 1 : null;
+          if (to !== null) moves.push([k, sid + ":" + to, e]);
+        });
+        moves.forEach(([k]) => delete L[k]);
+        moves.forEach(([, k2, e]) => { if ((e.d || []).some(Boolean) || (e.w || []).some(Boolean)) L[k2] = e; });
+      });
+    } finally { TEMPLATES.upper[4] = NEW; }
+  });
+  if (changed) { HC = null; save(); }
+}
 function prog(pr, dow, s) {
   let tot = 0, done = 0;
   const add = (it, idx) => { if (it.opt) return; tot += it.sets; const e = peek(pr, dow, s.id, idx); for (let k = 0; k < it.sets; k++) if (e.d[k]) done++; };
@@ -3104,7 +3140,8 @@ function renderSheet() {
       sets = id !== inPlan ? "" : `<div class="card"><div class="setsh" style="align-items:center"><div><b>${esc(it.reps)}</b><div class="small muted">${it.opt ? "Optional finisher" : it.role === "warm" ? "Warm-up" : it.role === "cool" ? "Cool-down stretch" : s.cardio ? (it.vig ? "Vigorous cardio" : "Moderate cardio") : "Cardio finisher"}</div></div><button class="tick${e.d[0] ? " on" : ""}" data-act="tick" data-i="0" aria-label="Mark done">✓</button></div>${mins}</div>`;
     } else {
       const u = unitOf(id), ds = logKey(SH.ctx.dow), ad = advice(pr, it, ds), [lo, hi] = repRange(it.reps), cu = unitW(pr, id), ph = PERHAND.has(id);
-      const help = u === "kg" ? (ph ? `Enter the weight of one dumbbell (two 6 ${cu} dumbbells = 6) and the reps you did, then tick the set to start your rest timer.` : `Enter the weight and the reps you did, then tick the set to start your rest timer.`) : u === "reps" ? "Log the reps you did, then tick the set to start your rest timer." : u === "sec" ? "Log how many seconds you held, then tick the set." : "Tick each set when it's done. Quality over quantity.";
+      const bar = u === "kg" && BARLOAD.has(id), looseBar = bar && BARLOOSE.has(id);
+      const help = u === "kg" ? (ph ? `Enter the weight of one dumbbell (two 6 ${cu} dumbbells = 6) and the reps you did, then tick the set to start your rest timer.` : looseBar ? `Enter the total weight, including the bar, and the reps you did. Bar weights vary between machines, so use the same one each time. Then tick the set to start your rest timer.` : bar ? (cu === "lb" ? `Enter the total weight including the bar (a 45 lb bar with a 10 lb plate on each side = 65) and the reps you did, then tick the set to start your rest timer.` : `Enter the total weight including the bar (a 20 kg bar with a 10 kg plate on each side = 40) and the reps you did, then tick the set to start your rest timer.`) : `Enter the weight and the reps you did, then tick the set to start your rest timer.`) : u === "reps" ? "Log the reps you did, then tick the set to start your rest timer." : u === "sec" ? "Log how many seconds you held, then tick the set." : "Tick each set when it's done. Quality over quantity.";
       const adv = ad ? `<div class="adv${ad.up ? " up" : ""}"><span class="small muted">Last time: <b style="color:var(--tx)">${esc(ad.last)}</b></span><div>${ad.up ? "↑ " : ""}${ad.msg}</div></div>` : "";
       const ph0 = u === "kg" ? (ad && ad.kg !== null ? fmtN(ad.kg) : cu) : UNIT[u] || "";
       const row = k => {
@@ -3213,7 +3250,7 @@ const stopTimer = () => { clearInterval(T.iv); clearTimeout(T.go); $("#timer").c
 let W = null, WSTEP = 0, WERR = "";
 const WSTEPS = 6;
 function openWizard(editId) {
-  const base = editId ? JSON.parse(JSON.stringify(S.profiles[editId])) : { id: "p" + Date.now().toString(36), name: "", sex: null, age: "", weight: "", goal: null, exp: "new", days: 3, equip: "gym", focus: null, swaps: {}, log: {}, last: {}, dayList: null };
+  const base = editId ? JSON.parse(JSON.stringify(S.profiles[editId])) : { id: "p" + Date.now().toString(36), name: "", tv: 2, sex: null, age: "", weight: "", goal: null, exp: "new", days: 3, equip: "gym", focus: null, swaps: {}, log: {}, last: {}, dayList: null };
   W = base; W._edit = !!editId; WSTEP = editId ? 5 : 0; WERR = ""; renderWizard(); $("#wiz").classList.add("open");
 }
 function renderWizard() {
@@ -3449,7 +3486,7 @@ document.addEventListener("change", ev => {
       const src = d && d.data && d.data.profiles ? d.data : null;
       if (!src || !Object.keys(src.profiles).length) { NOTE = "<b>That file isn't a FitForm backup.</b> Choose the .json file you saved from FitForm."; render(); return; }
       Object.assign(S.profiles, src.profiles); if (!S.profiles[S.active]) S.active = src.active in S.profiles ? src.active : Object.keys(S.profiles)[0];
-      save(); NOTE = `Restored ${Object.keys(src.profiles).length} profile${Object.keys(src.profiles).length > 1 ? "s" : ""} with their plans and logs.`; VIEWDAY = todayDow(); render();
+      migrateLogs(); save(); NOTE = `Restored ${Object.keys(src.profiles).length} profile${Object.keys(src.profiles).length > 1 ? "s" : ""} with their plans and logs.`; VIEWDAY = todayDow(); render();
     }).catch(() => { NOTE = "Couldn't read that file."; render(); });
   }
 });
@@ -3460,6 +3497,7 @@ if ("1" === "1" && "serviceWorker" in navigator && (location.protocol === "https
 function retireRootWorker() { try { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => { if (r.scope === location.origin + "/") r.unregister(); })); caches.keys().then(ks => ks.filter(k => k.startsWith("fitform-") && !k.startsWith("fitform-app-")).forEach(k => caches.delete(k))); } catch (e) {} }
 if ("1" !== "1") try { const man = { name: "FitForm", short_name: "FitForm", display: "standalone", background_color: "#0E0F11", theme_color: "#0E0F11", start_url: location.href.split("#")[0], icons: [{ src: "data:image/png;base64,", sizes: "512x512", type: "image/png" }] };
   const l = document.createElement("link"); l.rel = "manifest"; l.href = URL.createObjectURL(new Blob([JSON.stringify(man)], { type: "application/manifest+json" })); document.head.appendChild(l); } catch (e) {}
+migrateLogs();
 localize();
 if (S.wdraft) { const d = S.wdraft; delete S.wdraft; save(); W = d; WSTEP = 0; WERR = ""; renderWizard(); $("#wiz").classList.add("open"); } else render();
 </script>
