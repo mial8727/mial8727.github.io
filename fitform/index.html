@@ -2201,8 +2201,58 @@ const TEMPLATES = {
          { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, side shoulders", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
          { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms, traps", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"], ["shrug", "acc"]] },
          { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
+  },
+  /* Push / Pull / Legs, 3 to 6 days. Two versions: men lean to chest, shoulder width, back and arms; women lean to glutes, shoulders and posture. */
+  pplm: {
+    title: "Push Pull Legs",
+    3: [ { ab: "Push", id: "ps", name: "Push", focus: "Chest, shoulders, triceps", items: [["press", "main"], ["incline", "sec"], ["@shp", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back width & thickness, rear shoulders, traps, biceps, forearms", items: [["pulldown", "main"], ["@hp", "main"], ["@rd", "acc"], ["shrug", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@calf", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs", focus: "Quads, hamstrings, glutes, calves, core", items: [["squat", "main"], ["hinge", "sec"], ["legpress", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "Push", id: "ps", name: "Push", focus: "Chest, shoulders, triceps", items: [["press", "main"], ["@shp", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back width & thickness, rear shoulders, traps, biceps, forearms", items: [["pulldown", "main"], ["@hp", "main"], ["@rd", "acc"], ["shrug", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@calf", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs", focus: "Quads, hamstrings, glutes, calves, core", items: [["squat", "main"], ["hinge", "sec"], ["legpress", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "Upper", id: "up", name: "Upper", focus: "Upper chest, back, side & rear shoulders, arms", items: [["incline", "main"], ["@hp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["crossover", "acc"], ["@bi", "acc"], ["@tri", "acc"]] } ],
+    5: [ { ab: "Push", id: "ps", name: "Push", focus: "Chest, shoulders, triceps", items: [["press", "main"], ["@shp", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back width & thickness, rear shoulders, traps, biceps, forearms", items: [["pulldown", "main"], ["@hp", "main"], ["@rd", "acc"], ["shrug", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs", focus: "Quads, hamstrings, glutes, calves, core", items: [["squat", "main"], ["hinge", "sec"], ["legpress", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "Upper", id: "up", name: "Upper", focus: "Upper chest, back, side & rear shoulders, arms", items: [["incline", "main"], ["@hp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["crossover", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "Lower", id: "lw", name: "Lower", focus: "Leg press, glutes, single-leg, calves, core", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@core", "core"]] } ],
+    6: [ { ab: "Push A", id: "ps1", name: "Push A", focus: "Chest, shoulders, triceps", items: [["press", "main"], ["@shp", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"]] },
+         { ab: "Pull A", id: "pl1", name: "Pull A", focus: "Lats, upper back, rear shoulders, biceps", items: [["pulldown", "main"], ["@hp", "main"], ["@rd", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Legs A", id: "lg1", name: "Legs A", focus: "Squat focus: quads, hamstrings, calves, core", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "Push B", id: "ps2", name: "Push B", focus: "Upper chest, shoulders, triceps", items: [["incline", "main"], ["@shp", "sec"], ["@shs", "pri"], ["crossover", "acc"], ["@tri", "acc"], ["@tri", "acc"]] },
+         { ab: "Pull B", id: "pl2", name: "Pull B", focus: "Back thickness, traps, rear shoulders, biceps", items: [["bentrow", "main"], ["@vp", "sec"], ["@rd", "acc"], ["shrug", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Legs B", id: "lg2", name: "Legs B", focus: "Leg press, glutes, single-leg, calves, core", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@core", "core"]] } ]
+  },
+  pplf: {
+    title: "Push Pull Legs",
+    3: [ { ab: "Push", id: "ps", name: "Push", focus: "Shoulders, chest, triceps", items: [["@shp", "main"], ["press", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back, posture, rear shoulders, biceps, forearms", items: [["@vp", "main"], ["@hp", "main"], ["@rd", "pri"], ["backext", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@calf", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs & Glutes", focus: "Jumps, glutes, quads, hamstrings, inner/outer thighs, calves", items: [["@jump", "pow"], ["thrust", "main"], ["squat", "sec"], ["hinge", "sec"], ["legext", "acc"], ["@hip", "acc"], ["legcurl", "acc"], ["@calf", "acc"]] } ],
+    4: [ { ab: "Push", id: "ps", name: "Push", focus: "Shoulders, chest, triceps", items: [["@shp", "main"], ["press", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back, posture, rear shoulders, biceps, forearms", items: [["@vp", "main"], ["@hp", "main"], ["@rd", "pri"], ["backext", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"], ["@calf", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs & Glutes", focus: "Jumps, glutes, quads, hamstrings, inner/outer thighs, calves", items: [["@jump", "pow"], ["thrust", "main"], ["squat", "sec"], ["hinge", "sec"], ["legext", "acc"], ["@hip", "acc"], ["legcurl", "acc"], ["@calf", "acc"]] },
+         { ab: "Upper", id: "up", name: "Upper", focus: "Back, shoulders, chest, arms", items: [["@hp", "main"], ["incline", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] } ],
+    5: [ { ab: "Push", id: "ps", name: "Push", focus: "Shoulders, chest, triceps", items: [["@shp", "main"], ["press", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "pl", name: "Pull", focus: "Back, posture, rear shoulders, biceps, forearms", items: [["@vp", "main"], ["@hp", "main"], ["@rd", "pri"], ["backext", "acc"], ["@bi", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Legs", id: "lg", name: "Legs & Glutes", focus: "Jumps, glutes, quads, hamstrings, inner/outer thighs, calves", items: [["@jump", "pow"], ["thrust", "main"], ["squat", "sec"], ["hinge", "sec"], ["legext", "acc"], ["@hip", "acc"], ["legcurl", "acc"], ["@calf", "acc"]] },
+         { ab: "Upper", id: "up", name: "Upper", focus: "Back, shoulders, chest, arms", items: [["@hp", "main"], ["incline", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "Lower", id: "lw", name: "Glutes & Hamstrings", focus: "Jumps, hinge, glute isolation, hamstrings, inner thighs, calves", items: [["@jump", "pow"], ["hinge", "main"], ["split", "sec"], ["kickback", "acc"], ["legcurl", "acc"], ["adduct", "acc"], ["@calf", "acc"], ["@core", "core"]] } ],
+    6: [ { ab: "Push A", id: "ps1", name: "Push A", focus: "Shoulders, chest, triceps", items: [["@shp", "main"], ["press", "sec"], ["@shs", "pri"], ["@fly", "acc"], ["@tri", "acc"], ["@tri", "acc"]] },
+         { ab: "Pull A", id: "pl1", name: "Pull A", focus: "Lats, upper back, rear shoulders, biceps", items: [["pulldown", "main"], ["@hp", "main"], ["@rd", "pri"], ["backext", "acc"], ["@bi", "acc"], ["@core", "core"]] },
+         { ab: "Legs A", id: "lg1", name: "Legs & Glutes", focus: "Jumps, glutes, squat, hamstrings, inner/outer thighs, calves", items: [["@jump", "pow"], ["thrust", "main"], ["squat", "sec"], ["legext", "acc"], ["@hip", "acc"], ["legcurl", "acc"], ["@calf", "acc"]] },
+         { ab: "Push B", id: "ps2", name: "Push B", focus: "Shoulders, upper chest, triceps", items: [["@shp", "main"], ["incline", "sec"], ["@shs", "pri"], ["crossover", "acc"], ["@tri", "acc"], ["@tri", "acc"]] },
+         { ab: "Pull B", id: "pl2", name: "Pull B", focus: "Back thickness, rear shoulders, biceps, forearms", items: [["bentrow", "main"], ["@vp", "sec"], ["@rd", "pri"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Legs B", id: "lg2", name: "Glutes & Hamstrings", focus: "Jumps, hinge, split squat, glute isolation, hamstrings, calves", items: [["@jump", "pow"], ["hinge", "main"], ["split", "sec"], ["kickback", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] } ]
   }
 };
+
+/* programs: "glutes" and "upper" run 2-4 days; Push Pull Legs (pplf for women, pplm for men) runs 3-6 */
+const pplOf = sex => sex === "f" ? "pplf" : "pplm";
+const isPPL = f => f === "pplf" || f === "pplm";
+const clampDays = (f, d) => { const ds = [2, 3, 4, 5, 6].filter(x => TEMPLATES[f] && TEMPLATES[f][x]); return ds.includes(d) ? d : d < ds[0] ? ds[0] : ds[ds.length - 1]; };
+const defFocus = (sex, days) => days >= 5 ? pplOf(sex) : sex === "f" ? "glutes" : "upper";
+const focusNote = (f, d) => { const ds = [2, 3, 4, 5, 6].filter(x => TEMPLATES[f][x]); return `Days set to ${d} because this program runs ${ds[0]}–${ds[ds.length - 1]} days a week.`; };
 
 /* the men's 4-day plan before the Nov 2026 tweaks: used once to match old logged sets to their exercises */
 const UPPER4_OLD = [ { ab: "Up A", id: "ua", name: "Upper A", focus: "", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
@@ -2283,7 +2333,7 @@ const SOURCES = {
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, el = document) => el.querySelector(s);
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], DAYF = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DEFAULT_DAYS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4] };
+const DEFAULT_DAYS = { 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 4, 5], 6: [0, 1, 2, 4, 5, 6] };
 const CATS = ["All", "Glutes", "Legs", "Back", "Chest", "Shoulders", "Biceps", "Triceps", "Forearms", "Core", "Cardio"];
 
 /* ---------- storage ---------- */
@@ -2375,7 +2425,7 @@ function fitTime(pr, items) {
 function cardioPick(pr) {
   if (pr.cardio === "off") return {};
   const ds = dayList(pr), rest = [0, 1, 2, 3, 4, 5, 6].filter(d => !ds.includes(d));
-  const n = Math.min(rest.length, { fatloss: 3, health: 3, muscle: 2, strength: 2 }[pr.goal] + (pr.age >= 65 ? 1 : 0));
+  const n = Math.min(rest.length - (ds.length >= 5 ? 1 : 0), { fatloss: 3, health: 3, muscle: 2, strength: 2 }[pr.goal] + (pr.age >= 65 ? 1 : 0));
   const pick = n <= 0 ? [] : n === 1 ? [rest[0]] : Array.from(new Set(Array.from({ length: n }, (_, i) => rest[Math.round(i * (rest.length - 1) / (n - 1))])));
   const hiitOK = (pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new";
   const out = {}; pick.forEach((d, i) => out[d] = hiitOK && i === 0 ? "hiit" : "walk"); return out;
@@ -2826,7 +2876,7 @@ function localize() {
   Object.entries(AR.slots || {}).forEach(([k, l]) => { if (SLOTS[k]) SLOTS[k].label = l; });
   Object.assign(MUSCLE_NAMES, AR.muscles || {});
   Object.entries(AR.goals || {}).forEach(([k, g]) => { if (GOALS[k]) Object.assign(GOALS[k], g); });
-  Object.values(TEMPLATES).forEach(T => { T.title = AR.ui[T.title] || T.title; [2, 3, 4].forEach(d => (T[d] || []).forEach(x => { x.name = AR.ui[x.name] || x.name; x.focus = AR.ui[x.focus] || x.focus; x.ab = (AR.ab || {})[x.ab] || x.ab; })); });
+  Object.values(TEMPLATES).forEach(T => { T.title = AR.ui[T.title] || T.title; [2, 3, 4, 5, 6].forEach(d => (T[d] || []).forEach(x => { x.name = AR.ui[x.name] || x.name; x.focus = AR.ui[x.focus] || x.focus; x.ab = (AR.ab || {})[x.ab] || x.ab; })); });
   Object.keys(STRETCHES).forEach(g => { if ((AR.stretches || {})[g]) STRETCHES[g] = AR.stretches[g]; });
 }
 
@@ -2943,7 +2993,7 @@ function trainCard(pr, d, isT) {
     return `<button class="row" data-act="trainOn" data-dow="${d}" data-sid="${x.id}"><div class="rmain"><div class="rname">${esc(x.name)}</div><div class="rmeta">Rest of the week: ${weekLine(pr, r.w, todayDow())}</div></div><div class="rprog">›</div></button>`; }).join("");
   return `<div class="card"><h3 style="margin-top:0">Want to train ${when}?</h3>
     ${s ? `<p class="small muted" style="margin-top:-4px">Do <b style="color:var(--tx)">${esc(s.name)}</b> ${when}${from}. The rest of your week shifts to keep a rest day between workouts where it can.</p>
-    <div class="small" style="margin:0 0 10px">Rest of the week: <b>${weekLine(pr, res.w, todayDow())}</b>${res.over.length ? `<br><span class="muted">${res.over.map(abOf).join(", ")} won't fit this week.</span>` : ""}</div>
+    <div class="small" style="margin:0 0 10px">Rest of the week: <b>${weekLine(pr, res.w, todayDow())}</b>${res.over.length ? `<br><span class="muted"><span data-notr>${res.over.map(abOf).join(", ")}</span> won't fit this week.</span>` : ""}</div>
     <button class="btn a wide" data-act="trainOn" data-dow="${d}" data-sid="${s.id}" data-src="${pk.src ?? ""}">Train ${when}: ${esc(s.ab || s.name)}</button>`
     : `<p class="small muted" style="margin-top:-4px">You've done all of this week's workouts. You can repeat one ${when}.</p>`}
     ${others ? `<details class="pickw"><summary class="small">${s ? "Or choose a different workout" : "Choose a workout"}</summary><div class="list" style="margin-top:8px">${others}</div></details>` : ""}</div>`;
@@ -2969,7 +3019,7 @@ function moveCard(pr, d, isT) {
   const r = planMove(pr, d);
   if (r.to === undefined) return "";
   return `<div class="card"><div class="small muted">Can't train ${isT ? "today" : "on " + DAYF[d]}?</div>
-    <div class="small" style="margin:4px 0 10px">Move this workout to <b>${DAYF[r.to]}</b>. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `<br><span class="muted">${r.over.map(abOf).join(", ")} won't fit this week.</span>` : ""}</div>
+    <div class="small" style="margin:4px 0 10px">Move this workout to <b>${DAYF[r.to]}</b>. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `<br><span class="muted"><span data-notr>${r.over.map(abOf).join(", ")}</span> won't fit this week.</span>` : ""}</div>
     <button class="btn sm" data-act="moveOn" data-dow="${d}">Move to ${DAYF[r.to]} →</button></div>`;
 }
 const VGROUP = { glutes: "Glutes", glute_med: "Glutes", quads: "Quads", hams: "Hamstrings", lats: "Back", upperback: "Back", traps: "Back", chest: "Chest", delt_f: "Shoulders", delt_s: "Shoulders", delt_r: "Shoulders", biceps: "Biceps", triceps: "Triceps", forearms: "Forearms", abs: "Core", obliques: "Core", calves: "Calves" };
@@ -3035,20 +3085,27 @@ function viewLibrary() {
   });
   return `<h2>Exercises</h2><p class="sub">Every muscle group has at least four movements, and each movement has a gym, dumbbell and home version. Your plan rotates through them week to week.</p><div class="chips">${chips}</div>${out.join("")}`;
 }
+function pplWhy(pr) {
+  const base = "Push days train chest, shoulders and triceps. Pull days train your back, rear shoulders and biceps. Leg days train quads, hamstrings, glutes and calves. One area per day means more sets for it in a single session, while the other muscles recover. ";
+  const freq = { 3: "At 3 days a week each muscle is trained once, so every session is thorough.", 4: "Your fourth day is an upper-body day, so chest, back, shoulders and arms are trained twice a week.", 5: "Your fourth and fifth days (upper and lower) mean every muscle group is trained about twice a week.", 6: "At 6 days a week every muscle is trained twice, with one full rest day." }[pr.days] || "";
+  return base + freq;
+}
 function viewMe() {
   const pr = P(), g = GOALS[pr.goal], w = pr.weight;
   const pLo = Math.round(w * (pr.goal === "fatloss" ? 1.6 : 1.4)), pHi = Math.round(w * (pr.goal === "fatloss" ? 2.2 : 2.0)), perMeal = Math.round(w * 0.25);
   const card = (title, text, src) => `<div class="info"><b>${title}</b>${text}${src ? src.map(k => `<a class="src" href="${SOURCES[k].u}" target="_blank" rel="noopener">Source: ${esc(SOURCES[k].t)}</a>`).join("") : ""}</div>`;
   const cards = [];
   if (pr.sex === "f") {
-    cards.push(card("Why glutes & back", "Hip thrusts, step-ups, split squats and deadlift-style hinges are among the highest glute-activation exercises in research reviews. Back work (pulldowns, rows) builds posture and a defined upper-body shape.", ["glute", "thrust"]));
+    if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else cards.push(card("Why glutes & back", "Hip thrusts, step-ups, split squats and deadlift-style hinges are among the highest glute-activation exercises in research reviews. Back work (pulldowns, rows) builds posture and a defined upper-body shape.", ["glute", "thrust"]));
     cards.push(card("Will lifting make me bulky?", "No. Women and men gain muscle at similar rates relative to where they start, but muscle builds slowly for everyone. You shape your body gradually with training and food. It doesn't happen by accident.", ["sex"]));
     cards.push(card("Training and your cycle", "An umbrella review found no clear evidence that menstrual-cycle phase meaningfully changes strength or training results. Train by feel: on low-energy days use lighter weights and keep the habit.", ["cycle"]));
-    cards.push(card("Toned arms & inner thighs", "You can't burn fat from one spot by training it. What you can do is build the muscle underneath (triceps, shoulders, inner and outer thighs, glutes) while overall fat loss reveals it. " + (pr.focus === "glutes" ? (pr.days === 2 ? "Your plan trains all of these, with inner and outer thighs on alternate weeks." : "Your plan trains all of these every week.") : "The Glutes & Back focus trains all of these every week; switch focus in your profile if that's your goal.") + "", ["spot"]));
-    cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting combined with jumping-and-landing exercises improved bone density in postmenopausal women with low bone mass. " + (pr.focus === "glutes" ? "That's why your lower-body days start with a few short sets of small jumps. Skip them" : "The Glutes & Back focus adds a few short sets of small jumps to each lower-body day. Skip jumps") + " (do calf raises instead) if you're pregnant, recently gave birth, leak urine when jumping, or they hurt your joints. They're left out automatically at 60+.", ["bone"]));
+    cards.push(card("Toned arms & inner thighs", "You can't burn fat from one spot by training it. What you can do is build the muscle underneath (triceps, shoulders, inner and outer thighs, glutes) while overall fat loss reveals it. " + ((pr.focus === "glutes" || pr.focus === "pplf") ? (pr.days === 2 ? "Your plan trains all of these, with inner and outer thighs on alternate weeks." : "Your plan trains all of these every week.") : "The Glutes & Back focus trains all of these every week; switch focus in your profile if that's your goal.") + "", ["spot"]));
+    cards.push(card("Bone health", "Lifting builds bone as well as muscle. In the supervised LIFTMOR trial, heavy progressive lifting combined with jumping-and-landing exercises improved bone density in postmenopausal women with low bone mass. " + ((pr.focus === "glutes" || pr.focus === "pplf") ? "That's why your lower-body days start with a few short sets of small jumps. Skip them" : "The Glutes & Back focus adds a few short sets of small jumps to each lower-body day. Skip jumps") + " (do calf raises instead) if you're pregnant, recently gave birth, leak urine when jumping, or they hurt your joints. They're left out automatically at 60+.", ["bone"]));
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
-    cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
+    if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
     cards.push(card("Don't skip legs", "Squats and hinges stay in the plan. Legs are your biggest muscles, and training them supports strength, athletic balance and metabolic health."));
     cards.push(card("Belly fat", "Crunches won't burn fat from your stomach. A controlled study of abdominal exercise found no reduction in belly fat. Fat loss comes from an overall calorie deficit, and lifting keeps your muscle while you lose it.", ["spot"]));
     cards.push(card("Shoulder & back care", "Balance pressing with rows and face pulls. Brace and hinge from the hips, and don't ego-lift. Going to total failure isn't required for results.", ["acsm"]));
@@ -3072,7 +3129,7 @@ function viewMe() {
       <div class="kv"><span class="muted">Days per week</span><b>${pr.days}</b></div>
       <div class="kv"><span class="muted">Equipment (whole plan)</span><b>${EQNAME[pr.equip]}</b></div>
       <div class="seg" style="--n:3;margin:6px 0 10px">${KEYS.map(k => `<button class="${pr.equip === k ? "on" : ""}" data-act="equip" data-v="${k}">${KEYNAME[k]}</button>`).join("")}</div>
-      <div class="seg" style="margin-bottom:0"><button class="${pr.focus === "glutes" ? "on" : ""}" data-act="focus" data-f="glutes">Glutes & Back<small>lower-body emphasis</small></button><button class="${pr.focus === "upper" ? "on" : ""}" data-act="focus" data-f="upper">Upper body · V-shape<small>chest, shoulders, lats</small></button></div></div>
+      <div class="seg" style="--n:3;margin-bottom:0"><button class="${pr.focus === "glutes" ? "on" : ""}" data-act="focus" data-f="glutes">Glutes & Back<small>2–4 days</small></button><button class="${pr.focus === "upper" ? "on" : ""}" data-act="focus" data-f="upper">V-shape<small>2–4 days</small></button><button class="${isPPL(pr.focus) ? "on" : ""}" data-act="focus" data-f="ppl">Push Pull Legs<small>3–6 days</small></button></div></div>
     ${AR ? `<div class="card"><div class="kv tog"><span>Language</span><span class="tg" data-notr><button class="${isAR() ? "" : "on"}" data-act="lang" data-v="en">English</button><button class="${isAR() ? "on" : ""}" data-act="lang" data-v="ar">العربية</button></span></div></div>` : ""}
     <div class="card"><h3>Workout settings</h3><div class="small muted">Time per workout</div>${lenSeg(pr)}
       ${togRow(pr, "sound", "Sound when rest ends", ["on", "On"], ["off", "Off"], "on")}
@@ -3267,20 +3324,23 @@ function renderWizard() {
   if (WSTEP === 3) body = `<h2>Your main goal</h2><div class="choice">${Object.entries(GOALS).map(([k, g]) => `<button class="cbtn${W.goal === k ? " on" : ""}" data-act="wgoal" data-v="${k}"><div class="ic">${g.icon}</div><div><b>${esc(g.name)}</b><span>${{ muscle: "Grow and shape muscle: moderate weights, more sets", fatloss: "Keep muscle while losing fat, plus a cardio finisher", strength: "Lift heavier: lower reps, longer rest", health: "Feel fitter and healthier with a balanced, shorter plan" }[k]}</span></div></button>`).join("")}</div>`;
   if (WSTEP === 4) body = `<h2>Your training</h2>
       <p style="font-weight:600;margin:4px 0 6px">Experience</p><div class="minis">${[["new", "New"], ["some", "Some"], ["exp", "Experienced"]].map(([k, l]) => `<button class="${W.exp === k ? "on" : ""}" data-act="wexp" data-v="${k}">${l}</button>`).join("")}</div>
-      <p style="font-weight:600;margin:16px 0 6px">Days per week</p><div class="minis">${[2, 3, 4].map(d => `<button class="${W.days === d ? "on" : ""}" data-act="wdays" data-v="${d}">${d} days</button>`).join("")}</div>
+      <p style="font-weight:600;margin:16px 0 6px">Days per week</p><div class="minis" style="grid-template-columns:repeat(5,1fr);gap:6px">${[2, 3, 4, 5, 6].map(d => `<button class="${W.days === d ? "on" : ""}" data-act="wdays" data-v="${d}">${d} days</button>`).join("")}</div>
+      <p class="small muted" style="margin:6px 0 0">5 and 6 days use the Push Pull Legs program. You choose your program on the last step.</p>
       <p style="font-weight:600;margin:16px 0 6px">Time per workout</p><div class="minis">${[[45, "45 min"], [60, "60 min"], [0, "No limit"]].map(([v, l]) => `<button class="${(+W.len || 0) === v ? "on" : ""}" data-act="wlen" data-v="${v}">${l}</button>`).join("")}</div>
       <p style="font-weight:600;margin:16px 0 6px">Where do you train?</p><div class="choice"><button class="cbtn${W.equip === "gym" ? " on" : ""}" data-act="wequip" data-v="gym"><div class="ic">🏢</div><div><b>Gym machines</b><span>Machines, cables and barbells first</span></div></button>
         <button class="cbtn${W.equip === "db" ? " on" : ""}" data-act="wequip" data-v="db"><div class="ic">🏋️</div><div><b>Dumbbells</b><span>Dumbbells and a bench first, at home or in the gym</span></div></button>
         <button class="cbtn${W.equip === "home" ? " on" : ""}" data-act="wequip" data-v="home"><div class="ic">🏠</div><div><b>Home · bodyweight</b><span>No equipment first. Add dumbbells or a backpack to progress</span></div></button></div>
       <p class="small muted">Every exercise still has all three versions. You can switch any time.</p>`;
   if (WSTEP === 5) {
-    if (!W.focus) W.focus = W.sex === "f" ? "glutes" : "upper";
+    if (!W.focus || !TEMPLATES[W.focus][W.days]) W.focus = defFocus(W.sex, W.days);
+    if (isPPL(W.focus)) W.focus = pplOf(W.sex);
     body = `<h2>Your profile</h2><div class="card">
       <div class="kv"><span class="muted">Name</span><b>${esc(W.name || "—")}</b></div><div class="kv"><span class="muted">Sex</span><b>${W.sex === "f" ? "Female" : "Male"}</b></div>
       <div class="kv"><span class="muted">Age · weight</span><b>${W.age} yrs · ${W.weight} kg</b></div><div class="kv"><span class="muted">Goal</span><b>${esc(GOALS[W.goal].name)}</b></div>
       <div class="kv"><span class="muted">Training</span><b>${W.days} days · ${+W.len ? W.len + " min" : "no time limit"} · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
-      <p style="font-weight:600;margin:4px 0 6px">Program focus</p><div class="seg" style="margin-top:0"><button class="${W.focus === "glutes" ? "on" : ""}" data-act="wfocus" data-v="glutes">Glutes & Back<small>lower-body emphasis</small></button><button class="${W.focus === "upper" ? "on" : ""}" data-act="wfocus" data-v="upper">Upper body · V-shape<small>chest, shoulders, lats</small></button></div>
-      <p class="small muted">${W.sex === "f" ? "Glutes & Back is the default for women here. Pick V-shape if you'd rather emphasise the upper body." : "V-shape is the default for men here. Pick Glutes & Back if you'd rather emphasise the lower body."}</p>
+      <p style="font-weight:600;margin:4px 0 6px">Program focus</p><div class="seg" style="--n:3;margin-top:0"><button class="${W.focus === "glutes" ? "on" : ""}" data-act="wfocus" data-v="glutes">Glutes & Back<small>2–4 days</small></button><button class="${W.focus === "upper" ? "on" : ""}" data-act="wfocus" data-v="upper">V-shape<small>2–4 days</small></button><button class="${isPPL(W.focus) ? "on" : ""}" data-act="wfocus" data-v="ppl">Push Pull Legs<small>3–6 days</small></button></div>
+      ${W._fnote ? `<p class="small" style="color:var(--a);margin:0 0 6px">${esc(W._fnote)}</p>` : ""}
+      <p class="small muted">${isPPL(W.focus) ? (W.sex === "f" ? "Push Pull Legs for women puts the weight on glutes, shoulders and posture, with chest and arms in smaller doses." : "Push Pull Legs for men puts the weight on chest, back, shoulder width and arms, with a full legs day.") : W.sex === "f" ? "Glutes & Back is the default for women here. Pick V-shape if you'd rather emphasise the upper body, or Push Pull Legs for a body-part split." : "V-shape is the default for men here. Pick Glutes & Back if you'd rather emphasise the lower body, or Push Pull Legs for a body-part split."}</p>
       ${W._edit ? `<button class="btn danger sm" data-act="wdelete">${W._del ? "Tap again to delete this profile" : "Delete profile"}</button>` : ""}`;
   }
   const canBack = WSTEP > 0 && !(W._edit && WSTEP === 5);
@@ -3307,7 +3367,7 @@ function wizNext() {
   const old = S.profiles[W.id];
   if (old && old.days !== W.days) W.dayList = null;
   if (old && (old.days !== W.days || old.focus !== W.focus || old.goal !== W.goal)) delete W.wk;
-  delete W._edit; delete W._del;
+  delete W._edit; delete W._del; delete W._fnote;
   if (!old) W.start = ymd(new Date());
   S.profiles[W.id] = W; S.active = W.id; save();
   $("#wiz").classList.remove("open"); W = null; TAB = "today"; VIEWDAY = todayDow(); render(); window.scrollTo(0, 0);
@@ -3389,12 +3449,12 @@ document.addEventListener("click", ev => {
     case "trainOn": {
       const d = +el.dataset.dow, src = el.dataset.src === undefined || el.dataset.src === "" ? undefined : +el.dataset.src;
       const r = planTrainOn(pr, d, el.dataset.sid, src); applyWeek(pr, r.w);
-      NOTE = `<b>${esc(abOf(el.dataset.sid))}</b> is now ${d === todayDow() ? "today" : "on " + DAYF[d]}. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `. ${r.over.map(abOf).join(", ")} didn't fit this week.` : "."}`;
+      NOTE = `<b>${esc(abOf(el.dataset.sid))}</b> is now ${d === todayDow() ? "today" : "on " + DAYF[d]}. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `. <span data-notr>${r.over.map(abOf).join(", ")}</span> didn't fit this week.` : "."}`;
       VIEWDAY = d; render(); window.scrollTo(0, 0); break;
     }
     case "moveOn": {
       const d = +el.dataset.dow, r = planMove(pr, d); if (r.to === undefined) break; applyWeek(pr, r.w);
-      NOTE = `Moved <b>${esc(abOf(r.sid))}</b> to ${DAYF[r.to]}. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `. ${r.over.map(abOf).join(", ")} didn't fit this week.` : "."}`;
+      NOTE = `Moved <b>${esc(abOf(r.sid))}</b> to ${DAYF[r.to]}. Rest of the week: <b>${weekLine(pr, r.w, todayDow())}</b>${r.over.length ? `. <span data-notr>${r.over.map(abOf).join(", ")}</span> didn't fit this week.` : "."}`;
       render(); window.scrollTo(0, 0); break;
     }
     case "resetWeek": delete pr.wk; save(); render(); break;
@@ -3435,19 +3495,19 @@ document.addEventListener("click", ev => {
     case "tskip": stopTimer(); break;
     case "cat": CAT = el.dataset.c; render(); break;
     case "toggleDay": { const d = +el.dataset.dow, arr = dayList(pr), i = arr.indexOf(d); if (i >= 0) { if (arr.length > 1) arr.splice(i, 1); } else arr.push(d); pr.dayList = arr.sort((x, y) => x - y); delete pr.wk; save(); render(); break; }
-    case "focus": pr.focus = el.dataset.f; delete pr.wk; save(); render(); break;
+    case "focus": { const f = el.dataset.f === "ppl" ? pplOf(pr.sex) : el.dataset.f, d = clampDays(f, pr.days); pr.focus = f; if (d !== pr.days) { pr.days = d; pr.dayList = null; NOTE = focusNote(f, d); } delete pr.wk; save(); render(); break; }
     case "edit": openWizard(pr.id); break;
     case "profiles": if (P()) openProfiles(); break;
     case "closeModal": $("#modal").classList.remove("open"); break;
     case "pick": S.active = el.dataset.id; save(); $("#modal").classList.remove("open"); VIEWDAY = todayDow(); render(); break;
     case "newProfile": $("#modal").classList.remove("open"); openWizard(null); break;
-    case "wsex": W.sex = el.dataset.v; W.focus = W.sex === "f" ? "glutes" : "upper"; WERR = ""; renderWizard(); break;
+    case "wsex": W.sex = el.dataset.v; W.focus = isPPL(W.focus) ? pplOf(W.sex) : defFocus(W.sex, W.days); WERR = ""; renderWizard(); break;
     case "wgoal": W.goal = el.dataset.v; WERR = ""; renderWizard(); break;
     case "wexp": W.exp = el.dataset.v; renderWizard(); break;
     case "wdays": W.days = +el.dataset.v; renderWizard(); break;
     case "wequip": W.equip = el.dataset.v; renderWizard(); break;
     case "wlen": W.len = +el.dataset.v; renderWizard(); break;
-    case "wfocus": W.focus = el.dataset.v; renderWizard(); break;
+    case "wfocus": { const f = el.dataset.v === "ppl" ? pplOf(W.sex) : el.dataset.v, d = clampDays(f, W.days); W.focus = f; W._fnote = d !== W.days ? focusNote(f, d) : ""; W.days = d; renderWizard(); break; }
     case "wnext": wizNext(); break;
     case "wback": wizRead(); WSTEP--; WERR = ""; renderWizard(); break;
     case "wgo": WSTEP = +el.dataset.v; renderWizard(); break;
