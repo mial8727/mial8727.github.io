@@ -2181,6 +2181,7 @@ const POOLS = {
   bi:   ["inclinecurl", "preacher", "biceps", "hammer"],   // long head + short head one week, both heads + brachialis the next
   tri:  ["triohp", "triceps", "skull", "closepress"],     // overhead/lying (long head) alternates with pushdown/close-grip
   calf: ["calf", "calf2"],
+  bwbi: ["preacher", "inclinecurl"], bwtri: ["triceps", "skull", "closepress"],   // bodyweight program: no backpack, bottle or jug versions
   jump: ["jump"],                               // standing (gastrocnemius) / seated (soleus)
   legacc: ["legcurl", "legext"],
   hip:  ["abduct", "adduct"],                           // 2-day glute plan: outer / inner thighs on alternate weeks                         // 2-day plans: knee-bending hamstrings / rectus femoris on alternate weeks
@@ -2242,6 +2243,17 @@ const TEMPLATES = {
          { ab: "Up B", id: "xub", name: "Upper B", focus: "Upper chest, lats, rows, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
          { ab: "Lo B", id: "xlb", name: "Lower B", focus: "Leg press, glutes, single-leg, calves, core", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["@calf", "acc"], ["@core", "core"]] } ]
   },
+  /* Bodyweight: no equipment (floor, wall, a sturdy table or chair). Always uses the home exercises. 3 or 4 days */
+  body: {
+    title: "Bodyweight",
+    3: [ { ab: "Push", id: "bwp", name: "Push", focus: "Chest, shoulders, triceps, core", items: [["press", "main"], ["incline", "sec"], ["ohp", "sec"], ["arnold", "pri"], ["@bwtri", "acc"], ["@bwtri", "acc"], ["@core", "core"]] },
+         { ab: "Pull", id: "bwl", name: "Pull", focus: "Back, rear shoulders, biceps, forearms, lower back", items: [["row", "main"], ["pulldown", "main"], ["reardelt", "acc"], ["@bwbi", "acc"], ["@bwbi", "acc"], ["revwrist", "acc"], ["backext", "acc"]] },
+         { ab: "Legs", id: "bwg", name: "Legs", focus: "Quads, glutes, hamstrings, calves, core", items: [["squat", "main"], ["split", "sec"], ["hinge", "sec"], ["thrust", "sec"], ["legext", "acc"], ["calf", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "Push", id: "bwp", name: "Push", focus: "Chest, shoulders, triceps, core", items: [["press", "main"], ["incline", "sec"], ["ohp", "sec"], ["arnold", "pri"], ["@bwtri", "acc"], ["@bwtri", "acc"]] },
+         { ab: "Pull", id: "bwl", name: "Pull", focus: "Back, rear shoulders, biceps, forearms, lower back", items: [["row", "main"], ["pulldown", "main"], ["reardelt", "acc"], ["@bwbi", "acc"], ["@bwbi", "acc"], ["revwrist", "acc"], ["backext", "acc"]] },
+         { ab: "Legs", id: "bwg", name: "Legs", focus: "Quads, hamstrings, calves, core", items: [["squat", "main"], ["split", "sec"], ["hinge", "sec"], ["legcurl", "acc"], ["legext", "acc"], ["calf", "acc"], ["@core", "core"]] },
+         { ab: "Glutes", id: "bwc", name: "Glutes & Core", focus: "Glutes, hip muscles, chest, back, core", items: [["thrust", "main"], ["kickback", "sec"], ["@hip", "acc"], ["press", "sec"], ["row", "sec"], ["@core", "core"], ["@core", "core"]] } ]
+  },
   /* Push / Pull / Legs, 3 to 6 days. Two versions: men lean to chest, shoulder width, back and arms; women lean to glutes, shoulders and posture. */
   pplm: {
     title: "Push Pull Legs",
@@ -2289,7 +2301,7 @@ const TEMPLATES = {
 
 /* programs: "glutes" and "upper" run 2-4 days; Push Pull Legs (pplf for women, pplm for men) runs 3-6 */
 const PROGS = [["glutes", "Glutes & Back", "2–4 days", "Glutes, back and legs first, with upper-body days."], ["upper", "V-shape", "2–4 days", "Wide shoulders, upper chest and lats, with legs kept in."],
-  ["ppl", "Push Pull Legs", "3–6 days", "Push, pull and leg days. Different for men and women."], ["full", "Full Body", "2–4 days", "Every muscle each session. Great for busy weeks."], ["ul", "Upper / Lower", "4 days", "Two upper-body and two lower-body days."]];
+  ["ppl", "Push Pull Legs", "3–6 days", "Push, pull and leg days. Different for men and women."], ["full", "Full Body", "2–4 days", "Every muscle each session. Great for busy weeks."], ["ul", "Upper / Lower", "4 days", "Two upper-body and two lower-body days."], ["body", "Bodyweight", "3–4 days", "No equipment: just floor, a wall and a sturdy table or chair."]];
 const progPicker = (cur, act) => `<div class="progs">${PROGS.map(([k, n, d, t]) => `<button class="prog${(k === "ppl" ? isPPL(cur) : cur === k) ? " on" : ""}" data-act="${act}" ${act === "focus" ? "data-f" : "data-v"}="${k}"><span class="pn">${n}</span><span class="pd">${d}</span><span class="pt">${t}</span></button>`).join("")}</div>`;
 const pplOf = sex => sex === "f" ? "pplf" : "pplm";
 const isPPL = f => f === "pplf" || f === "pplm";
@@ -3192,6 +3204,7 @@ function viewMe() {
   const cards = [];
   if (pr.sex === "f") {
     if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else if (pr.focus === "body") cards.push(card("Why bodyweight", "Muscle grows when your sets get close to failure, whether the load is a barbell or your own body. Take each set to about two reps from failure, and when it gets easy, use a harder version: slower reps, a pause at the bottom, feet raised or one limb at a time.", []));
     else if (pr.focus === "full" || pr.focus === "ul") cards.push(card(pr.focus === "full" ? "Why full body" : "Why upper / lower", pr.focus === "full" ? "Training every muscle in each session means each one gets worked two or three times a week, which is a well-supported way to build muscle. It also forgives a missed day, because every session covers the whole body." : "Four sessions a week, with each muscle trained twice. That is a good balance of training frequency and recovery, and the two upper and two lower days keep sessions focused.", []));
     else cards.push(card("Why glutes & back", "Hip thrusts, step-ups, split squats and deadlift-style hinges are among the highest glute-activation exercises in research reviews. Back work (pulldowns, rows) builds posture and a defined upper-body shape.", ["glute", "thrust"]));
     cards.push(card("Will lifting make me bulky?", "No. Women and men gain muscle at similar rates relative to where they start, but muscle builds slowly for everyone. You shape your body gradually with training and food. It doesn't happen by accident.", ["sex"]));
@@ -3201,6 +3214,7 @@ function viewMe() {
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
     if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else if (pr.focus === "body") cards.push(card("Why bodyweight", "Muscle grows when your sets get close to failure, whether the load is a barbell or your own body. Take each set to about two reps from failure, and when it gets easy, use a harder version: slower reps, a pause at the bottom, feet raised or one limb at a time.", []));
     else if (pr.focus === "full" || pr.focus === "ul") cards.push(card(pr.focus === "full" ? "Why full body" : "Why upper / lower", pr.focus === "full" ? "Training every muscle in each session means each one gets worked two or three times a week, which is a well-supported way to build muscle. It also forgives a missed day, because every session covers the whole body." : "Four sessions a week, with each muscle trained twice. That is a good balance of training frequency and recovery, and the two upper and two lower days keep sessions focused.", []));
     else cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
     cards.push(card("Don't skip legs", "Squats and hinges stay in the plan. Legs are your biggest muscles, and training them supports strength, athletic balance and metabolic health."));
@@ -3576,7 +3590,9 @@ document.addEventListener("click", ev => {
       render(); window.scrollTo(0, 0); break; }
     case "cbring": { const w = weekPlan(pr), d = +el.dataset.dow, from = +el.dataset.from, id = w.c[from]; if (!id) break; delete w.c[from]; w.c[d] = id; applyWeek(pr, w); render(); break; }
     case "equip": case "equipAll": {
-      const had = Object.keys(pr.swaps || {}).length; pr.equip = el.dataset.v; pr.swaps = {}; save();
+      const had = Object.keys(pr.swaps || {}).length; pr.equip = el.dataset.v; pr.swaps = {};
+      if (pr.focus === "body" && pr.equip !== "home") { pr.focus = defFocus(pr.sex, pr.days); delete pr.wk; }
+      save();
       NOTE = `Every exercise this week now uses the <b>${esc(EQNAME[pr.equip].toLowerCase())}</b> version${had ? ", including the ones you'd changed by hand" : ""}. You can still change a single exercise from its page.`;
       render(); break;
     }
@@ -3644,7 +3660,7 @@ document.addEventListener("click", ev => {
     case "tskip": stopTimer(); break;
     case "cat": CAT = el.dataset.c; render(); break;
     case "toggleDay": { const d = +el.dataset.dow, arr = dayList(pr), i = arr.indexOf(d); if (i >= 0) { if (arr.length > 1) arr.splice(i, 1); } else arr.push(d); pr.dayList = arr.sort((x, y) => x - y); delete pr.wk; save(); render(); break; }
-    case "focus": { const f = el.dataset.f === "ppl" ? pplOf(pr.sex) : el.dataset.f, d = clampDays(f, pr.days); pr.focus = f; if (d !== pr.days) { pr.days = d; pr.dayList = null; NOTE = focusNote(f, d); } delete pr.wk; save(); render(); break; }
+    case "focus": { const f = el.dataset.f === "ppl" ? pplOf(pr.sex) : el.dataset.f, d = clampDays(f, pr.days); pr.focus = f; if (f === "body" && pr.equip !== "home") { pr.equip = "home"; pr.swaps = {}; NOTE = "Bodyweight uses the home, no-equipment exercises, so your equipment is now set to Home."; } if (d !== pr.days) { pr.days = d; pr.dayList = null; NOTE = focusNote(f, d); } delete pr.wk; save(); render(); break; }
     case "edit": openWizard(pr.id); break;
     case "profiles": if (P()) openProfiles(); break;
     case "closeModal": $("#modal").classList.remove("open"); break;
@@ -3654,9 +3670,9 @@ document.addEventListener("click", ev => {
     case "wgoal": W.goal = el.dataset.v; WERR = ""; renderWizard(); break;
     case "wexp": W.exp = el.dataset.v; renderWizard(); break;
     case "wdays": W.days = +el.dataset.v; renderWizard(); break;
-    case "wequip": W.equip = el.dataset.v; renderWizard(); break;
+    case "wequip": W.equip = el.dataset.v; if (W.focus === "body" && W.equip !== "home") { W.focus = defFocus(W.sex, W.days); W._fnote = ""; } renderWizard(); break;
     case "wlen": W.len = +el.dataset.v; renderWizard(); break;
-    case "wfocus": { const f = el.dataset.v === "ppl" ? pplOf(W.sex) : el.dataset.v, d = clampDays(f, W.days); W.focus = f; W._fnote = d !== W.days ? focusNote(f, d) : ""; W.days = d; renderWizard(); break; }
+    case "wfocus": { const f = el.dataset.v === "ppl" ? pplOf(W.sex) : el.dataset.v, d = clampDays(f, W.days); W.focus = f; if (f === "body") W.equip = "home"; W._fnote = d !== W.days ? focusNote(f, d) : ""; W.days = d; renderWizard(); break; }
     case "wnext": wizNext(); break;
     case "wback": wizRead(); WSTEP--; WERR = ""; renderWizard(); break;
     case "wgo": WSTEP = +el.dataset.v; renderWizard(); break;
