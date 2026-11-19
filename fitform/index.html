@@ -119,6 +119,9 @@ a.btn{text-decoration:none;color:inherit}a.btn.a{color:#06210f}
 .set{display:grid;grid-template-columns:54px 1fr 54px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
 .set:first-of-type{border-top:0}
 .set .lbl{font-weight:600;color:var(--mut)}
+.set .stag{cursor:pointer;line-height:1.15;-webkit-tap-highlight-color:transparent}.set .stag.u{text-decoration:underline dotted var(--mut2);text-underline-offset:4px}.set .stag small{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.set .stag.w small{color:var(--y)}.set .stag.d small{color:var(--pink)}.set .stag.f small{color:var(--red)}
+.nbox{width:100%;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);padding:0 12px;font-size:15px}.nbox:focus{outline:2px solid var(--a);border-color:transparent}
 .set.kg{grid-template-columns:44px 1fr 12px 66px 50px;gap:8px}.set.kg .x{color:var(--mut2);text-align:center}.set.kg .tick{width:50px}
 .set.hd{padding:0 0 2px;border-top:0;font-size:12px;color:var(--mut);font-weight:600}.set.hd span{text-align:center}
 .set.s1{grid-template-columns:54px 1fr 54px}
@@ -2567,7 +2570,7 @@ const logKey = dow => ymd(dateForDow(dow));
 function peek(pr, dow, sid, idx) { const k = logKey(dow); return (pr.log[k] && pr.log[k][sid + ":" + idx]) || { d: [], w: [] }; }
 function entry(pr, dow, sid, idx) { const k = logKey(dow); pr.log[k] = pr.log[k] || {}; return (pr.log[k][sid + ":" + idx] = pr.log[k][sid + ":" + idx] || { d: [], w: [] }); }
 /* a set log belongs to one exercise: after a swap the new exercise starts clean */
-function entryX(pr, dow, sid, idx, id) { const e = entry(pr, dow, sid, idx); if (id && e.x && e.x !== id) { e.d = []; e.w = []; e.r = []; delete e.u; } if (id) e.x = id; return e; }
+function entryX(pr, dow, sid, idx, id) { const e = entry(pr, dow, sid, idx); if (id && e.x && e.x !== id) { e.d = []; e.w = []; e.r = []; delete e.u; delete e.t; delete e.n; } if (id) e.x = id; return e; }
 /* Nov 2026: the men's 4-day plan changed (a leg curl left Lower B). Logged sets are matched to exercises by position, so
    stamp each old set with its exercise first, then shift Lower B's later positions up by one. Runs once per profile. */
 function migrateLogs() {
@@ -2753,7 +2756,7 @@ function historyOf(pr) {
       if (s && idx[0] === "x") { const slot = (((pr.extra || {})[ds] || {})[sid] || [])[+idx.slice(1)], sd = slot && slotDef(pr, slot); ex = sd && sd[pickOrder(pr, slot)[0]]; }
       else if (s) ex = (s.items[+idx] || {}).ex;
     }
-    if (ex && EX[ex]) out.push({ ds, sid, idx, ex, d: e.d, w: e.w || [], r: e.r || [], u: e.u || "kg" });
+    if (ex && EX[ex]) out.push({ ds, sid, idx, ex, d: (e.t || []).some(x => x === "w") ? e.d.map((x, k) => x && (e.t || [])[k] !== "w") : e.d, dAll: e.d, t: e.t || [], n: e.n || "", w: e.w || [], r: e.r || [], u: e.u || "kg" });
   }));
   return out.sort((a, b) => a.ds < b.ds ? -1 : a.ds > b.ds ? 1 : 0);
 }
@@ -2977,7 +2980,7 @@ function remHTML(pr) {
 }
 function backupHTML() {
   return `<div class="card"><h3>Backup</h3><p class="small muted" style="margin-top:-4px">Your plan and logs live only on this phone. Save a backup file (to Drive, Files or email) so you can restore it after changing phones or reinstalling.${S.backup ? ` Last backup: ${shortDate(S.backup)}.` : ""}</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn a" data-act="backup">Save a backup</button><button class="btn" data-act="restore">Restore from a file</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn a" data-act="backup">Save a backup</button><button class="btn" data-act="restore">Restore from a file</button><button class="btn" data-act="csv">Export history (CSV)</button></div>
     <input type="file" id="restoreIn" accept=".json,application/json" style="display:none"></div>`;
 }
 
@@ -3274,13 +3277,15 @@ function renderSheet() {
         if (u === "none") return `<div class="set s1"><span class="lbl">Set ${k + 1}</span><span class="muted">${esc(it.reps)}</span>${tick}</div>`;
         const main = `<input type="text" inputmode="decimal" data-act="w" data-i="${k}" value="${esc(e.w[k] || "")}" placeholder="${esc(ph)}" aria-label="${u === "kg" ? "Weight" : u === "sec" ? "Seconds" : "Reps"} for set ${k + 1}">`;
         if (u !== "kg") return `<div class="set"><span class="lbl">Set ${k + 1}</span>${main}${tick}</div>`;
-        return `<div class="set kg"><span class="lbl">Set ${k + 1}</span>${main}<span class="x">×</span><input type="text" inputmode="numeric" data-act="r" data-i="${k}" value="${esc((e.r || [])[k] || "")}" placeholder="${lo === hi ? lo : lo + "–" + hi}" aria-label="Reps for set ${k + 1}">${tick}</div>`;
+        const tg = (e.t || [])[k] || "", tl = { w: "Warm", d: "Drop", f: "Fail" }[tg];
+        return `<div class="set kg"><span class="lbl stag u ${tg}" data-act="stag" data-i="${k}" role="button" tabindex="0">Set ${k + 1}${tl ? `<small>${tl}</small>` : ""}</span>${main}<span class="x">×</span><input type="text" inputmode="numeric" data-act="r" data-i="${k}" value="${esc((e.r || [])[k] || "")}" placeholder="${lo === hi ? lo : lo + "–" + hi}" aria-label="Reps for set ${k + 1}">${tick}</div>`;
       };
       const utog = u === "kg" ? `<span class="tg utog" data-notr>${["kg", "lb"].map(x => `<button class="${cu === x ? "on" : ""}" data-act="unit" data-v="${x}">${x}</button>`).join("")}</span>` : "";
       sets = `<div class="card"><div class="setsh"><b>${it.sets} × ${esc(it.reps)}</b><span class="muted small">Rest ${fmtRest(it.rest)} · ${DAYF[SH.ctx.dow]}</span></div>
         ${adv}<div class="small muted" style="margin:2px 0 8px">${help}</div>
         ${u === "kg" ? `<div class="set kg hd"><span>${utog}</span><span>${ph ? (cu === "lb" ? "lb per dumbbell" : "kg per dumbbell") : cu}</span><span></span><span>reps</span><span></span></div>` : ""}
-        ${Array.from({ length: it.sets }, (_, k) => row(k)).join("")}</div>`;
+        ${Array.from({ length: it.sets }, (_, k) => row(k)).join("")}${u === "kg" ? `<div class="small muted" style="margin-top:8px">Tap “Set 1” to mark a set as warm-up, drop set or failure. Warm-ups don't count in your records.</div>` : ""}</div>`;
+      if (u === "kg" && id === inPlan) { const pn = histC(pr).filter(h => h.ex === id && h.ds < ds && h.n).pop(); sets += `<div class="card"><h3>Note</h3><input class="nbox" type="text" maxlength="200" data-act="note" value="${esc(e.n || "")}" placeholder="Add a note for this exercise (optional)">${pn ? `<div class="small muted" style="margin-top:6px">Last note: ${esc(pn.n)}</div>` : ""}</div>`; }
     }
   }
   let nextBtn = "";
@@ -3369,8 +3374,8 @@ function summaryHTML(pr, dow, s) {
     const e = L[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, it.sets).filter(Boolean).length; if (!dn) return;
     if (!NOWORK.includes(it.role)) { exs++; sets += dn; }
     if (unitOf(it.ex) === "kg") {
-      const eu = e.u || "kg", cu = unitW(pr, it.ex), ws = (e.d || []).map((x, k) => x ? toKg(parseFloat(e.w[k]), eu) : NaN).filter(v => v > 0);
-      (e.d || []).forEach((x, k) => { if (x) vol += toKg(parseFloat(e.w[k]) || 0, eu) * (parseInt((e.r || [])[k]) || 0) * (PERHAND.has(it.ex) ? 2 : 1); });
+      const eu = e.u || "kg", cu = unitW(pr, it.ex), wu = k => (e.t || [])[k] === "w", ws = (e.d || []).map((x, k) => x && !wu(k) ? toKg(parseFloat(e.w[k]), eu) : NaN).filter(v => v > 0);
+      (e.d || []).forEach((x, k) => { if (x && !wu(k)) vol += toKg(parseFloat(e.w[k]) || 0, eu) * (parseInt((e.r || [])[k]) || 0) * (PERHAND.has(it.ex) ? 2 : 1); });
       if (ws.length) { const top = Math.max(...ws), before = histC(pr).filter(h => h.ex === it.ex && h.ds < ds).flatMap(h => h.w.map((v, k) => h.d[k] ? toKg(parseFloat(v), h.u) : NaN)).filter(v => v > 0);
         if (before.length && top > Math.max(...before) + 0.01) prs.push(`${esc(EX[it.ex].name)}: <b>${fmtN(roundU(fromKg(top, cu), cu))} ${cu}</b> (was ${fmtN(roundU(fromKg(Math.max(...before), cu), cu))})`); }
     }
@@ -3598,6 +3603,15 @@ document.addEventListener("click", ev => {
     case "wpause": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); o.acc = wtMs(o); o.run = 0; save(); render(); break; }
     case "wfinish": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); wtEnd(o); audioOn(); chime("end"); save(); render(); showSummary(pr, VIEWDAY, s2); break; }
     case "summary": { const dow = SH.ctx ? SH.ctx.dow : VIEWDAY, s2 = SH.ctx ? sessById(SH.ctx.sid) : dayPlan(pr, VIEWDAY); if (s2) showSummary(pr, dow, s2); break; }
+    case "stag": { if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex), i = +el.dataset.i; e.t = e.t || []; e.t[i] = { "": "w", w: "d", d: "f", f: "" }[e.t[i] || ""]; if (!e.t.some(Boolean)) delete e.t; save(); renderSheet(); break; }
+    case "csv": {
+      const q = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }, rows = [["Date", "Exercise", "Set", "Weight", "Unit", "Reps", "Type", "Note"]];
+      historyOf(pr).forEach(h => { const un = unitOf(h.ex); if (un === "none") return; h.dAll.forEach((dn, k) => { if (!dn || k >= 12) return; const t = { w: "warm-up", d: "drop set", f: "failure" }[h.t[k]] || "";
+        rows.push(un === "kg" ? [h.ds, EX[h.ex].name, k + 1, h.w[k] || "", h.u, h.r[k] || "", t, k ? "" : h.n] : [h.ds, EX[h.ex].name, k + 1, "", un === "sec" ? "sec" : "", h.w[k] || "", t, k ? "" : h.n]); }); });
+      const data = "\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n"), name = "fitform-history-" + ymd(new Date()) + ".csv";
+      let file = null; try { file = new File([data], name, { type: "text/csv" }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: "FitForm history" }).catch(() => {}); else saveFile(data, name, "text/csv");
+      NOTE = rows.length > 1 ? `Exported ${rows.length - 1} sets to a CSV file you can open in Excel or Sheets.` : "Nothing to export yet. Log some sets first."; render(); break; }
     case "pbar": { const d = el.closest(".plt"), u = d.dataset.u; pr.barw = pr.barw || {}; pr.barw[u] = +el.dataset.v; save(); d.querySelectorAll("[data-act=pbar]").forEach(b => b.classList.toggle("on", b === el)); const inp = d.querySelector("input"); d.querySelector(".pltout").innerHTML = plateOut(parseFloat((inp.value || "").replace(",", ".")), +el.dataset.v, u); break; }
     case "t15": T.end += 15000; break;
     case "tskip": stopTimer(); break;
@@ -3635,6 +3649,7 @@ document.addEventListener("input", ev => {
     const v = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); e.w[i] = v; e.x = SH.view; if (unitOf(SH.view) === "kg") e.u = unitW(pr, SH.view); if (v) pr.last[SH.view] = v; save();
     document.querySelectorAll("#sheetIn input[data-act='w']").forEach(inp => { const k = +inp.dataset.i; if (k > i && !e.w[k] && v) inp.placeholder = v; });
   }
+  if (el.dataset && el.dataset.act === "note" && SH.ctx && pr) { const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex); e.n = el.value.slice(0, 200); if (!e.n) delete e.n; save(); }
   if (el.dataset && el.dataset.act === "plt" && pr) { const d = el.closest(".plt"), u = d.dataset.u; el.value = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); d.querySelector(".pltout").innerHTML = plateOut(parseFloat(el.value), barOf(pr, u), u); }
   if (el.dataset && el.dataset.act === "min" && SH.ctx && pr) {
     const { dow, sid, idx } = SH.ctx, e = entryX(pr, dow, sid, idx, SH.view), v = el.value.replace(/[^0-9]/g, "").slice(0, 3);
