@@ -2440,6 +2440,8 @@ function cardioSessions(pr, wn = weekNo()) {
   const pk = cardioPick(pr), walkEx = pr.equip === "gym" ? "incline-walk" : "brisk-walk";
   let alt = pr.age >= 60 ? null : { gym: "stationary-bike", db: "jump-rope", home: "stair-climb" }[pr.equip];
   if (alt === "jump-rope" && (pr.age >= 50 || pr.exp === "new")) alt = "stair-climb";
+  const px = pr.wk && pr.wk.start === weekStart() && wn === weekNo() ? pr.wk.x || {} : {};
+  Object.keys(px).forEach(d => { if (!(d in pk)) pk[d] = "walk"; });
   const walks = Object.values(pk).filter(t => t === "walk").length; let wi = 0;
   return Object.entries(pk).map(([d, type]) => {
     const useAlt = type === "walk" && alt && (walks > 1 ? (wi++ % 2 === 1) : wn % 2 === 1), A = useAlt ? CARDIO_ALT[alt] : null;
@@ -2544,7 +2546,7 @@ function planMove(pr, d) {
 }
 const abOf = sid => { const s = PLAN.sessions.find(x => x.id === sid); return s ? (s.ab || s.name) : sid; };
 function weekLine(pr, w, from) { return nums(w.m).filter(x => x >= from).map(x => `${DAY[x]} ${esc(abOf(w.m[x]))}`).join(" · ") || "no more workouts"; }
-function applyWeek(pr, w) { pr.wk = { start: weekStart(), m: w.m, c: w.c }; save(); }
+function applyWeek(pr, w) { const x = w.x || (pr.wk && pr.wk.start === weekStart() ? pr.wk.x : undefined); pr.wk = { start: weekStart(), m: w.m, c: w.c }; if (x) pr.wk.x = x; save(); }
 function estMin(pr, s) { let t = 0; s.items.forEach(it => { if (it.opt) return; if (it.role === "warm") { t += 7 * 60; return; } if (it.role === "cool") { t += 5 * 60; return; } if (it.role === "cardio") { t += (parseInt(it.reps) || 10) * 60; return; } t += it.sets * ((/side/.test(it.reps) ? 75 : 45) + it.rest) + 60; }); return Math.round(t / 300) * 5; }
 const logKey = dow => ymd(dateForDow(dow));
 function peek(pr, dow, sid, idx) { const k = logKey(dow); return (pr.log[k] && pr.log[k][sid + ":" + idx]) || { d: [], w: [] }; }
@@ -2957,7 +2959,7 @@ function viewToday() {
     const nx = nums(wk.m).find(x => x > VIEWDAY);
     body = `<div class="card" style="text-align:center;padding:24px 14px"><div style="font:700 34px var(--head);text-transform:uppercase">Rest day</div><p class="muted">${lbl} is for recovery. A ${GOALS[pr.goal].cardio.opt ? "walk" : "brisk walk or easy cardio"} and some stretching are perfect. Muscles grow between sessions.</p>
       ${nx !== undefined ? `<button class="btn" data-act="day" data-dow="${nx}">Next: ${esc(sessionFor(pr, PLAN, nx).name)} on ${DAYF[nx]} →</button>` : ""}</div>
-      ${canPlan ? trainCard(pr, VIEWDAY, isT) + cardioBringCard(pr, VIEWDAY, isT) : ""}`;
+      ${canPlan ? trainCard(pr, VIEWDAY, isT) + cardioBringCard(pr, VIEWDAY, isT) + changeCard(pr, VIEWDAY, isT, null) : ""}`;
   } else {
     const p = prog(pr, VIEWDAY, s), pct = p.tot ? Math.round(p.done / p.tot * 100) : 0;
     const xs = extraItems(pr, VIEWDAY, s), disp = dispOrder(pr, VIEWDAY, s);
@@ -2974,7 +2976,7 @@ function viewToday() {
       <div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px"><span style="color:var(--a);font-weight:600">Session complete. Great work!</span><button class="btn sm a" data-act="summary">Summary</button></div>` : ""}</div>
       <div class="list">${rows}</div><p class="small muted">${s.cardio ? "Cardio days fill your rest days so you reach the weekly cardio target. Turn them off in the Plan tab." : "Tap an exercise for the moving demo, how-to, YouTube guide and the gym, dumbbell or home version."}</p>
       ${s.cardio ? "" : xs.length || p.done >= Math.ceil(p.tot * 0.6) ? extrasCard(pr, VIEWDAY, s) : `<p class="small muted" style="margin:4px 2px 12px">Feeling good near the end? Once you've done most of today's sets, you can add 1–2 extra exercises here.</p>`}
-      ${!canPlan ? "" : s.cardio ? (p.done ? "" : cardioMoveCard(pr, VIEWDAY, isT, s)) + trainCard(pr, VIEWDAY, isT) : p.done ? "" : moveCard(pr, VIEWDAY, isT)}`;
+      ${!canPlan ? "" : s.cardio ? (p.done ? "" : cardioMoveCard(pr, VIEWDAY, isT, s) + changeCard(pr, VIEWDAY, isT, s)) + trainCard(pr, VIEWDAY, isT) : p.done ? "" : moveCard(pr, VIEWDAY, isT) + changeCard(pr, VIEWDAY, isT, s)}`;
   }
   const note = NOTE; NOTE = "";
   const fresh = pr.start === ymd(new Date()) && !Object.keys(pr.log || {}).length && isT;
@@ -3013,6 +3015,15 @@ function cardioBringCard(pr, d, isT) {
   return `<div class="card"><div class="small muted">Prefer cardio ${isT ? "today" : "on " + DAYF[d]}?</div>
     <div class="small" style="margin:4px 0 10px">Do <b>${esc(cs.name)}</b> ${isT ? "today" : "on " + DAYF[d]} instead of ${DAYF[src]}.</div>
     <button class="btn sm" data-act="cbring" data-dow="${d}" data-from="${src}">Do cardio ${isT ? "today" : "on " + DAYF[d]}</button></div>`;
+}
+/* any day not started yet: take the workout or cardio off it, or swap it for another kind of day */
+function changeCard(pr, d, isT, s) {
+  const when = isT ? "today" : "on " + DAYF[d], cur = s && s.cardio ? s.items[0].ex : null, walk = pr.equip === "gym" ? "incline-walk" : "brisk-walk";
+  const opts = [["rest", "Rest day"], ["stationary-bike", "Bike"], ["home-hiit", "HIIT"], [walk, pr.equip === "gym" ? "Treadmill" : "Walk"]].filter(([k]) => (k === "rest" ? !!s : k !== cur));
+  return `<div class="card"><div class="small muted">${s && !s.cardio ? "Not training" : "Change your plan"} ${when}?</div>
+    <div class="small" style="margin:4px 0 8px">${s ? "Switch this day to:" : "Add some cardio instead:"}</div>
+    <div class="seg" style="--n:${opts.length};margin:0">${opts.map(([k, l]) => `<button data-act="chg" data-dow="${d}" data-k="${k}">${l}</button>`).join("")}</div>
+    <p class="small muted" style="margin:8px 0 0">${s && !s.cardio ? "The workout comes off this week's plan. It is back to normal next week." : "Only for this week."}</p></div>`;
 }
 /* training day not started yet: push it to a later day */
 function moveCard(pr, d, isT) {
@@ -3439,6 +3450,12 @@ document.addEventListener("click", ev => {
     }
     case "cmove": { const w = weekPlan(pr), d = +el.dataset.dow, to = +el.dataset.to, id = w.c[d]; if (!id) break; delete w.c[d]; w.c[to] = id; applyWeek(pr, w);
       const cs = (PLAN.cardioSessions || []).find(x => x.id === id); NOTE = `Moved <b>${esc(cs ? cs.name : "cardio")}</b> to ${DAYF[to]}.`; render(); break; }
+    case "chg": {
+      const d = +el.dataset.dow, k = el.dataset.k, w = weekPlan(pr), old = w.m[d] ? abOf(w.m[d]) : null; delete w.m[d]; delete w.c[d];
+      if (k !== "rest" && CARDIO_INFO[k]) { pr.cx = pr.cx || {}; pr.cx[weekNo() + ":c" + d] = k; w.c[d] = "c" + d; w.x = Object.assign({}, pr.wk && pr.wk.start === weekStart() ? pr.wk.x : {}, { [d]: 1 }); }
+      applyWeek(pr, w); PLAN = buildPlan(pr);
+      NOTE = `${d === todayDow() ? "Today" : DAYF[d]} is now a ${k === "rest" ? "rest" : "cardio"} day.`;
+      render(); window.scrollTo(0, 0); break; }
     case "cbring": { const w = weekPlan(pr), d = +el.dataset.dow, from = +el.dataset.from, id = w.c[from]; if (!id) break; delete w.c[from]; w.c[d] = id; applyWeek(pr, w); render(); break; }
     case "equip": case "equipAll": {
       const had = Object.keys(pr.swaps || {}).length; pr.equip = el.dataset.v; pr.swaps = {}; save();
