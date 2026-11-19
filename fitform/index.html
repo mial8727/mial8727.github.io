@@ -136,6 +136,18 @@ nav.tabs .wrap{max-width:560px;margin:0 auto;display:grid;grid-template-columns:
 nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--mut2);font-size:11.5px;font-weight:600}
 nav.tabs button.on{color:var(--a)}
 nav.tabs svg{width:23px;height:23px}
+.wt{display:flex;align-items:center;gap:8px;margin:12px 0 2px;min-height:38px}
+.wt .wtn{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+.wt .wtn b{font:700 26px var(--head);font-variant-numeric:tabular-nums;line-height:1}
+.wt .wtn small{font-size:12px;color:var(--mut)}
+.wt.run .wtn b{color:var(--a)}.wt.pause .wtn b{color:var(--mut)}
+.wt .dot{width:7px;height:7px;border-radius:50%;background:var(--a);animation:wtp 1.8s ease-in-out infinite}
+@keyframes wtp{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.wt .dot{animation:none}}
+.wt button{padding:7px 13px;border-radius:999px;font-weight:600;font-size:13px;border:1px solid var(--line);background:var(--card2);color:var(--tx)}
+.wt button.go{background:var(--a);color:#0b2618;border-color:var(--a)}
+.wt.idle button{flex:1;padding:9px 12px;color:var(--a);border-color:var(--a2);background:transparent}
+.wchip{font:600 13px var(--body,inherit);font-variant-numeric:tabular-nums;color:var(--a);background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
 .timer{position:fixed;left:50%;transform:translate(-50%,24px);visibility:hidden;opacity:0;bottom:calc(74px + var(--sab));z-index:60;width:min(532px,calc(100% - 28px));background:#111;border:1px solid var(--a);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.6);transition:transform .25s,opacity .25s,visibility 0s .25s}
 .timer.show{transform:translate(-50%,0);visibility:visible;opacity:1;transition:transform .25s,opacity .25s,visibility 0s}
 .timer .tt{flex:1}.timer .tt small{display:block;color:var(--mut);font-size:12px}.timer .tt b{font-family:var(--head);font-size:30px;line-height:1;color:var(--a)}
@@ -2961,6 +2973,7 @@ function viewToday() {
       ${nx !== undefined ? `<button class="btn" data-act="day" data-dow="${nx}">Next: ${esc(sessionFor(pr, PLAN, nx).name)} on ${DAYF[nx]} →</button>` : ""}</div>
       ${canPlan ? trainCard(pr, VIEWDAY, isT) + cardioBringCard(pr, VIEWDAY, isT) + changeCard(pr, VIEWDAY, isT, null) : ""}`;
   } else {
+    if (!s.cardio && wtIdle(wtSess(pr, VIEWDAY, s.id))) save();
     const p = prog(pr, VIEWDAY, s), pct = p.tot ? Math.round(p.done / p.tot * 100) : 0;
     const xs = extraItems(pr, VIEWDAY, s), disp = dispOrder(pr, VIEWDAY, s);
     const rows = disp.map(({ it, i }) => {
@@ -2973,7 +2986,7 @@ function viewToday() {
     }).join("");
     body = `<div class="card sess"><div class="kicker">${lbl} · ${s.cardio ? "Cardio day" : PLAN.easy ? "Easy week · half the sets" : esc(GOALS[pr.goal].name)}</div><div class="name">${esc(s.name)}</div><div class="muted">${esc(s.focus)}</div>
       <div class="meta">${s.cardio ? `<span class="pill">Optional, but good for your heart</span>` : `<span class="pill">⏱ ~${estMin(pr, { items: [...s.items, ...xs] })} min</span><span class="pill">${s.items.filter(x => !NOWORK.includes(x.role)).length + xs.length} exercises</span><span class="pill">${EQNAME[pr.equip]}</span>`}</div>
-      <div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px"><span style="color:var(--a);font-weight:600">Session complete. Great work!</span><button class="btn sm a" data-act="summary">Summary</button></div>` : ""}</div>
+      ${!s.cardio && isT ? wtCard(pr, s, VIEWDAY) : ""}<div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px"><span style="color:var(--a);font-weight:600">Session complete. Great work!</span><button class="btn sm a" data-act="summary">Summary</button></div>` : ""}</div>
       <div class="list">${rows}</div><p class="small muted">${s.cardio ? "Cardio days fill your rest days so you reach the weekly cardio target. Turn them off in the Plan tab." : "Tap an exercise for the moving demo, how-to, YouTube guide and the gym, dumbbell or home version."}</p>
       ${s.cardio ? "" : xs.length || p.done >= Math.ceil(p.tot * 0.6) ? extrasCard(pr, VIEWDAY, s) : `<p class="small muted" style="margin:4px 2px 12px">Feeling good near the end? Once you've done most of today's sets, you can add 1–2 extra exercises here.</p>`}
       ${!canPlan ? "" : s.cardio ? (p.done ? "" : cardioMoveCard(pr, VIEWDAY, isT, s) + changeCard(pr, VIEWDAY, isT, s)) + trainCard(pr, VIEWDAY, isT) : p.done ? "" : moveCard(pr, VIEWDAY, isT) + changeCard(pr, VIEWDAY, isT, s)}`;
@@ -3243,7 +3256,7 @@ function renderSheet() {
   })() : "";
   const ml = arr => arr.map(m => `<div><i class="dot" style="background:${ex.P.includes(m) ? "var(--a)" : "var(--a2)"}"></i>${MUSCLE_NAMES[m]}</div>`).join("");
   $("#sheetIn").innerHTML = `
-    <div class="sbar"><button class="iconbtn" data-act="close" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="t">${s ? esc(s.name) + " · " + (itemLabel(it, s, SH.ctx.idx) || "Finish") : "Exercise guide"}</div></div>
+    <div class="sbar"><button class="iconbtn" data-act="close" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="t">${s ? esc(s.name) + " · " + (itemLabel(it, s, SH.ctx.idx) || "Finish") : "Exercise guide"}</div>${s && !s.cardio && SH.ctx && ["run", "pause"].includes(wtState(wtSess(pr, SH.ctx.dow, s.id))) ? `<span class="wchip" data-wt="${esc(sessKey(SH.ctx.dow, s.id))}">${wtFmt(wtMs(wtSess(pr, SH.ctx.dow, s.id)))}</span>` : ""}</div>
     <div class="stage">${figHTML(id, true)}${id === "warmup" || id === "cooldown" ? "" : `<span class="lbl">${tagFor(it && id === inPlan && it.key === "cardio" ? "cardio" : viewKey)}</span>`}</div>
     ${segHTML}${varHTML}${swapBtn}
     <div class="ex-title">${esc(ex.name)}</div>
@@ -3276,6 +3289,34 @@ function beep() {
     g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.2); o.connect(g); g.connect(AC.destination); o.start(t0 + d); o.stop(t0 + d + 0.22); }); } catch (e) {}
 }
 
+/* ---------- whole-workout timer: start, pause, finish (also early). o.run = when the running stretch began, o.acc = time banked, o.fin = finished ---------- */
+const wtSess = (pr, dow, sid) => { pr.sess = pr.sess || {}; const k = sessKey(dow, sid); return pr.sess[k] = pr.sess[k] || {}; };
+const wtMs = (o, now = Date.now()) => (o.acc || 0) + (o.run ? Math.max(0, now - o.run) : 0);
+const wtFmt = ms => { const t = Math.floor(ms / 1000), h = Math.floor(t / 3600); return (h ? h + ":" + pad(Math.floor(t % 3600 / 60)) : Math.floor(t / 60)) + ":" + pad(t % 60); };
+const wtState = o => o.fin ? "fin" : o.run ? "run" : o.acc ? "pause" : "idle";
+/* forgot to stop it? after 90 minutes with no set ticked, pause at the last activity */
+function wtIdle(o) { if (!o.run || Date.now() - Math.max(o.run, o.b || 0) < 90 * 60e3) return false; o.acc = (o.acc || 0) + Math.max(0, (o.b || o.run) - o.run); o.run = 0; o.auto = 1; return true; }
+function wtEnd(o) { o.acc = wtMs(o); o.run = 0; o.fin = 1; delete o.auto; }
+function chime(kind) {
+  const pr = P(); try { navigator.vibrate && navigator.vibrate(kind === "start" ? [60] : [80, 60, 80]); } catch (e) {}
+  if (!AC || (pr && pr.sound === "off")) return;
+  try { const t0 = AC.currentTime + 0.02; (kind === "start" ? [[660, 0], [880, 0.15]] : [[784, 0], [988, 0.17], [1318, 0.34]]).forEach(([f, d]) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = "sine"; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.16, t0 + d + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.45); o.connect(g); g.connect(AC.destination); o.start(t0 + d); o.stop(t0 + d + 0.5); }); } catch (e) {}
+}
+function wtCard(pr, s, dow) {
+  const o = wtSess(pr, dow, s.id), st = wtState(o), k = sessKey(dow, s.id);
+  if (st === "idle") return `<div class="wt idle"><button data-act="wstart">▶ Start workout</button></div>`;
+  const ms = wtMs(o), num = `<b data-wt="${esc(k)}">${wtFmt(ms)}</b>`;
+  if (st === "run") return `<div class="wt run"><div class="wtn"><i class="dot"></i>${num}<small>Workout time</small></div><button data-act="wpause">Pause</button><button class="go" data-act="wfinish">Finish ✓</button></div>`;
+  if (st === "pause") return `<div class="wt pause"><div class="wtn">${num}<small>${o.auto ? "Paused: no activity" : "Paused"}</small></div><button class="go" data-act="wresume">Resume</button><button data-act="wfinish">Finish ✓</button></div>`;
+  return `<div class="wt fin"><div class="wtn">${num}<small>Finished</small></div><button data-act="wresume">Resume</button><button class="go" data-act="summary">Summary</button></div>`;
+}
+setInterval(() => {
+  const pr = P(); if (!pr || !pr.sess) return; let redo = false;
+  document.querySelectorAll("[data-wt]").forEach(el => { const o = pr.sess[el.dataset.wt]; if (!o) return; if (wtIdle(o)) { redo = true; save(); } el.textContent = wtFmt(wtMs(o)); });
+  if (redo && !document.querySelector(".sheet.open") && !document.querySelector(".modal.open")) render();
+}, 1000);
+
 /* ---------- workout summary ---------- */
 const sessKey = (dow, sid) => logKey(dow) + "|" + sid;
 function summaryHTML(pr, dow, s) {
@@ -3291,10 +3332,12 @@ function summaryHTML(pr, dow, s) {
         if (before.length && top > Math.max(...before) + 0.01) prs.push(`${esc(EX[it.ex].name)}: <b>${fmtN(roundU(fromKg(top, cu), cu))} ${cu}</b> (was ${fmtN(roundU(fromKg(Math.max(...before), cu), cu))})`); }
     }
   });
-  const mins = info.a && info.b ? Math.max(1, Math.round((info.b - info.a) / 60000)) : null;
+  const timed = info.fin || info.acc || info.run, pg = prog(pr, dow, s), early = pg.tot > 0 && pg.done < pg.tot;
+  const mins = timed ? Math.max(1, Math.round(wtMs(info) / 60000)) : info.a && info.b ? Math.max(1, Math.round((info.b - info.a) / 60000)) : null;
   const w = weekPlan(pr), nx = nums(w.m).find(x => x > dow && !started(pr, x, w.m[x]));
-  return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">Workout done 🎉</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
+  return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">${early ? "Workout saved" : "Workout done 🎉"}</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
     <p class="muted" style="margin-top:0">${esc(s.name)} · ${DAYF[dow]}</p>
+    ${early ? `<p class="small">Stopped early with ${pg.done} of ${pg.tot} sets done. It's saved, and you can resume it from the Today tab.</p>` : ""}
     <div class="targets"><div class="tgt"><b>${mins ? mins + " min" : "—"}</b><span>workout time</span></div><div class="tgt"><b>${sets}</b><span>sets done</span></div>
       <div class="tgt"><b>${exs}</b><span>exercises</span></div><div class="tgt"><b>${vol ? Math.round(vol).toLocaleString() + " kg" : "—"}</b><span>total lifted (kg × reps)</span></div></div>
     ${prs.length ? `<div class="card" style="border-color:var(--a)"><h3 style="margin-top:0">New personal bests</h3>${prs.map(x => `<div class="small" style="margin:4px 0">🏆 ${x}</div>`).join("")}</div>` : ""}
@@ -3497,16 +3540,20 @@ document.addEventListener("click", ev => {
     case "tick": {
       if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex), i = +el.dataset.i; e.d[i] = !e.d[i];
       audioOn(); keepAwake();
-      if (e.d[i]) { pr.sess = pr.sess || {}; const sk = sessKey(dow, sid), o = pr.sess[sk] = pr.sess[sk] || {}; o.a = o.a || Date.now(); o.b = Date.now(); }
+      if (e.d[i]) { pr.sess = pr.sess || {}; const sk = sessKey(dow, sid), o = pr.sess[sk] = pr.sess[sk] || {}; o.a = o.a || Date.now(); o.b = Date.now(); if (!o.run && !o.fin && sessById(sid) && !sessById(sid).cardio) { o.run = Date.now(); delete o.auto; } }
       if (it && unitOf(it.ex) === "kg" && !isTimed(it)) e.u = unitW(pr, it.ex);
       if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && /^\d+(\.\d+)?$/.test(inp.placeholder)) { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
       save(); renderSheet();
       const ss = sessById(sid), pg = ss && prog(pr, dow, ss), sk2 = sessKey(dow, sid);
-      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; save(); showSummary(pr, dow, ss); }
+      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; if (!pr.sess[sk2].fin) wtEnd(pr.sess[sk2]); chime("end"); save(); showSummary(pr, dow, ss); }
       break;
     }
     case "nextEx": { if (!SH.ctx) break; const dow = SH.ctx.dow, s2 = sessById(SH.ctx.sid), raw = el.dataset.idx, idx = raw[0] === "x" ? raw : +raw, it = s2 && itemAt(pr, dow, s2, idx); if (!it) break;
       SH.ctx = { dow, sid: s2.id, idx }; SH.slot = it.slot; SH.base = SH.view = it.ex; renderSheet(); $("#sheet").scrollTop = 0; keepAwake(); break; }
+    case "wstart": case "wresume": { const s2 = dayPlan(pr, VIEWDAY); if (!s2 || s2.cardio) break; const o = wtSess(pr, VIEWDAY, s2.id), first = !o.acc && !o.fin;
+      o.run = Date.now(); o.b = Math.max(o.b || 0, o.run); delete o.fin; delete o.auto; delete o.shown; audioOn(); keepAwake(); if (first) chime("start"); save(); render(); break; }
+    case "wpause": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); o.acc = wtMs(o); o.run = 0; save(); render(); break; }
+    case "wfinish": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); wtEnd(o); audioOn(); chime("end"); save(); render(); showSummary(pr, VIEWDAY, s2); break; }
     case "summary": { const dow = SH.ctx ? SH.ctx.dow : VIEWDAY, s2 = SH.ctx ? sessById(SH.ctx.sid) : dayPlan(pr, VIEWDAY); if (s2) showSummary(pr, dow, s2); break; }
     case "t15": T.end += 15000; break;
     case "tskip": stopTimer(); break;
