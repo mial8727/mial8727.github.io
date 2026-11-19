@@ -187,6 +187,8 @@ html[dir=rtl] details.fold>summary small{margin-left:0;margin-right:8px}
 .langpick{display:flex;gap:6px;justify-content:flex-end;margin:-4px 0 6px}.langpick button{padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px;color:var(--mut)}.langpick button.on{border-color:var(--a);color:var(--tx)}
 .info b{display:block;margin-bottom:2px}
 .info .src{display:block;font-size:12px;margin-top:4px}
+.progs{display:grid;gap:8px;margin:6px 0 10px}.prog{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:start;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--tx)}.prog.on{border-color:var(--a);box-shadow:inset 0 0 0 1px var(--a)}
+.prog .pn{font:700 17px var(--head);text-transform:uppercase}.prog .pd{font-size:12px;color:var(--mut);align-self:center}.prog.on .pd{color:var(--a)}.prog .pt{grid-column:1/-1;font-size:12.5px;color:var(--mut)}
 .targets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .targets.t3{grid-template-columns:repeat(3,1fr)}.targets.t3 .tgt b{font-size:18px}.targets.t3 .tgt span{font-size:11.5px}
 .pchart{display:block;width:100%;height:auto;margin:2px 0 10px;direction:ltr}.pchart text{fill:var(--mut);font:11px var(--body,inherit)}.pchart .ln{fill:none;stroke:var(--a);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}.pchart .pt{fill:var(--a)}.pchart .gd{stroke:var(--line);stroke-width:1}
@@ -2220,6 +2222,26 @@ const TEMPLATES = {
          { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms, traps", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"], ["shrug", "acc"]] },
          { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
+  /* Full body (2 to 4 days) and Upper / Lower (4 days): balanced, same for men and women */
+  full: {
+    title: "Full Body",
+    2: [ { ab: "Full A", id: "fa", name: "Full Body A", focus: "Squat, chest, back, side shoulders, biceps, core", items: [["squat", "main"], ["press", "sec"], ["@hp", "sec"], ["@shs", "pri"], ["@bi", "acc"], ["@fore", "acc"], ["@core", "core"]] },
+         { ab: "Full B", id: "fb", name: "Full Body B", focus: "Hinge, glutes, shoulders, lats, side shoulders, triceps, calves", items: [["hinge", "main"], ["@shp", "sec"], ["@vp", "sec"], ["thrust", "sec"], ["@tri", "acc"], ["@calf", "acc"]] } ],
+    3: [ { ab: "Full A", id: "fa", name: "Full Body A", focus: "Squat, chest, back, side shoulders, triceps, core", items: [["squat", "main"], ["press", "sec"], ["@hp", "sec"], ["@shs", "pri"], ["@tri", "acc"], ["@core", "core"]] },
+         { ab: "Full B", id: "fb", name: "Full Body B", focus: "Hinge, shoulders, lats, hamstrings, biceps", items: [["hinge", "main"], ["@shp", "sec"], ["@vp", "sec"], ["legcurl", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Full C", id: "fc", name: "Full Body C", focus: "Leg press, glutes, upper chest, rows, side shoulders, calves", items: [["legpress", "main"], ["thrust", "sec"], ["incline", "sec"], ["@rd", "sec"], ["@shs", "pri"], ["@calf", "acc"], ["@core", "core"]] } ],
+    4: [ { ab: "Full A", id: "fa", name: "Full Body A", focus: "Squat, chest, back, side shoulders, triceps", items: [["squat", "main"], ["press", "sec"], ["@hp", "sec"], ["@shs", "pri"], ["@tri", "acc"]] },
+         { ab: "Full B", id: "fb", name: "Full Body B", focus: "Hinge, shoulders, lats, hamstrings, biceps", items: [["hinge", "main"], ["@shp", "sec"], ["@vp", "sec"], ["legcurl", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Full C", id: "fc", name: "Full Body C", focus: "Leg press, upper chest, rows, side shoulders, calves, core", items: [["legpress", "main"], ["incline", "sec"], ["@rd", "sec"], ["@shs", "pri"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "Full D", id: "fd", name: "Full Body D", focus: "Glutes, single-leg, chest, back, side shoulders, calves", items: [["thrust", "main"], ["split", "sec"], ["@chest", "sec"], ["@rd", "acc"], ["@shs", "pri"], ["@calf", "acc"]] } ]
+  },
+  ul: {
+    title: "Upper / Lower",
+    4: [ { ab: "Up A", id: "xua", name: "Upper A", focus: "Chest, back, shoulders, biceps, triceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@shs", "pri"], ["@bi", "acc"], ["@tri", "acc"]] },
+         { ab: "Lo A", id: "xla", name: "Lower A", focus: "Squat focus, hamstrings, calves, core", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["@calf", "acc"], ["@core", "core"]] },
+         { ab: "Up B", id: "xub", name: "Upper B", focus: "Upper chest, lats, rows, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "main"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "acc"], ["@bi", "acc"], ["@fore", "acc"]] },
+         { ab: "Lo B", id: "xlb", name: "Lower B", focus: "Leg press, glutes, single-leg, calves, core", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["@calf", "acc"], ["@core", "core"]] } ]
+  },
   /* Push / Pull / Legs, 3 to 6 days. Two versions: men lean to chest, shoulder width, back and arms; women lean to glutes, shoulders and posture. */
   pplm: {
     title: "Push Pull Legs",
@@ -2266,11 +2288,14 @@ const TEMPLATES = {
 };
 
 /* programs: "glutes" and "upper" run 2-4 days; Push Pull Legs (pplf for women, pplm for men) runs 3-6 */
+const PROGS = [["glutes", "Glutes & Back", "2–4 days", "Glutes, back and legs first, with upper-body days."], ["upper", "V-shape", "2–4 days", "Wide shoulders, upper chest and lats, with legs kept in."],
+  ["ppl", "Push Pull Legs", "3–6 days", "Push, pull and leg days. Different for men and women."], ["full", "Full Body", "2–4 days", "Every muscle each session. Great for busy weeks."], ["ul", "Upper / Lower", "4 days", "Two upper-body and two lower-body days."]];
+const progPicker = (cur, act) => `<div class="progs">${PROGS.map(([k, n, d, t]) => `<button class="prog${(k === "ppl" ? isPPL(cur) : cur === k) ? " on" : ""}" data-act="${act}" ${act === "focus" ? "data-f" : "data-v"}="${k}"><span class="pn">${n}</span><span class="pd">${d}</span><span class="pt">${t}</span></button>`).join("")}</div>`;
 const pplOf = sex => sex === "f" ? "pplf" : "pplm";
 const isPPL = f => f === "pplf" || f === "pplm";
 const clampDays = (f, d) => { const ds = [2, 3, 4, 5, 6].filter(x => TEMPLATES[f] && TEMPLATES[f][x]); return ds.includes(d) ? d : d < ds[0] ? ds[0] : ds[ds.length - 1]; };
 const defFocus = (sex, days) => days >= 5 ? pplOf(sex) : sex === "f" ? "glutes" : "upper";
-const focusNote = (f, d) => { const ds = [2, 3, 4, 5, 6].filter(x => TEMPLATES[f][x]); return `Days set to ${d} because this program runs ${ds[0]}–${ds[ds.length - 1]} days a week.`; };
+const focusNote = (f, d) => { const ds = [2, 3, 4, 5, 6].filter(x => TEMPLATES[f][x]); return ds.length === 1 ? `Days set to ${d} because this program runs ${ds[0]} days a week.` : `Days set to ${d} because this program runs ${ds[0]}–${ds[ds.length - 1]} days a week.`; };
 
 /* the men's 4-day plan before the Nov 2026 tweaks: used once to match old logged sets to their exercises */
 const UPPER4_OLD = [ { ab: "Up A", id: "ua", name: "Upper A", focus: "", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"]] },
@@ -3167,6 +3192,7 @@ function viewMe() {
   const cards = [];
   if (pr.sex === "f") {
     if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else if (pr.focus === "full" || pr.focus === "ul") cards.push(card(pr.focus === "full" ? "Why full body" : "Why upper / lower", pr.focus === "full" ? "Training every muscle in each session means each one gets worked two or three times a week, which is a well-supported way to build muscle. It also forgives a missed day, because every session covers the whole body." : "Four sessions a week, with each muscle trained twice. That is a good balance of training frequency and recovery, and the two upper and two lower days keep sessions focused.", []));
     else cards.push(card("Why glutes & back", "Hip thrusts, step-ups, split squats and deadlift-style hinges are among the highest glute-activation exercises in research reviews. Back work (pulldowns, rows) builds posture and a defined upper-body shape.", ["glute", "thrust"]));
     cards.push(card("Will lifting make me bulky?", "No. Women and men gain muscle at similar rates relative to where they start, but muscle builds slowly for everyone. You shape your body gradually with training and food. It doesn't happen by accident.", ["sex"]));
     cards.push(card("Training and your cycle", "An umbrella review found no clear evidence that menstrual-cycle phase meaningfully changes strength or training results. Train by feel: on low-energy days use lighter weights and keep the habit.", ["cycle"]));
@@ -3175,6 +3201,7 @@ function viewMe() {
     cards.push(card("Pregnancy, postpartum & pelvic floor", "If you're pregnant or have recently given birth, check with your doctor before starting. If you leak urine when lifting or jumping, a pelvic-floor physiotherapist can help. It's common and treatable."));
   } else {
     if (isPPL(pr.focus)) cards.push(card("Why Push Pull Legs", pplWhy(pr), []));
+    else if (pr.focus === "full" || pr.focus === "ul") cards.push(card(pr.focus === "full" ? "Why full body" : "Why upper / lower", pr.focus === "full" ? "Training every muscle in each session means each one gets worked two or three times a week, which is a well-supported way to build muscle. It also forgives a missed day, because every session covers the whole body." : "Four sessions a week, with each muscle trained twice. That is a good balance of training frequency and recovery, and the two upper and two lower days keep sessions focused.", []));
     else cards.push(card("Why upper body & V-shape", "Width comes from the side shoulders and lats, plus the upper chest. Side-shoulder work (lateral raises, 4 sets) appears in every upper-body session, rear shoulders get direct work twice a week, and pressing covers the front shoulders. That's about 8–16 direct sets a week for the side shoulders and 6 for the rear, in line with the 10 or more weekly sets research suggests for a muscle you want to grow. Pulling work at least matches pushing work to keep your shoulders healthy."));
     cards.push(card("Don't skip legs", "Squats and hinges stay in the plan. Legs are your biggest muscles, and training them supports strength, athletic balance and metabolic health."));
     cards.push(card("Belly fat", "Crunches won't burn fat from your stomach. A controlled study of abdominal exercise found no reduction in belly fat. Fat loss comes from an overall calorie deficit, and lifting keeps your muscle while you lose it.", ["spot"]));
@@ -3199,7 +3226,7 @@ function viewMe() {
       <div class="kv"><span class="muted">Days per week</span><b>${pr.days}</b></div>
       <div class="kv"><span class="muted">Equipment (whole plan)</span><b>${EQNAME[pr.equip]}</b></div>
       <div class="seg" style="--n:3;margin:6px 0 10px">${KEYS.map(k => `<button class="${pr.equip === k ? "on" : ""}" data-act="equip" data-v="${k}">${KEYNAME[k]}</button>`).join("")}</div>
-      <div class="seg" style="--n:3;margin-bottom:0"><button class="${pr.focus === "glutes" ? "on" : ""}" data-act="focus" data-f="glutes">Glutes & Back<small>2–4 days</small></button><button class="${pr.focus === "upper" ? "on" : ""}" data-act="focus" data-f="upper">V-shape<small>2–4 days</small></button><button class="${isPPL(pr.focus) ? "on" : ""}" data-act="focus" data-f="ppl">Push Pull Legs<small>3–6 days</small></button></div></div>
+      ${progPicker(pr.focus, "focus")}</div>
     ${AR ? `<div class="card"><div class="kv tog"><span>Language</span><span class="tg" data-notr><button class="${isAR() ? "" : "on"}" data-act="lang" data-v="en">English</button><button class="${isAR() ? "on" : ""}" data-act="lang" data-v="ar">العربية</button></span></div></div>` : ""}
     <div class="card"><h3>Workout settings</h3><div class="small muted">Time per workout</div>${lenSeg(pr)}
       ${togRow(pr, "sound", "Sound when rest ends", ["on", "On"], ["off", "Off"], "on")}
@@ -3440,9 +3467,9 @@ function renderWizard() {
       <div class="kv"><span class="muted">Name</span><b>${esc(W.name || "—")}</b></div><div class="kv"><span class="muted">Sex</span><b>${W.sex === "f" ? "Female" : "Male"}</b></div>
       <div class="kv"><span class="muted">Age · weight</span><b>${W.age} yrs · ${W.weight} kg</b></div><div class="kv"><span class="muted">Goal</span><b>${esc(GOALS[W.goal].name)}</b></div>
       <div class="kv"><span class="muted">Training</span><b>${W.days} days · ${+W.len ? W.len + " min" : "no time limit"} · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
-      <p style="font-weight:600;margin:4px 0 6px">Program focus</p><div class="seg" style="--n:3;margin-top:0"><button class="${W.focus === "glutes" ? "on" : ""}" data-act="wfocus" data-v="glutes">Glutes & Back<small>2–4 days</small></button><button class="${W.focus === "upper" ? "on" : ""}" data-act="wfocus" data-v="upper">V-shape<small>2–4 days</small></button><button class="${isPPL(W.focus) ? "on" : ""}" data-act="wfocus" data-v="ppl">Push Pull Legs<small>3–6 days</small></button></div>
+      <p style="font-weight:600;margin:4px 0 6px">Program focus</p>${progPicker(W.focus, "wfocus")}
       ${W._fnote ? `<p class="small" style="color:var(--a);margin:0 0 6px">${esc(W._fnote)}</p>` : ""}
-      <p class="small muted">${isPPL(W.focus) ? (W.sex === "f" ? "Push Pull Legs for women puts the weight on glutes, shoulders and posture, with chest and arms in smaller doses." : "Push Pull Legs for men puts the weight on chest, back, shoulder width and arms, with a full legs day.") : W.sex === "f" ? "Glutes & Back is the default for women here. Pick V-shape if you'd rather emphasise the upper body, or Push Pull Legs for a body-part split." : "V-shape is the default for men here. Pick Glutes & Back if you'd rather emphasise the lower body, or Push Pull Legs for a body-part split."}</p>
+      <p class="small muted">${isPPL(W.focus) ? (W.sex === "f" ? "Push Pull Legs for women puts the weight on glutes, shoulders and posture, with chest and arms in smaller doses." : "Push Pull Legs for men puts the weight on chest, back, shoulder width and arms, with a full legs day.") : W.sex === "f" ? "Glutes & Back is the usual pick for women here, V-shape for men. Any program works for anyone." : "V-shape is the usual pick for men here, Glutes & Back for women. Any program works for anyone."}</p>
       ${W._edit ? `<button class="btn danger sm" data-act="wdelete">${W._del ? "Tap again to delete this profile" : "Delete profile"}</button>` : ""}`;
   }
   const canBack = WSTEP > 0 && !(W._edit && WSTEP === 5);
