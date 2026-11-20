@@ -3272,6 +3272,7 @@ function viewMe() {
     <details class="fold"><summary><span>Sources<small>${Object.keys(SOURCES).length} studies & guidelines</small></span></summary><ul class="srcs small" style="padding-left:18px;margin:0">${Object.values(SOURCES).map(s => `<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.t)}</a></li>`).join("")}</ul>
       <p class="small muted">YouTube buttons open a YouTube search for that exercise from reputable coaches, so the link always works.</p></details>
     ${contactHTML()}
+    <div class="card"><h3>Share FitForm</h3><p class="small muted" style="margin-top:-4px">Know someone who trains? Send them the app. It's free and has no ads.</p><button class="btn a" data-act="invite">Invite a friend</button></div>
     <div class="card"><h3>Privacy</h3><div class="small">FitForm has no accounts and collects no personal data. Your profile (name, sex, age, weight, goal), ticks and weights are stored only in this browser on this device. Nothing is sent to us or to anyone else. YouTube buttons open YouTube, which has its own privacy policy. Uninstalling the app or clearing this site's data erases everything.</div>
       ${PRIVACY_URL ? `<a class="small" href="${PRIVACY_URL}" target="_blank" rel="noopener" style="display:block;margin-top:8px">Read the full privacy policy</a>` : ""}
       ${GC_CODE ? `<div class="small muted" style="margin-top:8px">FitForm counts how often features are used, for example how many workouts get finished. It never sends your name, weights or profile details.</div><button class="btn sm" style="margin-top:8px" data-act="stats">${S.stats === false ? "Usage counts: off" : "Usage counts: on"}</button>` : ""}
@@ -3421,6 +3422,35 @@ setInterval(() => {
 
 /* ---------- workout summary ---------- */
 const sessKey = (dow, sid) => logKey(dow) + "|" + sid;
+/* ---------- sharing: a picture of the finished workout, and an invite link ---------- */
+const SHARE_URL = "https://mial8727.github.io/fitform/", PLAY_URL = "https://play.google.com/store/apps/details?id=io.github.mial8727.fitform";   // once the app is public on Play, point SHARE_URL at PLAY_URL
+let SUMM = null;
+async function shareCard() {
+  const d = SUMM; if (!d) return;
+  const cs = getComputedStyle(document.documentElement), c = n => cs.getPropertyValue(n).trim() || null, A = c("--a") || "#3ddc84", BG = c("--bg") || "#0f1512", TX = c("--tx") || "#fff", MU = c("--mut") || "#9aa7a0", CARD = c("--card2") || "#1a231e";
+  try { await document.fonts.load("700 80px 'Barlow Condensed'"); } catch (e) {}
+  const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d"), ar = isAR(), F = "'Barlow Condensed', 'Segoe UI', Tahoma, sans-serif";
+  x.direction = ar ? "rtl" : "ltr"; x.textAlign = "center"; x.textBaseline = "alphabetic";
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, BG); g.addColorStop(1, CARD); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = A; x.fillRect(0, 0, W, 14);
+  const T = (t, y, size, col, wt) => { x.font = (wt || 700) + " " + size + "px " + F; x.fillStyle = col; x.fillText(t, W / 2, y); };
+  T("FITFORM", 130, 54, A); T(d.early ? L("Workout saved") : L("Workout done"), 330, 150, TX); T(d.name, 420, 56, MU, 600); T(d.day, 484, 40, MU, 500);
+  const tiles = [[d.mins ? d.mins + " " + L("min") : "—", L("workout time")], [String(d.sets), L("sets done")], [String(d.exs), L("exercises")], [d.vol ? Math.round(d.vol).toLocaleString() + " " + L("kg") : "—", L("total lifted")]];
+  tiles.forEach(([v, l], i) => { const tx = 90 + (i % 2) * 450, ty = 560 + Math.floor(i / 2) * 270; x.fillStyle = CARD; x.beginPath(); x.roundRect ? x.roundRect(tx, ty, 450 - 30, 240, 36) : x.rect(tx, ty, 420, 240); x.fill();
+    x.textAlign = "center"; x.font = "700 96px " + F; x.fillStyle = A; x.fillText(v, tx + 210, ty + 125); x.font = "500 38px " + F; x.fillStyle = MU; x.fillText(l, tx + 210, ty + 190); });
+  if (d.prs) T("🏆 " + d.prs + " " + L(d.prs > 1 ? "new personal bests" : "new personal best"), 1160, 56, TX, 700);
+  T(L("Free workout planner · No ads"), 1236, 40, MU, 500); T("mial8727.github.io/fitform", 1290, 38, A, 600);
+  const blob = await new Promise(r => cv.toBlob(r, "image/png")); if (!blob) return;
+  track("share-card");
+  const file = new File([blob], "fitform-workout.png", { type: "image/png" }), text = L("I just finished a workout with FitForm") + " " + SHARE_URL;
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "fitform-workout.png"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+async function inviteFriend() {
+  track("invite"); const text = L("I use FitForm for my workouts. It's free, has no ads and works in Arabic and English.");
+  try { if (navigator.share) { await navigator.share({ title: "FitForm", text, url: SHARE_URL }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  try { await navigator.clipboard.writeText(text + " " + SHARE_URL); NOTE = "The invite link is copied. Paste it in a message to a friend."; render(); } catch (e) { prompt(L("Copy this link"), SHARE_URL); }
+}
 function summaryHTML(pr, dow, s) {
   const ds = logKey(dow), L = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
   let sets = 0, vol = 0, exs = 0; const prs = [];
@@ -3437,6 +3467,8 @@ function summaryHTML(pr, dow, s) {
   const timed = info.fin || info.acc || info.run, pg = prog(pr, dow, s), early = pg.tot > 0 && pg.done < pg.tot;
   const mins = timed ? Math.max(1, Math.round(wtMs(info) / 60000)) : info.a && info.b ? Math.max(1, Math.round((info.b - info.a) / 60000)) : null;
   const w = weekPlan(pr), nx = nums(w.m).find(x => x > dow && !started(pr, x, w.m[x]));
+  SUMM = { name: s.name, day: L(DAYF[dow]), mins, sets, exs, vol, prs: prs.length, early };
+  const ask = !early && !S.rated && [3, 10, 25].includes(S.done || 0) && /android/i.test(navigator.userAgent);
   return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">${early ? "Workout saved" : "Workout done 🎉"}</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
     <p class="muted" style="margin-top:0">${esc(s.name)} · ${DAYF[dow]}</p>
     ${early ? `<p class="small">Stopped early with ${pg.done} of ${pg.tot} sets done. It's saved, and you can resume it from the Today tab.</p>` : ""}
@@ -3444,7 +3476,8 @@ function summaryHTML(pr, dow, s) {
       <div class="tgt"><b>${exs}</b><span>exercises</span></div><div class="tgt"><b>${vol ? Math.round(vol).toLocaleString() + " kg" : "—"}</b><span>total lifted (kg × reps)</span></div></div>
     ${prs.length ? `<div class="card" style="border-color:var(--a)"><h3 style="margin-top:0">New personal bests</h3>${prs.map(x => `<div class="small" style="margin:4px 0">🏆 ${x}</div>`).join("")}</div>` : ""}
     <p class="small">${nx !== undefined ? `Next workout: <b>${esc(abOf(w.m[nx]))}</b> on ${DAYF[nx]}.` : "That's this week's workouts done. Rest well."} Eat some protein in the next few hours.</p>
-    <button class="btn a wide" data-act="closeModal">Done</button>`;
+    ${ask ? `<div class="card" style="border-color:var(--a)"><b>Enjoying FitForm?</b><div class="small muted" style="margin:4px 0 8px">A quick rating on Google Play helps other people find it.</div><button class="btn a" data-act="rate">Rate on Google Play</button></div>` : ""}
+    <div style="display:flex;gap:8px"><button class="btn wide" data-act="shareSum">Share</button><button class="btn a wide" data-act="closeModal">Done</button></div>`;
 }
 function showSummary(pr, dow, s) { letSleep(); stopTimer(); $("#modalIn").innerHTML = summaryHTML(pr, dow, s); trIn($("#modalIn")); $("#modal").classList.add("open"); }
 
@@ -3650,7 +3683,7 @@ document.addEventListener("click", ev => {
       if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && /^\d+(\.\d+)?$/.test(inp.placeholder)) { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
       save(); renderSheet();
       const ss = sessById(sid), pg = ss && prog(pr, dow, ss), sk2 = sessKey(dow, sid);
-      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; if (!pr.sess[sk2].fin) wtEnd(pr.sess[sk2]); chime("end"); track("workout-done/" + progName(pr.focus)); save(); showSummary(pr, dow, ss); }
+      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; S.done = (S.done || 0) + 1; if (!pr.sess[sk2].fin) wtEnd(pr.sess[sk2]); chime("end"); track("workout-done/" + progName(pr.focus)); save(); showSummary(pr, dow, ss); }
       break;
     }
     case "nextEx": { if (!SH.ctx) break; const dow = SH.ctx.dow, s2 = sessById(SH.ctx.sid), raw = el.dataset.idx, idx = raw[0] === "x" ? raw : +raw, it = s2 && itemAt(pr, dow, s2, idx); if (!it) break;
@@ -3669,6 +3702,9 @@ document.addEventListener("click", ev => {
       let file = null; try { file = new File([data], name, { type: "text/csv" }); } catch (e) {}
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: "FitForm history" }).catch(() => {}); else saveFile(data, name, "text/csv");
       NOTE = rows.length > 1 ? `Exported ${rows.length - 1} sets to a CSV file you can open in Excel or Sheets.` : "Nothing to export yet. Log some sets first."; render(); break; }
+    case "shareSum": shareCard(); break;
+    case "invite": inviteFriend(); break;
+    case "rate": S.rated = 1; save(); track("rate-tap"); window.open(PLAY_URL, "_blank", "noopener"); break;
     case "stats": S.stats = S.stats === false ? true : false; save(); render(); break;
     case "pbar": { const d = el.closest(".plt"), u = d.dataset.u; pr.barw = pr.barw || {}; pr.barw[u] = +el.dataset.v; save(); d.querySelectorAll("[data-act=pbar]").forEach(b => b.classList.toggle("on", b === el)); const inp = d.querySelector("input"); d.querySelector(".pltout").innerHTML = plateOut(parseFloat((inp.value || "").replace(",", ".")), +el.dataset.v, u); break; }
     case "t15": T.end += 15000; break;
