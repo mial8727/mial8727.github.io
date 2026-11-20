@@ -3452,10 +3452,10 @@ async function inviteFriend() {
   try { await navigator.clipboard.writeText(text + " " + SHARE_URL); NOTE = "The invite link is copied. Paste it in a message to a friend."; render(); } catch (e) { prompt(L("Copy this link"), SHARE_URL); }
 }
 function summaryHTML(pr, dow, s) {
-  const ds = logKey(dow), L = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
+  const ds = logKey(dow), LG = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
   let sets = 0, vol = 0, exs = 0; const prs = [];
   dispOrder(pr, dow, s).forEach(({ it, i }) => {
-    const e = L[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, it.sets).filter(Boolean).length; if (!dn) return;
+    const e = LG[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, it.sets).filter(Boolean).length; if (!dn) return;
     if (!NOWORK.includes(it.role)) { exs++; sets += dn; }
     if (unitOf(it.ex) === "kg") {
       const eu = e.u || "kg", cu = unitW(pr, it.ex), wu = k => (e.t || [])[k] === "w", ws = (e.d || []).map((x, k) => x && !wu(k) ? toKg(parseFloat(e.w[k]), eu) : NaN).filter(v => v > 0);
