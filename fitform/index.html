@@ -2400,7 +2400,7 @@ let SAVES = 0;
 const save = () => { SAVES++; try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 /* ---------- anonymous usage counts (GoatCounter): only event names like "workout-done/ppl", never names, weights or profile data.
    Off while GC_CODE is empty. People can switch it off in Profile → Privacy. ---------- */
-const GC_CODE = "";
+const GC_CODE = "fitform";
 function track(name, once) {
   try {
     if (!GC_CODE || S.stats === false || !/^https?:$/.test(location.protocol) || navigator.doNotTrack === "1") return;
