@@ -2398,6 +2398,18 @@ try { store = window.localStorage; store.setItem("__t", "1"); store.removeItem("
 let S = (() => { try { const v = store && JSON.parse(store.getItem(KEY) || "null"); if (v && v.profiles) return v; } catch (e) {} return { profiles: {}, active: null }; })();
 let SAVES = 0;
 const save = () => { SAVES++; try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+/* ---------- anonymous usage counts (GoatCounter): only event names like "workout-done/ppl", never names, weights or profile data.
+   Off while GC_CODE is empty. People can switch it off in Profile → Privacy. ---------- */
+const GC_CODE = "";
+function track(name, once) {
+  try {
+    if (!GC_CODE || S.stats === false || !/^https?:$/.test(location.protocol) || navigator.doNotTrack === "1") return;
+    if (once) { const k = "fitform.gc." + name, d = ymd(new Date()); if (localStorage.getItem(k) === d) return; localStorage.setItem(k, d); }
+    new Image().src = "https://" + GC_CODE + ".goatcounter.com/count?p=" + encodeURIComponent("/e/" + name) + "&t=" + encodeURIComponent(name) + "&e=true&rnd=" + Math.random().toString(36).slice(2);
+  } catch (e) {}
+}
+const progName = f => isPPL(f) ? "ppl" : f;
+setTimeout(() => { track("open", true); track("lang/" + (isAR() ? "ar" : "en"), true); }, 2500);
 const P = () => S.profiles[S.active] || null;
 
 /* ---------- dates ---------- */
@@ -3262,6 +3274,7 @@ function viewMe() {
     ${contactHTML()}
     <div class="card"><h3>Privacy</h3><div class="small">FitForm has no accounts and collects no personal data. Your profile (name, sex, age, weight, goal), ticks and weights are stored only in this browser on this device. Nothing is sent to us or to anyone else. YouTube buttons open YouTube, which has its own privacy policy. Uninstalling the app or clearing this site's data erases everything.</div>
       ${PRIVACY_URL ? `<a class="small" href="${PRIVACY_URL}" target="_blank" rel="noopener" style="display:block;margin-top:8px">Read the full privacy policy</a>` : ""}
+      ${GC_CODE ? `<div class="small muted" style="margin-top:8px">FitForm counts how often features are used, for example how many workouts get finished. It never sends your name, weights or profile details.</div><button class="btn sm" style="margin-top:8px" data-act="stats">${S.stats === false ? "Usage counts: off" : "Usage counts: on"}</button>` : ""}
       <button class="btn danger sm" style="margin-top:10px" data-act="wipe">${WIPE ? "Tap again to erase all profiles and logs" : "Erase all my data on this device"}</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="profiles">Switch or add profile</button></div>
     <p class="small muted">Your profile, ticks and weights are saved in this browser on this device only.${store ? "" : " <b style='color:#ff9a9a'>This browser isn't allowing storage right now.</b>"}</p>`;
@@ -3513,6 +3526,7 @@ function wizNext() {
   delete W._edit; delete W._del; delete W._fnote;
   if (!old) W.start = ymd(new Date());
   S.profiles[W.id] = W; S.active = W.id; save();
+  if (!old) { track("profile-created"); track("program/" + progName(W.focus)); track("equip/" + W.equip); } else track("profile-edited");
   $("#wiz").classList.remove("open"); W = null; TAB = "today"; VIEWDAY = todayDow(); render(); window.scrollTo(0, 0);
 }
 
@@ -3636,7 +3650,7 @@ document.addEventListener("click", ev => {
       if (e.d[i] && !isTimed(it)) { if (!e.w[i]) { const inp = $(`#sheetIn input[data-i="${i}"]`); if (inp && /^\d+(\.\d+)?$/.test(inp.placeholder)) { e.w[i] = inp.placeholder; pr.last[it.ex] = inp.placeholder; } } startTimer(it.rest); }
       save(); renderSheet();
       const ss = sessById(sid), pg = ss && prog(pr, dow, ss), sk2 = sessKey(dow, sid);
-      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; if (!pr.sess[sk2].fin) wtEnd(pr.sess[sk2]); chime("end"); save(); showSummary(pr, dow, ss); }
+      if (ss && !ss.cardio && e.d[i] && pg.tot && pg.done >= pg.tot && !(pr.sess[sk2] || {}).shown) { pr.sess[sk2].shown = 1; if (!pr.sess[sk2].fin) wtEnd(pr.sess[sk2]); chime("end"); track("workout-done/" + progName(pr.focus)); save(); showSummary(pr, dow, ss); }
       break;
     }
     case "nextEx": { if (!SH.ctx) break; const dow = SH.ctx.dow, s2 = sessById(SH.ctx.sid), raw = el.dataset.idx, idx = raw[0] === "x" ? raw : +raw, it = s2 && itemAt(pr, dow, s2, idx); if (!it) break;
@@ -3644,7 +3658,7 @@ document.addEventListener("click", ev => {
     case "wstart": case "wresume": { const s2 = dayPlan(pr, VIEWDAY); if (!s2 || s2.cardio) break; const o = wtSess(pr, VIEWDAY, s2.id), first = !o.acc && !o.fin;
       o.run = Date.now(); o.b = Math.max(o.b || 0, o.run); delete o.fin; delete o.auto; delete o.shown; audioOn(); keepAwake(); if (first) chime("start"); save(); render(); break; }
     case "wpause": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); o.acc = wtMs(o); o.run = 0; save(); render(); break; }
-    case "wfinish": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); wtEnd(o); audioOn(); chime("end"); save(); render(); showSummary(pr, VIEWDAY, s2); break; }
+    case "wfinish": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); wtEnd(o); audioOn(); chime("end"); { const pg = prog(pr, VIEWDAY, s2); if (pg.tot && pg.done < pg.tot) track("workout-stopped-early/" + progName(pr.focus)); } save(); render(); showSummary(pr, VIEWDAY, s2); break; }
     case "summary": { const dow = SH.ctx ? SH.ctx.dow : VIEWDAY, s2 = SH.ctx ? sessById(SH.ctx.sid) : dayPlan(pr, VIEWDAY); if (s2) showSummary(pr, dow, s2); break; }
     case "stag": { if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex), i = +el.dataset.i; e.t = e.t || []; e.t[i] = { "": "w", w: "d", d: "f", f: "" }[e.t[i] || ""]; if (!e.t.some(Boolean)) delete e.t; save(); renderSheet(); break; }
     case "csv": {
@@ -3655,12 +3669,13 @@ document.addEventListener("click", ev => {
       let file = null; try { file = new File([data], name, { type: "text/csv" }); } catch (e) {}
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: "FitForm history" }).catch(() => {}); else saveFile(data, name, "text/csv");
       NOTE = rows.length > 1 ? `Exported ${rows.length - 1} sets to a CSV file you can open in Excel or Sheets.` : "Nothing to export yet. Log some sets first."; render(); break; }
+    case "stats": S.stats = S.stats === false ? true : false; save(); render(); break;
     case "pbar": { const d = el.closest(".plt"), u = d.dataset.u; pr.barw = pr.barw || {}; pr.barw[u] = +el.dataset.v; save(); d.querySelectorAll("[data-act=pbar]").forEach(b => b.classList.toggle("on", b === el)); const inp = d.querySelector("input"); d.querySelector(".pltout").innerHTML = plateOut(parseFloat((inp.value || "").replace(",", ".")), +el.dataset.v, u); break; }
     case "t15": T.end += 15000; break;
     case "tskip": stopTimer(); break;
     case "cat": CAT = el.dataset.c; render(); break;
     case "toggleDay": { const d = +el.dataset.dow, arr = dayList(pr), i = arr.indexOf(d); if (i >= 0) { if (arr.length > 1) arr.splice(i, 1); } else arr.push(d); pr.dayList = arr.sort((x, y) => x - y); delete pr.wk; save(); render(); break; }
-    case "focus": { const f = el.dataset.f === "ppl" ? pplOf(pr.sex) : el.dataset.f, d = clampDays(f, pr.days); pr.focus = f; if (f === "body" && pr.equip !== "home") { pr.equip = "home"; pr.swaps = {}; NOTE = "Bodyweight uses the home, no-equipment exercises, so your equipment is now set to Home."; } if (d !== pr.days) { pr.days = d; pr.dayList = null; NOTE = focusNote(f, d); } delete pr.wk; save(); render(); break; }
+    case "focus": { const f = el.dataset.f === "ppl" ? pplOf(pr.sex) : el.dataset.f, d = clampDays(f, pr.days); pr.focus = f; track("program-changed/" + progName(f)); if (f === "body" && pr.equip !== "home") { pr.equip = "home"; pr.swaps = {}; NOTE = "Bodyweight uses the home, no-equipment exercises, so your equipment is now set to Home."; } if (d !== pr.days) { pr.days = d; pr.dayList = null; NOTE = focusNote(f, d); } delete pr.wk; save(); render(); break; }
     case "edit": openWizard(pr.id); break;
     case "profiles": if (P()) openProfiles(); break;
     case "closeModal": $("#modal").classList.remove("open"); break;
