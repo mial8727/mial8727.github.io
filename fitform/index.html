@@ -2654,7 +2654,7 @@ const logKey = dow => ymd(dateForDow(dow));
 function peek(pr, dow, sid, idx) { const k = logKey(dow); return (pr.log[k] && pr.log[k][sid + ":" + idx]) || { d: [], w: [] }; }
 function entry(pr, dow, sid, idx) { const k = logKey(dow); pr.log[k] = pr.log[k] || {}; return (pr.log[k][sid + ":" + idx] = pr.log[k][sid + ":" + idx] || { d: [], w: [] }); }
 /* a set log belongs to one exercise: after a swap the new exercise starts clean */
-function entryX(pr, dow, sid, idx, id) { const e = entry(pr, dow, sid, idx); if (id && e.x && e.x !== id) { e.d = []; e.w = []; e.r = []; delete e.u; delete e.t; delete e.n; } if (id) e.x = id; return e; }
+function entryX(pr, dow, sid, idx, id) { const e = entry(pr, dow, sid, idx); if (id && e.x && e.x !== id) { e.d = []; e.w = []; e.r = []; delete e.u; delete e.t; delete e.n; delete e.a; } if (id) e.x = id; return e; }
 /* Nov 2026: the men's 4-day plan changed (a leg curl left Lower B). Logged sets are matched to exercises by position, so
    stamp each old set with its exercise first, then shift Lower B's later positions up by one. Runs once per profile. */
 function migrateLogs() {
@@ -2683,9 +2683,10 @@ function migrateLogs() {
   });
   if (changed) { HC = null; save(); }
 }
+const nSets = (it, e) => it.sets + ((e && e.a) | 0);   // planned sets plus any the user added (e.g. after a warm-up set)
 function prog(pr, dow, s) {
   let tot = 0, done = 0;
-  const add = (it, idx) => { if (it.opt) return; tot += it.sets; const e = peek(pr, dow, s.id, idx); for (let k = 0; k < it.sets; k++) if (e.d[k]) done++; };
+  const add = (it, idx) => { if (it.opt) return; const e = peek(pr, dow, s.id, idx), n = nSets(it, e); tot += n; for (let k = 0; k < n; k++) if (e.d[k]) done++; };
   s.items.forEach(add); extraItems(pr, dow, s).forEach((it, j) => add(it, "x" + j));
   return { tot, done };
 }
@@ -3107,12 +3108,12 @@ function viewToday() {
     const p = prog(pr, VIEWDAY, s), pct = p.tot ? Math.round(p.done / p.tot * 100) : 0;
     const xs = extraItems(pr, VIEWDAY, s), disp = dispOrder(pr, VIEWDAY, s);
     const rows = disp.map(({ it, i }) => {
-      const ex = EX[it.ex], e = peek(pr, VIEWDAY, s.id, i), dn = e.d.slice(0, it.sets).filter(Boolean).length, full = dn >= it.sets;
+      const ex = EX[it.ex], e = peek(pr, VIEWDAY, s.id, i), ns = nSets(it, e), dn = e.d.slice(0, ns).filter(Boolean).length, full = dn >= ns;
       const meta = isTimed(it) ? esc(it.reps) + (it.role === "cardio" && parseInt(e.w[0]) && e.d[0] ? ` · <b style="color:var(--a)">${parseInt(e.w[0])} min done</b>` : "") : `${it.sets} × ${esc(it.reps)} · rest ${fmtRest(it.rest)}`;
       const k = itemLabel(it, s, i) + (it.subFrom ? " · swapped" : "");
       return `<button class="row${full ? " complete" : ""}" data-act="open" data-idx="${i}">${figHTML(it.ex)}
         <div class="rmain">${it.opt ? `<div class="opt">Optional finisher</div>` : `<div class="rnum">${k}</div>`}<div class="rname">${esc(ex.name)}</div><div class="rmeta">${meta}${isTimed(it) ? "" : (() => { const ad = advice(pr, it, logKey(VIEWDAY)); return !ad ? "" : ad.up && ad.kg !== null ? ` · <span style="color:var(--a)">try ${fmtN(ad.kg)} ${ad.unit} ↑</span>` : " · last " + esc(ad.short || ad.last.replace(/ × .*/, "")); })()}</div>${it.alt ? tagFor(it.key) : ""}</div>
-        <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + it.sets}</div></button>`;
+        <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + ns}</div></button>`;
     }).join("");
     body = `<div class="card sess"><div class="kicker">${lbl} · ${s.cardio ? "Cardio day" : PLAN.easy ? "Easy week · half the sets" : esc(GOALS[pr.goal].name)}</div><div class="name">${esc(s.name)}</div><div class="muted">${esc(s.focus)}</div>
       <div class="meta">${s.cardio ? `<span class="pill">Optional, but good for your heart</span>` : `<span class="pill">⏱ ~${estMin(pr, { items: [...s.items, ...xs] })} min</span><span class="pill">${s.items.filter(x => !NOWORK.includes(x.role)).length + xs.length} exercises</span><span class="pill">${EQNAME[pr.equip]}</span>`}</div>
@@ -3372,17 +3373,18 @@ function renderSheet() {
         return `<div class="set kg"><span class="lbl stag u ${tg}" data-act="stag" data-i="${k}" role="button" tabindex="0">Set ${k + 1}${tl ? `<small>${tl}</small>` : ""}</span>${main}<span class="x">×</span><input type="text" inputmode="numeric" data-act="r" data-i="${k}" value="${esc((e.r || [])[k] || "")}" placeholder="${lo === hi ? lo : lo + "–" + hi}" aria-label="Reps for set ${k + 1}">${tick}</div>`;
       };
       const utog = u === "kg" ? `<span class="tg utog" data-notr>${["kg", "lb"].map(x => `<button class="${cu === x ? "on" : ""}" data-act="unit" data-v="${x}">${x}</button>`).join("")}</span>` : "";
-      sets = `<div class="card"><div class="setsh"><b>${it.sets} × ${esc(it.reps)}</b><span class="muted small">Rest ${fmtRest(it.rest)} · ${DAYF[SH.ctx.dow]}</span></div>
+      sets = `<div class="card"><div class="setsh"><b>${nSets(it, e)} × ${esc(it.reps)}</b><span class="muted small">Rest ${fmtRest(it.rest)} · ${DAYF[SH.ctx.dow]}</span></div>
         ${adv}<div class="small muted" style="margin:2px 0 8px">${help}</div>
         ${u === "kg" ? `<div class="set kg hd"><span>${utog}</span><span>${ph ? (cu === "lb" ? "lb per dumbbell" : "kg per dumbbell") : cu}</span><span></span><span>reps</span><span></span></div>` : ""}
-        ${Array.from({ length: it.sets }, (_, k) => row(k)).join("")}${u === "kg" ? `<div class="small muted" style="margin-top:8px">Tap “Set 1” to mark a set as warm-up, drop set or failure. Warm-ups don't count in your records.</div>` : ""}</div>`;
+        ${Array.from({ length: nSets(it, e) }, (_, k) => row(k)).join("")}${u === "kg" ? `<div class="small muted" style="margin-top:8px">Tap “Set 1” to mark a set as warm-up, drop set or failure. Warm-ups don't count in your records.</div>` : ""}
+        ${u === "kg" && id === inPlan && ((e.t || []).some(x => x === "w") || e.a) ? `<div style="display:flex;gap:8px;margin-top:10px">${(e.a | 0) < 3 ? `<button class="btn sm" data-act="addset">+ Add a set</button>` : ""}${e.a ? `<button class="btn sm" data-act="rmset">Remove added set</button>` : ""}</div>` : ""}</div>`;
       if (u === "kg" && id === inPlan) { const pn = histC(pr).filter(h => h.ex === id && h.ds < ds && h.n).pop(); sets += `<div class="card"><h3>Note</h3><input class="nbox" type="text" maxlength="200" data-act="note" value="${esc(e.n || "")}" placeholder="Add a note for this exercise (optional)">${pn ? `<div class="small muted" style="margin-top:6px">Last note: ${esc(pn.n)}</div>` : ""}</div>`; }
     }
   }
   let nextBtn = "";
   if (it && id === inPlan) {
     const order = dispOrder(pr, SH.ctx.dow, s), pos = order.findIndex(d => String(d.i) === String(SH.ctx.idx)), nx = order[pos + 1];
-    const e2 = peek(pr, SH.ctx.dow, SH.ctx.sid, SH.ctx.idx), mine = e2.d.slice(0, it.sets).filter(Boolean).length >= it.sets, p2 = prog(pr, SH.ctx.dow, s);
+    const e2 = peek(pr, SH.ctx.dow, SH.ctx.sid, SH.ctx.idx), mine = e2.d.slice(0, nSets(it, e2)).filter(Boolean).length >= nSets(it, e2), p2 = prog(pr, SH.ctx.dow, s);
     nextBtn = nx ? `<button class="btn${mine ? " a" : ""} wide nextb" data-act="nextEx" data-idx="${nx.i}">${mine ? "Next" : "Skip to next"}: ${esc(EX[nx.it.ex].name)} →</button>`
       : p2.done >= p2.tot && !s.cardio ? `<button class="btn a wide nextb" data-act="summary">Finish: see your summary</button>` : `<button class="btn wide nextb" data-act="close">Back to the workout list</button>`;
   }
@@ -3491,7 +3493,7 @@ function summaryHTML(pr, dow, s) {
   const ds = logKey(dow), LG = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
   let sets = 0, vol = 0, exs = 0; const prs = [];
   dispOrder(pr, dow, s).forEach(({ it, i }) => {
-    const e = LG[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, it.sets).filter(Boolean).length; if (!dn) return;
+    const e = LG[s.id + ":" + i]; if (!e) return; const dn = (e.d || []).slice(0, nSets(it, e)).filter(Boolean).length; if (!dn) return;
     if (!NOWORK.includes(it.role)) { exs++; sets += dn; }
     if (unitOf(it.ex) === "kg") {
       const eu = e.u || "kg", cu = unitW(pr, it.ex), wu = k => (e.t || [])[k] === "w", ws = (e.d || []).map((x, k) => x && !wu(k) ? toKg(parseFloat(e.w[k]), eu) : NaN).filter(v => v > 0);
@@ -3539,7 +3541,7 @@ function renderWizard() {
   const dots = `<div class="dots">${Array.from({ length: WSTEPS }, (_, i) => `<i class="${i <= WSTEP ? "on" : ""}"></i>`).join("")}</div>`;
   let body = "";
   if (WSTEP === 0) body = `${AR ? `<div class="langpick" data-notr><button class="${isAR() ? "" : "on"}" data-act="lang" data-v="en">English</button><button class="${isAR() ? "on" : ""}" data-act="lang" data-v="ar">العربية</button></div>` : ""}<div class="brand" style="font-size:30px" data-notr>FIT<b>FORM</b></div><h2>Let's build your profile</h2><p class="muted">Answer a few quick questions and you'll get a personal program with moving demos for every exercise, and a dumbbell or machine option for each.</p>
-      <label class="field"><span>Your name <span class="muted" style="font-weight:400">(optional)</span></span><input id="wName" type="text" maxlength="24" value="${esc(W.name || "")}" placeholder="e.g. Mohamed" autocomplete="off"></label>`;
+      <label class="field"><span>Your name <span class="muted" style="font-weight:400">(optional)</span></span><input id="wName" type="text" maxlength="24" value="${esc(W.name || "")}" placeholder="Your name" autocomplete="off"></label>`;
   if (WSTEP === 1) body = `<h2>Your sex</h2><p class="muted">This sets your default focus and the advice you'll see. You can change the focus later.</p>
       <div class="sexpick"><button class="cbtn${W.sex === "f" ? " on" : ""}" data-act="wsex" data-v="f"><div data-fig="db-hipthrust" data-big="1" data-sex="f"><svg viewBox="0 0 240 220">${RIG.svgAt(ANIM["db-hipthrust"], 0, true)}</svg></div><b>Female</b><span>Glutes & back focus</span></button>
         <button class="cbtn${W.sex === "m" ? " on" : ""}" data-act="wsex" data-v="m"><div data-fig="db-lateral" data-big="1" data-sex="m"><svg viewBox="0 0 240 220">${RIG.svgAt(ANIM["db-lateral"], 0, false)}</svg></div><b>Male</b><span>Upper body · V-shape focus</span></button></div>`;
@@ -3731,6 +3733,10 @@ document.addEventListener("click", ev => {
     case "wpause": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); o.acc = wtMs(o); o.run = 0; save(); render(); break; }
     case "wfinish": { const s2 = dayPlan(pr, VIEWDAY); if (!s2) break; const o = wtSess(pr, VIEWDAY, s2.id); wtEnd(o); audioOn(); chime("end"); { const pg = prog(pr, VIEWDAY, s2); if (pg.tot && pg.done < pg.tot) track("workout-stopped-early/" + progName(pr.focus)); } save(); render(); showSummary(pr, VIEWDAY, s2); break; }
     case "summary": { const dow = SH.ctx ? SH.ctx.dow : VIEWDAY, s2 = SH.ctx ? sessById(SH.ctx.sid) : dayPlan(pr, VIEWDAY); if (s2) showSummary(pr, dow, s2); break; }
+    case "addset": case "rmset": { if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex), n = it.sets + (e.a | 0);
+      if (a === "addset") e.a = Math.min(3, (e.a | 0) + 1);
+      else if (e.a) { const k = n - 1; ["d", "w", "r", "t"].forEach(f => { if (e[f]) e[f][k] = f === "d" ? false : ""; }); if (e.t && !e.t.some(Boolean)) delete e.t; e.a--; if (!e.a) delete e.a; }
+      save(); renderSheet(); break; }
     case "stag": { if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, it = itemAt(pr, dow, sessById(sid), idx), e = entryX(pr, dow, sid, idx, it && it.ex), i = +el.dataset.i; e.t = e.t || []; e.t[i] = { "": "w", w: "d", d: "f", f: "" }[e.t[i] || ""]; if (!e.t.some(Boolean)) delete e.t; save(); renderSheet(); break; }
     case "csv": {
       const q = v => { v = String(v ?? ""); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }, rows = [["Date", "Exercise", "Set", "Weight", "Unit", "Reps", "Type", "Note"]];
