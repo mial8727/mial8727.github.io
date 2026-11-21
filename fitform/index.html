@@ -2336,7 +2336,7 @@ const VARIANTS = {
 const isCardioSlot = slot => slot === "cardio" || slot === "cardio2";
 const typeKey = id => EX[id].type === "bw" ? "home" : EX[id].type;
 /* the exercise the plan uses for a slot and equipment choice (a picked machine variant wins) */
-function planEx(pr, slot, key) { const sd = slotDef(pr, slot), pk = pr.pick && pr.pick[slot]; return pk && EX[pk] && (VARIANTS[slot] || []).includes(pk) && (isCardioSlot(slot) || typeKey(pk) === key) ? pk : sd[key]; }
+function planEx(pr, slot, key) { const sd = slotDef(pr, slot), pk = pr.pick && pr.pick[slot]; return pk && EX[pk] && !painNoEx(pr).has(pk) && (VARIANTS[slot] || []).includes(pk) && (isCardioSlot(slot) || typeKey(pk) === key) ? pk : sd[key]; }
 const CARDIO_INFO = {
   "incline-walk": { ab: "Walk", name: "Cardio Walk", focus: "Steady, moderate cardio", reps: "30–40 min" },
   "brisk-walk": { ab: "Walk", name: "Cardio Walk", focus: "Steady, moderate cardio", reps: "30–40 min" },
@@ -2422,7 +2422,39 @@ const weekNo = () => Math.round(dateForDow(0).getTime() / 6048e5);   // changes 
 
 /* ---------- plan builder ---------- */
 const KEYS = ["gym", "db", "home"], KEYNAME = { gym: "Gym", db: "Dumbbells", home: "Home" }, EQNAME = { gym: "Gym machines", db: "Dumbbells", home: "Home / bodyweight" };
-function slotDef(pr, slot) { if (!SLOTS[slot]) return null; return Object.assign({}, SLOTS[slot], pr.age >= 60 && SLOTS_60[slot] ? SLOTS_60[slot] : {}); }
+/* ---------- training around pain: "map" swaps a movement for the first safer one that fits (an empty list drops it),
+   "def" changes the exercise a movement uses, "noex" stops a picked machine variant from coming back ---------- */
+const PAIN = {
+  back: { name: "Lower back", noex: ["tbar-row", "bb-ohp"],
+    map: { hinge: ["thrust", "kickback"], backext: ["kickback", "abduct"], bentrow: ["row", "straightarm"], arnold: ["ohp", "lateral"] },
+    def: { squat: { gym: "hack-squat" }, thrust: { gym: "machine-hipthrust" }, row: { gym: "machine-row" }, coreflex: { gym: "dead-bug", db: "dead-bug", home: "dead-bug" }, legraise: { gym: "plank", db: "plank", home: "plank" }, rotation: { gym: "pallof", db: "side-plank", home: "side-plank" }, plank: { gym: "plank" } },
+    tip: "No heavy standing lifts: the barbell squat, Romanian deadlift, bent-over rows, back extensions and standing overhead presses are swapped for supported machine versions (hack squat, hip thrust machine, chest-supported row). Core work is the gentle kind: dead bug, plank, side plank. Keep your back neutral and stop before any pain." },
+  knee: { name: "Knees", noex: ["hack-squat", "smith-squat", "jump-rope", "stair-climb", "home-hiit"],
+    map: { split: ["thrust", "kickback", "abduct"], jump: [] },
+    def: { squat: { gym: "leg-press", db: "box-squat", home: "box-squat" }, legpress: { db: "db-hipthrust", home: "glute-bridge" }, legext: { db: "db-leg-curl", home: "slider-curl" }, cardio: { home: "brisk-walk" }, cardio2: { db: "brisk-walk", home: "brisk-walk" } },
+    tip: "No jumping, lunges, split squats or deep squats. Quads are worked on the leg press and leg extension, so use a pain-free range and don't let the knees cave in. Hip-dominant moves (hip thrust, bridges, curls) carry the leg work, and cardio is walking or cycling." },
+  shoulder: { name: "Shoulders", noex: ["bb-ohp", "smith-ohp", "bb-incline"],
+    map: { ohp: ["lateral2", "lateral"], arnold: ["lateral2", "lateral"], uprow: ["lateral2", "lateral", "reardelt"] },
+    def: { triceps: { home: "bw-tri-ext" } },
+    tip: "Overhead pressing and upright rows are swapped for light raises below shoulder height. Keep chest presses in a comfortable range, shoulder blades down and back, and don't go deep on flys. Rear-shoulder and rowing work stays in." },
+  wrist: { name: "Wrists & elbows", noex: [],
+    map: { skull: ["triohp", "triceps"], closepress: ["triohp", "triceps"], wristcurl: ["grip", "revcurl"], revwrist: ["grip", "revcurl"] },
+    def: { triceps: { home: "backpack-oh-ext" } },
+    tip: "Skull crushers, close-grip presses and wrist curls are swapped for gentler options. Use a neutral grip when you can, keep the weight lighter, and stop if the pain gets sharper. Push-ups can be done on dumbbells or handles to keep the wrist straight." }
+};
+const painList = pr => (pr.pain || []).filter(k => PAIN[k]);
+function painMap(pains, slot) { for (const k of pains) if (PAIN[k].map[slot]) return PAIN[k].map[slot]; return null; }
+const painBanned = (pr, slot) => { const l = painList(pr); return !!l.length && painMap(l, slot) !== null; };
+const painNoEx = pr => new Set(painList(pr).flatMap(k => PAIN[k].noex));
+/* the movement a template line becomes for someone with pain: itself, another from its pool, or a safe stand-in (null = drop it) */
+function painResolve(pr, k, slot, usedSlots, tplItems) {
+  const pains = painList(pr); if (!pains.length) return slot;
+  const raw = new Set(tplItems.map(([x]) => x)), pool = k[0] === "@" ? POOLS[k.slice(1)] : [];
+  const expand = (sl, d) => { const m = painMap(pains, sl); return m === null ? [sl] : d > 2 ? [] : m.flatMap(x => expand(x, d + 1)); };
+  const cand = [slot, ...pool.filter(x => x !== slot)].flatMap(sl => expand(sl, 0));
+  return cand.find(x => !usedSlots.has(x) && !(raw.has(x) && x !== k)) || null;
+}
+function slotDef(pr, slot) { if (!SLOTS[slot]) return null; return Object.assign({}, SLOTS[slot], pr.age >= 60 && SLOTS_60[slot] ? SLOTS_60[slot] : {}, ...painList(pr).map(k => PAIN[k].def[slot] || {})); }
 function pickOrder(pr, slot, dflt) { const f = (pr.swaps && pr.swaps[slot]) || dflt || pr.equip || "gym"; return [f, ...KEYS.filter(k => k !== f)]; }
 function keyOf(pr, slot, id) { const sd = slot && slotDef(pr, slot); const k = sd && KEYS.find(x => sd[x] === id); if (k) return k; const t = EX[id].type; return t === "gym" ? "gym" : t === "db" ? "db" : "home"; }
 const tagFor = k => `<span class="tag ${k}">${KEYNAME[k] || "Cardio"}</span>`;
@@ -2457,9 +2489,11 @@ function buildPlan(pr, wn = weekNo()) {
       let slot = resolve(k), subFrom = null;
       const sub = pr.subs && pr.subs[slot];   // "swap for a similar exercise"
       if (sub && SLOTS[sub] && !usedSlots.has(sub) && !s.items.some(([k2]) => k2 === sub)) { subFrom = slot; slot = sub; }
+      if (painList(pr).length) { slot = painResolve(pr, k, slot, usedSlots, s.items); if (!slot) return; }
       usedSlots.add(slot);
       const sd = slotDef(pr, slot), order = pickOrder(pr, slot);
-      const key = order.find(k => !used.has(sd[k])) || order[0], pk = planEx(pr, slot, key), ex = used.has(pk) ? sd[key] : pk;
+      const key = painList(pr).length ? order[0] : order.find(k => !used.has(sd[k])) || order[0], pk = planEx(pr, slot, key), ex = used.has(pk) ? sd[key] : pk;
+      if (painList(pr).length && used.has(ex)) return;
       used.add(ex);
       items.push(Object.assign({ slot, role, ex, key, alt: true, subFrom }, dose(pr, role, ex)));
     });
@@ -2494,7 +2528,7 @@ function cardioPick(pr) {
   const ds = dayList(pr), rest = [0, 1, 2, 3, 4, 5, 6].filter(d => !ds.includes(d));
   const n = Math.min(rest.length - (ds.length >= 5 ? 1 : 0), { fatloss: 3, health: 3, muscle: 2, strength: 2 }[pr.goal] + (pr.age >= 65 ? 1 : 0));
   const pick = n <= 0 ? [] : n === 1 ? [rest[0]] : Array.from(new Set(Array.from({ length: n }, (_, i) => rest[Math.round(i * (rest.length - 1) / (n - 1))])));
-  const hiitOK = (pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new";
+  const hiitOK = (pr.goal === "fatloss" || pr.goal === "health") && pr.age < 60 && pr.exp !== "new" && !painList(pr).includes("knee");
   const out = {}; pick.forEach((d, i) => out[d] = hiitOK && i === 0 ? "hiit" : "walk"); return out;
 }
 /* second steady-cardio type, used on every other walk day (or every other week) for variety */
@@ -2506,6 +2540,7 @@ const CARDIO_ALT = {
 function cardioSessions(pr, wn = weekNo()) {
   const pk = cardioPick(pr), walkEx = pr.equip === "gym" ? "incline-walk" : "brisk-walk";
   let alt = pr.age >= 60 ? null : { gym: "stationary-bike", db: "jump-rope", home: "stair-climb" }[pr.equip];
+  if (painList(pr).includes("knee") && alt !== "stationary-bike") alt = null;
   if (alt === "jump-rope" && (pr.age >= 50 || pr.exp === "new")) alt = "stair-climb";
   const px = pr.wk && pr.wk.start === weekStart() && wn === weekNo() ? pr.wk.x || {} : {};
   Object.keys(px).forEach(d => { if (!(d in pk)) pk[d] = "walk"; });
@@ -2783,7 +2818,7 @@ function similarSlots(pr, slot) {
   const sd0 = slotDef(pr, slot); if (!sd0 || SUBSKIP.has(slot)) return [];
   const ex0 = EX[sd0[pickOrder(pr, slot)[0]]], P0 = new Set(ex0.P), cat0 = SLOTS[slot].cat;
   const pooled = k => Object.values(POOLS).some(pl => pl.includes(k) && pl.includes(slot));
-  return Object.keys(SLOTS).filter(k => k !== slot && !SUBSKIP.has(k)).map(k => {
+  return Object.keys(SLOTS).filter(k => k !== slot && !SUBSKIP.has(k) && !painBanned(pr, k)).map(k => {
     const ex = slotDef(pr, k)[pickOrder(pr, k)[0]], e = EX[ex], ov = e.P.filter(m => P0.has(m)).length;
     if (!e.P.includes(ex0.P[0])) return null;   // must train the same main muscle
     return { slot: k, ex, score: ov * 2 + (e.P[0] === ex0.P[0] ? 2 : 0) + (pooled(k) ? 3 : 0) + (SLOTS[k].cat === cat0 ? 2 : 0) + (e.kind === ex0.kind ? 1 : 0) - e.P.filter(m => !P0.has(m)).length };
@@ -3233,6 +3268,7 @@ function viewMe() {
     cards.push(card("Belly fat", "Crunches won't burn fat from your stomach. A controlled study of abdominal exercise found no reduction in belly fat. Fat loss comes from an overall calorie deficit, and lifting keeps your muscle while you lose it.", ["spot"]));
     cards.push(card("Shoulder & back care", "Balance pressing with rows and face pulls. Brace and hinge from the hips, and don't ego-lift. Going to total failure isn't required for results.", ["acsm"]));
   }
+  painList(pr).forEach(k => cards.push(card(L("Training around pain") + ": " + L(PAIN[k].name), L(PAIN[k].tip) + " " + L("This isn't medical advice. If pain is sharp, spreads, or doesn't settle, see a doctor or physio."))));
   if (pr.goal === "fatloss") cards.push(card("Your goal: lose fat", "The calorie deficit does the fat loss. Lifting keeps your muscle so the weight you lose is fat. The cardio finisher adds extra burn. Aim for the higher end of the protein range.", ["protein", "spot"]));
   if (pr.goal === "muscle") cards.push(card("Your goal: build muscle", "Weekly volume matters: around 10 or more sets per muscle per week produces more growth than lower volumes. Your Plan tab shows your weekly sets.", ["volume", "acsm"]));
   if (pr.goal === "strength") cards.push(card("Your goal: get stronger", "Strength improves most with heavier loads (around 80% of your max) for a few sets, done early in the session, at least twice a week. That's why the first lift of each day is the heaviest.", ["acsm"]));
@@ -3519,14 +3555,16 @@ function renderWizard() {
       <p style="font-weight:600;margin:16px 0 6px">Where do you train?</p><div class="choice"><button class="cbtn${W.equip === "gym" ? " on" : ""}" data-act="wequip" data-v="gym"><div class="ic">🏢</div><div><b>Gym machines</b><span>Machines, cables and barbells first</span></div></button>
         <button class="cbtn${W.equip === "db" ? " on" : ""}" data-act="wequip" data-v="db"><div class="ic">🏋️</div><div><b>Dumbbells</b><span>Dumbbells and a bench first, at home or in the gym</span></div></button>
         <button class="cbtn${W.equip === "home" ? " on" : ""}" data-act="wequip" data-v="home"><div class="ic">🏠</div><div><b>Home · bodyweight</b><span>No equipment first. Add dumbbells or a backpack to progress</span></div></button></div>
-      <p class="small muted">Every exercise still has all three versions. You can switch any time.</p>`;
+      <p class="small muted">Every exercise still has all three versions. You can switch any time.</p>
+      <p style="font-weight:600;margin:16px 0 6px">Any pain or injury? <span class="muted" style="font-weight:400">(optional)</span></p><div class="minis" style="grid-template-columns:repeat(2,1fr)">${Object.entries(PAIN).map(([k, v]) => `<button class="${(W.pain || []).includes(k) ? "on" : ""}" data-act="wpain" data-v="${k}">${L(v.name)}</button>`).join("")}</div>
+      <p class="small muted" style="margin:6px 0 0">${L(painList(W).length ? "Your plan avoids the exercises that load these areas most and uses gentler ones instead." : "Pick any that apply and your plan will avoid the exercises that load them. Leave blank if none.")} ${L("This isn't medical advice. If pain is sharp or doesn't settle, see a doctor or physio.")}</p>`;
   if (WSTEP === 5) {
     if (!W.focus || !TEMPLATES[W.focus][W.days]) W.focus = defFocus(W.sex, W.days);
     if (isPPL(W.focus)) W.focus = pplOf(W.sex);
     body = `<h2>Your profile</h2><div class="card">
       <div class="kv"><span class="muted">Name</span><b>${esc(W.name || "—")}</b></div><div class="kv"><span class="muted">Sex</span><b>${W.sex === "f" ? "Female" : "Male"}</b></div>
       <div class="kv"><span class="muted">Age · weight</span><b>${W.age} yrs · ${W.weight} kg</b></div><div class="kv"><span class="muted">Goal</span><b>${esc(GOALS[W.goal].name)}</b></div>
-      <div class="kv"><span class="muted">Training</span><b>${W.days} days · ${+W.len ? W.len + " min" : "no time limit"} · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
+      ${painList(W).length ? `<div class="kv"><span class="muted">Avoiding strain on</span><b>${painList(W).map(k => L(PAIN[k].name)).join(isAR() ? "، " : ", ")}</b></div>` : ""}<div class="kv"><span class="muted">Training</span><b>${W.days} days · ${+W.len ? W.len + " min" : "no time limit"} · ${W.exp === "new" ? "new" : W.exp === "some" ? "some experience" : "experienced"} · ${EQNAME[W.equip].toLowerCase()}</b></div></div>
       <p style="font-weight:600;margin:4px 0 6px">Program focus</p>${progPicker(W.focus, "wfocus")}
       ${W._fnote ? `<p class="small" style="color:var(--a);margin:0 0 6px">${esc(W._fnote)}</p>` : ""}
       <p class="small muted">${isPPL(W.focus) ? (W.sex === "f" ? "Push Pull Legs for women puts the weight on glutes, shoulders and posture, with chest and arms in smaller doses." : "Push Pull Legs for men puts the weight on chest, back, shoulder width and arms, with a full legs day.") : W.sex === "f" ? "Glutes & Back is the usual pick for women here, V-shape for men. Any program works for anyone." : "V-shape is the usual pick for men here, Glutes & Back for women. Any program works for anyone."}</p>
@@ -3720,6 +3758,7 @@ document.addEventListener("click", ev => {
     case "wsex": W.sex = el.dataset.v; W.focus = isPPL(W.focus) ? pplOf(W.sex) : defFocus(W.sex, W.days); WERR = ""; renderWizard(); break;
     case "wgoal": W.goal = el.dataset.v; WERR = ""; renderWizard(); break;
     case "wexp": W.exp = el.dataset.v; renderWizard(); break;
+    case "wpain": { const v = el.dataset.v, l = new Set(W.pain || []); l.has(v) ? l.delete(v) : l.add(v); W.pain = [...l]; renderWizard(); break; }
     case "wdays": W.days = +el.dataset.v; renderWizard(); break;
     case "wequip": W.equip = el.dataset.v; if (W.focus === "body" && W.equip !== "home") { W.focus = defFocus(W.sex, W.days); W._fnote = ""; } renderWizard(); break;
     case "wlen": W.len = +el.dataset.v; renderWizard(); break;
