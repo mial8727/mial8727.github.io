@@ -3115,9 +3115,10 @@ function viewToday() {
       const ex = EX[it.ex], e = peek(pr, VIEWDAY, s.id, i), ns = nSets(it, e), dn = e.d.slice(0, ns).filter(Boolean).length, full = dn >= ns;
       const meta = isTimed(it) ? esc(it.reps) + (it.role === "cardio" && parseInt(e.w[0]) && e.d[0] ? ` · <b style="color:var(--a)">${parseInt(e.w[0])} min done</b>` : "") : `${it.sets} × ${esc(it.reps)} · rest ${fmtRest(it.rest)}`;
       const k = itemLabel(it, s, i) + (it.subFrom ? " · swapped" : "");
-      return `<button class="row${full ? " complete" : ""}" data-act="open" data-idx="${i}">${figHTML(it.ex)}
+      const xdel = it.extra ? `<button class="xdel" data-act="rmX" data-j="${String(i).slice(1)}" aria-label="Remove this exercise" style="position:absolute;right:64px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid var(--bad,#ff6b6b);background:rgba(255,107,107,.12);color:var(--bad,#ff6b6b);font-size:18px;line-height:1;z-index:2">✕</button>` : "";
+      return `${it.extra ? `<div style="position:relative">` : ""}<button class="row${full ? " complete" : ""}"${it.extra ? ` style="padding-right:108px"` : ""} data-act="open" data-idx="${i}">${figHTML(it.ex)}
         <div class="rmain">${it.opt ? `<div class="opt">Optional finisher</div>` : `<div class="rnum">${k}</div>`}<div class="rname">${esc(ex.name)}</div><div class="rmeta">${meta}${isTimed(it) ? "" : (() => { const ad = advice(pr, it, logKey(VIEWDAY)); return !ad ? "" : ad.up && ad.kg !== null ? ` · <span style="color:var(--a)">try ${fmtN(ad.kg)} ${ad.unit} ↑</span>` : " · last " + esc(ad.short || ad.last.replace(/ × .*/, "")); })()}</div>${it.alt ? tagFor(it.key) : ""}</div>
-        <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + ns}</div></button>`;
+        <div class="rprog${full ? " full" : ""}">${full ? "✓" : dn + "/" + ns}</div></button>${xdel}${it.extra ? `</div>` : ""}`;
     }).join("");
     body = `<div class="card sess"><div class="kicker">${lbl} · ${s.cardio ? "Cardio day" : PLAN.easy ? "Easy week · half the sets" : esc(GOALS[pr.goal].name)}</div><div class="name">${esc(s.name)}</div><div class="muted">${esc(s.focus)}</div>
       <div class="meta">${s.cardio ? `<span class="pill">Optional, but good for your heart</span>` : `<span class="pill">⏱ ~${estMin(pr, { items: [...s.items, ...xs] })} min</span><span class="pill">${s.items.filter(x => !NOWORK.includes(x.role)).length + xs.length} exercises</span><span class="pill">${EQNAME[pr.equip]}</span>`}</div>
