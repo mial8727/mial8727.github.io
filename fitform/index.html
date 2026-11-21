@@ -2683,10 +2683,13 @@ function migrateLogs() {
   });
   if (changed) { HC = null; save(); }
 }
+/* exercises the user removed from one day's workout: pr.hide[date][sessionId] = [item index, ...] (their logs are kept) */
+const hideList = (pr, dow, sid) => ((pr.hide || {})[logKey(dow)] || {})[sid] || [];
+const isHid = (pr, dow, sid, idx) => hideList(pr, dow, sid).includes(idx);
 const nSets = (it, e) => it.sets + ((e && e.a) | 0);   // planned sets plus any the user added (e.g. after a warm-up set)
 function prog(pr, dow, s) {
   let tot = 0, done = 0;
-  const add = (it, idx) => { if (it.opt) return; const e = peek(pr, dow, s.id, idx), n = nSets(it, e); tot += n; for (let k = 0; k < n; k++) if (e.d[k]) done++; };
+  const add = (it, idx) => { if (it.opt || isHid(pr, dow, s.id, idx)) return; const e = peek(pr, dow, s.id, idx), n = nSets(it, e); tot += n; for (let k = 0; k < n; k++) if (e.d[k]) done++; };
   s.items.forEach(add); extraItems(pr, dow, s).forEach((it, j) => add(it, "x" + j));
   return { tot, done };
 }
@@ -2748,7 +2751,7 @@ function suggestExtras(pr, dow, s) {
   return out;
 }
 function dispOrder(pr, dow, s) {
-  const disp = s.items.map((it, i) => ({ it, i })), at = disp.findIndex(d => d.it.role === "cardio" || d.it.role === "cool");
+  const disp = s.items.map((it, i) => ({ it, i })).filter(d => !isHid(pr, dow, s.id, d.i)), at = disp.findIndex(d => d.it.role === "cardio" || d.it.role === "cool");
   disp.splice(at < 0 ? disp.length : at, 0, ...extraItems(pr, dow, s).map((it, j) => ({ it, i: "x" + j })));
   return disp;
 }
@@ -2756,7 +2759,8 @@ function extrasCard(pr, dow, s) {
   const xs = extraItems(pr, dow, s), full = xs.length >= 2, sug = full ? [] : suggestExtras(pr, dow, s);
   const added = xs.map((it, j) => `<div class="xadd"><div class="rmain"><div class="rname">${esc(EX[it.ex].name)}</div><div class="rmeta">${it.sets} × ${esc(it.reps)} · in your list above</div></div><button class="btn sm" data-act="rmX" data-j="${j}">Remove</button></div>`).join("");
   const list = sug.map(c => { const d = dose(pr, "acc", c.ex); return `<div class="xrow"><button class="row" data-act="lib" data-ex="${c.ex}" data-slot="${c.slot}">${figHTML(c.ex)}<div class="rmain"><div class="rnum">${c.g}</div><div class="rname">${esc(EX[c.ex].name)}</div><div class="rmeta">${Math.min(d.sets, 3)} × ${esc(d.reps)}</div></div></button><button class="btn sm a" data-act="addX" data-slot="${c.slot}">+ Add</button></div>`; }).join("");
-  return `<div class="card"><h3 style="margin-top:0">Feeling good? Add an extra exercise</h3>
+  const gone = hideList(pr, dow, s.id).map(i => s.items[i] && `<div class="xadd"><div class="rmain"><div class="rname">${esc(EX[s.items[i].ex].name)}</div><div class="rmeta">Removed from today</div></div><button class="btn sm" data-act="restoreItem" data-i="${i}">Restore</button></div>`).filter(Boolean).join("");
+  return `${gone ? `<div class="card"><h3 style="margin-top:0">Removed from today</h3>${gone}</div>` : ""}<div class="card"><h3 style="margin-top:0">Feeling good? Add an extra exercise</h3>
     <p class="small muted" style="margin-top:-4px">Add up to 2, done before your cool-down stretch. They work today's muscles and aren't in today's workout or your last one. Tap one to see the demo.</p>
     ${added}${full ? `<p class="small" style="color:var(--a);margin:10px 0 0">That's 2 extras. Enjoy them, and don't skip the stretch.</p>` : sug.length ? `<div class="list" style="margin:8px 0 0">${list}</div>` : `<p class="small muted">No more suggestions for today.</p>`}</div>`;
 }
@@ -3119,7 +3123,7 @@ function viewToday() {
       <div class="meta">${s.cardio ? `<span class="pill">Optional, but good for your heart</span>` : `<span class="pill">⏱ ~${estMin(pr, { items: [...s.items, ...xs] })} min</span><span class="pill">${s.items.filter(x => !NOWORK.includes(x.role)).length + xs.length} exercises</span><span class="pill">${EQNAME[pr.equip]}</span>`}</div>
       ${!s.cardio && isT ? wtCard(pr, s, VIEWDAY) : ""}<div class="bar"><i style="width:${pct}%"></i></div><div class="small muted" style="margin-top:6px">${s.cardio ? (p.done >= p.tot ? "Done. Nice work!" : "Tick it off when you finish") : p.done + " of " + p.tot + " sets done"}</div>${p.tot && p.done >= p.tot && !s.cardio ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px"><span style="color:var(--a);font-weight:600">Session complete. Great work!</span><button class="btn sm a" data-act="summary">Summary</button></div>` : ""}</div>
       <div class="list">${rows}</div><p class="small muted">${s.cardio ? "Cardio days fill your rest days so you reach the weekly cardio target. Turn them off in the Plan tab." : "Tap an exercise for the moving demo, how-to, YouTube guide and the gym, dumbbell or home version."}</p>
-      ${s.cardio ? "" : xs.length || p.done >= Math.ceil(p.tot * 0.6) ? extrasCard(pr, VIEWDAY, s) : `<p class="small muted" style="margin:4px 2px 12px">Feeling good near the end? Once you've done most of today's sets, you can add 1–2 extra exercises here.</p>`}
+      ${s.cardio ? "" : xs.length || hideList(pr, VIEWDAY, s.id).length || p.done >= Math.ceil(p.tot * 0.6) ? extrasCard(pr, VIEWDAY, s) : `<p class="small muted" style="margin:4px 2px 12px">Feeling good near the end? Once you've done most of today's sets, you can add 1–2 extra exercises here.</p>`}
       ${!canPlan ? "" : s.cardio ? (p.done ? "" : cardioMoveCard(pr, VIEWDAY, isT, s) + changeCard(pr, VIEWDAY, isT, s)) + trainCard(pr, VIEWDAY, isT) : p.done ? "" : moveCard(pr, VIEWDAY, isT) + changeCard(pr, VIEWDAY, isT, s)}`;
   }
   const note = NOTE; NOTE = "";
@@ -3402,7 +3406,7 @@ function renderSheet() {
     ${segHTML}${varHTML}${swapBtn}
     <div class="ex-title">${esc(ex.name)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="pill">🏋 ${esc(ex.equip)}</span><span class="pill">${ex.kind === "compound" ? "Compound" : ex.kind === "cardio" ? "Cardio" : ex.kind === "stretch" ? "Stretch" : "Isolation"}</span></div>
-    ${sets}${nextBtn}${it && id === inPlan ? plateCard(pr, id, peek(pr, SH.ctx.dow, SH.ctx.sid, SH.ctx.idx)) : plateCard(pr, id, null)}${progCard(pr, id)}
+    ${sets}${nextBtn}${it && id === inPlan && !s.cardio && !["warm", "cool"].includes(it.role) ? `<button class="btn danger sm wide" style="margin-top:10px" data-act="rmItem">Remove from today's workout</button>` : ""}${it && id === inPlan ? plateCard(pr, id, peek(pr, SH.ctx.dow, SH.ctx.sid, SH.ctx.idx)) : plateCard(pr, id, null)}${progCard(pr, id)}
     ${id === "cooldown" ? (() => { const gs = s ? groupsOf([...s.items, ...extraItems(pr, SH.ctx.dow, s)]) : VORDER; return `<div class="card"><h3>${s ? "Today's stretches" : "Stretches"}</h3><p class="small muted" style="margin-top:-4px">About 30 seconds each${s ? ", for the muscles you trained today" : ""}.</p><ol class="steps">${gs.map(g => `<li><b>${g}.</b> ${esc(STRETCHES[g])}</li>`).join("")}</ol></div>`; })() : ""}
     <div class="card"><h3>About</h3><div>${esc(ex.brief)}</div>
       <a class="btn yt wide" style="margin-top:12px" href="${yt(ex.yt)}" target="_blank" rel="noopener"><svg width="20" height="14" viewBox="0 0 20 14"><rect width="20" height="14" rx="4" fill="#FF0000"/><path d="M8 4l5 3-5 3z" fill="#fff"/></svg>Watch on YouTube</a></div>
@@ -3627,6 +3631,12 @@ document.addEventListener("click", ev => {
       if (L.length < 2 && !L.includes(el.dataset.slot)) L.push(el.dataset.slot);
       save(); render(); break;
     }
+    case "rmItem": {
+      if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, s0 = sessById(sid);
+      if (typeof idx === "string") { const j = +idx.slice(1), k = logKey(dow), L0 = ((pr.extra || {})[k] || {})[sid]; if (!L0) break; L0.splice(j, 1); const lg = pr.log[k]; if (lg) for (let n = j; n < 2; n++) { const a0 = sid + ":x" + n, b0 = sid + ":x" + (n + 1); if (lg[b0]) lg[a0] = lg[b0]; else delete lg[a0]; delete lg[b0]; } }
+      else { pr.hide = pr.hide || {}; const k = logKey(dow); pr.hide[k] = pr.hide[k] || {}; const l = pr.hide[k][sid] = pr.hide[k][sid] || []; if (!l.includes(idx)) l.push(idx); }
+      save(); closeSheet(); render(); break; }
+    case "restoreItem": { const s0 = dayPlan(pr, VIEWDAY), k = logKey(VIEWDAY), l = pr.hide && pr.hide[k] && pr.hide[k][s0.id]; if (l) { pr.hide[k][s0.id] = l.filter(x => x !== +el.dataset.i); } save(); render(); break; }
     case "rmX": {
       const k = logKey(VIEWDAY), s = dayPlan(pr, VIEWDAY), j = +el.dataset.j, L = s && ((pr.extra || {})[k] || {})[s.id]; if (!L) break;
       L.splice(j, 1); const lg = pr.log[k];
