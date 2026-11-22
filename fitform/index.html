@@ -2220,8 +2220,8 @@ const TEMPLATES = {
          { ab: "FB 3", id: "fb3", name: "Upper Chest, Lats & Legs", focus: "Incline press, lats, split squat, side & rear shoulders, arms", items: [["incline", "main"], ["@vp", "sec"], ["split", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"], ["@core", "core"]] } ],
     4: [ { ab: "Up A", id: "ua", name: "Upper A", focus: "Press & row, shoulder press, side & rear shoulders, biceps, triceps", items: [["press", "main"], ["@hp", "main"], ["@shp", "sec"], ["@vp", "sec"], ["@shs", "pri"], ["@rd", "acc"], ["@bi", "acc"], ["@tri", "acc"]] },
          { ab: "Lo A", id: "la", name: "Lower A", focus: "Squat focus, hamstrings, calves, side shoulders", items: [["squat", "main"], ["hinge", "sec"], ["legext", "acc"], ["legcurl", "acc"], ["calf", "acc"], ["@shs", "acc"], ["@core", "core"]] },
-         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms, traps", items: [["incline", "main"], ["@vp", "main"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"], ["shrug", "acc"]] },
-         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
+         { ab: "Up B", id: "ub", name: "Upper B", focus: "Width: upper chest, lats, side & rear shoulders, arms, traps", items: [["incline", "main"], ["pulldown", "main"], ["@hp", "acc"], ["@fly", "acc"], ["@rd", "acc"], ["@shs", "pri"], ["@tri", "pri"], ["@bi", "acc"], ["shrug", "acc"]] },
+         { ab: "Lo B", id: "lb", name: "Lower B", focus: "Leg press, glutes, single-leg, hamstrings, forearms", items: [["legpress", "main"], ["thrust", "sec"], ["split", "sec"], ["legcurl", "acc"], ["calf2", "acc"], ["@fore", "acc"], ["@core", "core"]] } ]
   },
   /* Full body (2 to 4 days) and Upper / Lower (4 days): balanced, same for men and women */
   full: {
@@ -2686,6 +2686,23 @@ function migrateLogs() {
 /* exercises the user removed from one day's workout: pr.hide[date][sessionId] = [item index, ...] (their logs are kept) */
 const hideList = (pr, dow, sid) => ((pr.hide || {})[logKey(dow)] || {})[sid] || [];
 const isHid = (pr, dow, sid, idx) => hideList(pr, dow, sid).includes(idx);
+/* every muscle group the plan trains must still be trained this week, and each workout keeps at least 3 exercises */
+const COVER_SKIP = new Set(["Forearms"]);
+function weekCover(pr, drop) {
+  const w = weekPlan(pr), groups = new Set(), base = new Set(), perDay = {};
+  nums(w.m).forEach(dow => { const s = PLAN.sessions.find(x => x.id === w.m[dow]); if (!s) return; let n = 0;
+    s.items.forEach((it, i) => { if (it.opt || NOWORK.includes(it.role) || it.role === "cardio") return; const gs = new Set((EX[it.ex].P || []).map(m => VGROUP[m]).filter(Boolean));
+      gs.forEach(g => base.add(g)); if (isHid(pr, dow, s.id, i) || (drop && drop.dow === dow && drop.idx === i)) return; n++; gs.forEach(g => groups.add(g)); });
+    extraItems(pr, dow, s).forEach((it, j) => { if (drop && drop.dow === dow && drop.idx === "x" + j) return; n++; (EX[it.ex].P || []).forEach(m => VGROUP[m] && groups.add(VGROUP[m])); });
+    perDay[dow] = n; });
+  return { groups, base, perDay };
+}
+function removeBlock(pr, dow, idx) {
+  const c = weekCover(pr, { dow, idx }), lost = [...c.base].find(g => !COVER_SKIP.has(g) && !c.groups.has(g));
+  if (lost) return L("Can't remove this one: it's the only {g} exercise this week. Swap it for another instead.").replace("{g}", L(lost).toLowerCase());
+  if (c.perDay[dow] < 3) return L("Keep at least 3 exercises in a workout.");
+  return "";
+}
 const nSets = (it, e) => it.sets + ((e && e.a) | 0);   // planned sets plus any the user added (e.g. after a warm-up set)
 function prog(pr, dow, s) {
   let tot = 0, done = 0;
@@ -3633,12 +3650,14 @@ document.addEventListener("click", ev => {
       save(); render(); break;
     }
     case "rmItem": {
-      if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, s0 = sessById(sid);
+      if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, s0 = sessById(sid), blk = removeBlock(pr, dow, idx);
+      if (blk) { NOTE = blk; closeSheet(); break; }
       if (typeof idx === "string") { const j = +idx.slice(1), k = logKey(dow), L0 = ((pr.extra || {})[k] || {})[sid]; if (!L0) break; L0.splice(j, 1); const lg = pr.log[k]; if (lg) for (let n = j; n < 2; n++) { const a0 = sid + ":x" + n, b0 = sid + ":x" + (n + 1); if (lg[b0]) lg[a0] = lg[b0]; else delete lg[a0]; delete lg[b0]; } }
       else { pr.hide = pr.hide || {}; const k = logKey(dow); pr.hide[k] = pr.hide[k] || {}; const l = pr.hide[k][sid] = pr.hide[k][sid] || []; if (!l.includes(idx)) l.push(idx); }
       save(); closeSheet(); render(); break; }
     case "restoreItem": { const s0 = dayPlan(pr, VIEWDAY), k = logKey(VIEWDAY), l = pr.hide && pr.hide[k] && pr.hide[k][s0.id]; if (l) { pr.hide[k][s0.id] = l.filter(x => x !== +el.dataset.i); } save(); render(); break; }
     case "rmX": {
+      { const blk = removeBlock(pr, VIEWDAY, "x" + (+el.dataset.j)); if (blk) { NOTE = blk; render(); break; } }
       const k = logKey(VIEWDAY), s = dayPlan(pr, VIEWDAY), j = +el.dataset.j, L = s && ((pr.extra || {})[k] || {})[s.id]; if (!L) break;
       L.splice(j, 1); const lg = pr.log[k];
       if (lg) for (let n = j; n < 2; n++) { const a = s.id + ":x" + n, b = s.id + ":x" + (n + 1); if (lg[b]) lg[a] = lg[b]; else delete lg[a]; delete lg[b]; }
