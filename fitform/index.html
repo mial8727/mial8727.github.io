@@ -2426,7 +2426,7 @@ const KEYS = ["gym", "db", "home"], KEYNAME = { gym: "Gym", db: "Dumbbells", hom
    "def" changes the exercise a movement uses, "noex" stops a picked machine variant from coming back ---------- */
 const PAIN = {
   back: { name: "Lower back", noex: ["tbar-row", "bb-ohp"],
-    map: { hinge: ["thrust", "kickback"], backext: ["kickback", "abduct"], bentrow: ["row", "straightarm"], arnold: ["ohp", "lateral"] },
+    map: { hinge: ["kickback", "abduct", "thrust"], backext: ["kickback", "abduct"], bentrow: ["row", "straightarm"], arnold: ["ohp", "lateral"] },
     def: { squat: { gym: "hack-squat" }, thrust: { gym: "machine-hipthrust" }, row: { gym: "machine-row" }, coreflex: { gym: "dead-bug", db: "dead-bug", home: "dead-bug" }, legraise: { gym: "plank", db: "plank", home: "plank" }, rotation: { gym: "pallof", db: "side-plank", home: "side-plank" }, plank: { gym: "plank" } },
     tip: "No heavy standing lifts: the barbell squat, Romanian deadlift, bent-over rows, back extensions and standing overhead presses are swapped for supported machine versions (hack squat, hip thrust machine, chest-supported row). Core work is the gentle kind: dead bug, plank, side plank. Keep your back neutral and stop before any pain." },
   knee: { name: "Knees", noex: ["hack-squat", "smith-squat", "jump-rope", "stair-climb", "home-hiit"],
