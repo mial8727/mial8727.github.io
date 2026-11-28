@@ -3541,6 +3541,7 @@ async function shareCard() {
   const tiles = [[d.mins ? d.mins + " " + L("min") : "—", L("workout time")], [String(d.sets), L("sets done")], [String(d.exs), L("exercises")], [d.vol ? Math.round(d.vol).toLocaleString() + " " + L("kg") : "—", L("total lifted")]];
   tiles.forEach(([v, l], i) => { const tx = 90 + (i % 2) * 450, ty = 560 + Math.floor(i / 2) * 270; x.fillStyle = CARD; x.beginPath(); x.roundRect ? x.roundRect(tx, ty, 450 - 30, 240, 36) : x.rect(tx, ty, 420, 240); x.fill();
     x.textAlign = "center"; x.font = "700 96px " + F; x.fillStyle = A; x.fillText(v, tx + 210, ty + 125); x.font = "500 38px " + F; x.fillStyle = MU; x.fillText(l, tx + 210, ty + 190); });
+  if (d.kcal) T("🔥 ≈ " + d.kcal.toLocaleString() + " kcal " + L("burned"), d.prs ? 1100 : 1160, 52, TX, 700);
   if (d.prs) T("🏆 " + d.prs + " " + L(d.prs > 1 ? "new personal bests" : "new personal best"), 1160, 56, TX, 700);
   T(L("Free workout planner · No ads"), 1236, 40, MU, 500); T("mial8727.github.io/fitform", 1290, 38, A, 600);
   const blob = await new Promise(r => cv.toBlob(r, "image/png")); if (!blob) return;
@@ -3553,6 +3554,22 @@ async function inviteFriend() {
   track("invite"); const text = L("I use FitForm for my workouts. It's free, has no ads and works in Arabic and English.");
   try { if (navigator.share) { await navigator.share({ title: "FitForm", text, url: SHARE_URL }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
   try { await navigator.clipboard.writeText(text + " " + SHARE_URL); NOTE = "The invite link is copied. Paste it in a message to a friend."; render(); } catch (e) { prompt(L("Copy this link"), SHARE_URL); }
+}
+/* ---------- calories burned: MET × body (the usual compendium method). Strength training about 4.5 METs, easier for beginners, 60+ and easy weeks.
+   With a height we use the Mifflin-St Jeor resting rate instead of plain body weight. Always shown as an estimate. ---------- */
+const CARDIO_MET = { "brisk-walk": 4.3, "incline-walk": 5.0, "elliptical": 5.0, "stationary-bike": 6.8, "rowing-machine": 7.0, "stair-climb": 8.8, "jump-rope": 10, "home-hiit": 8 };
+function kcalOf(pr, dow, s, mins) {
+  const ds = logKey(dow), LG = pr.log[ds] || {}, w = +pr.weight > 0 ? +pr.weight : 70;
+  const rmr = +pr.height > 0 ? Math.max(900, 10 * w + 6.25 * pr.height - 5 * (+pr.age || 30) + (pr.sex === "f" ? -161 : 5)) / 24 : w;   // kcal per hour at 1 MET
+  let cMin = 0, cKcal = 0, wMin = 0;
+  dispOrder(pr, dow, s).forEach(({ it, i }) => {
+    const e = LG[s.id + ":" + i]; if (!e || !(e.d || []).some(Boolean)) return;
+    if (it.role === "cardio") { const m = parseInt(e.w && e.w[0]) || parseInt(it.reps) || 0, met = CARDIO_MET[it.ex] || (it.vig ? 8 : 4.3); cMin += m; cKcal += met * rmr * m / 60; return; }
+    if (it.role === "warm") { wMin += 5; return; } if (it.role === "cool") { wMin += 3; return; }
+    wMin += (e.d || []).slice(0, nSets(it, e)).filter(Boolean).length * ((/side/.test(it.reps) ? 75 : 45) + (it.rest || 60)) / 60;
+  });
+  const sMin = s.cardio ? 0 : mins ? Math.max(0, mins - cMin) : wMin, met = (PLAN.easy || pr.exp === "new" || pr.age >= 60 || pr.focus === "body") ? 3.5 : 4.5;
+  const k = met * rmr * sMin / 60 + cKcal; return k > 0 ? Math.max(10, Math.round(k / 10) * 10) : 0;
 }
 function summaryHTML(pr, dow, s) {
   const ds = logKey(dow), LG = pr.log[ds] || {}, info = (pr.sess || {})[sessKey(dow, s.id)] || {};
@@ -3570,13 +3587,15 @@ function summaryHTML(pr, dow, s) {
   const timed = info.fin || info.acc || info.run, pg = prog(pr, dow, s), early = pg.tot > 0 && pg.done < pg.tot;
   const mins = timed ? Math.max(1, Math.round(wtMs(info) / 60000)) : info.a && info.b ? Math.max(1, Math.round((info.b - info.a) / 60000)) : null;
   const w = weekPlan(pr), nx = nums(w.m).find(x => x > dow && !started(pr, x, w.m[x]));
-  SUMM = { name: s.name, day: L(DAYF[dow]), mins, sets, exs, vol, prs: prs.length, early };
+  const kcal = kcalOf(pr, dow, s, mins);
+  SUMM = { name: s.name, day: L(DAYF[dow]), mins, sets, exs, vol, prs: prs.length, early, kcal };
   const ask = !early && !S.rated && [3, 10, 25].includes(S.done || 0) && /android/i.test(navigator.userAgent);
   return `<div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:4px 0">${early ? "Workout saved" : "Workout done 🎉"}</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">✕</button></div>
     <p class="muted" style="margin-top:0">${esc(s.name)} · ${DAYF[dow]}</p>
     ${early ? `<p class="small">Stopped early with ${pg.done} of ${pg.tot} sets done. It's saved, and you can resume it from the Today tab.</p>` : ""}
     <div class="targets"><div class="tgt"><b>${mins ? mins + " min" : "—"}</b><span>workout time</span></div><div class="tgt"><b>${sets}</b><span>sets done</span></div>
       <div class="tgt"><b>${exs}</b><span>exercises</span></div><div class="tgt"><b>${vol ? Math.round(vol).toLocaleString() + " kg" : "—"}</b><span>total lifted (kg × reps)</span></div></div>
+    ${kcal ? `<div class="card" style="display:flex;align-items:center;gap:12px"><div style="font-size:28px">🔥</div><div><b style="font-size:20px"><span data-notr>≈ ${kcal.toLocaleString()}</span> kcal</b><div class="small muted">Estimated calories burned. Real burn varies by about 25%${+pr.height ? "" : ", and is closer if you add your height (Profile tab, Edit)"}.</div></div></div>` : ""}
     ${prs.length ? `<div class="card" style="border-color:var(--a)"><h3 style="margin-top:0">New personal bests</h3>${prs.map(x => `<div class="small" style="margin:4px 0">🏆 ${x}</div>`).join("")}</div>` : ""}
     <p class="small">${nx !== undefined ? `Next workout: <b>${esc(abOf(w.m[nx]))}</b> on ${DAYF[nx]}.` : "That's this week's workouts done. Rest well."} Eat some protein in the next few hours.</p>
     ${ask ? `<div class="card" style="border-color:var(--a)"><b>Enjoying FitForm?</b><div class="small muted" style="margin:4px 0 8px">A quick rating on Google Play helps other people find it.</div><button class="btn a" data-act="rate">Rate on Google Play</button></div>` : ""}
@@ -3612,7 +3631,9 @@ function renderWizard() {
         <button class="cbtn${W.sex === "m" ? " on" : ""}" data-act="wsex" data-v="m"><div data-fig="db-lateral" data-big="1" data-sex="m"><svg viewBox="0 0 240 220">${RIG.svgAt(ANIM["db-lateral"], 0, false)}</svg></div><b>Male</b><span>Upper body · V-shape focus</span></button></div>`;
   if (WSTEP === 2) body = `<h2>Age & weight</h2><p class="muted">Used to adjust sets, rest and exercise choices, and to work out your protein target.</p>
       <label class="field"><span>Age (years)</span><input id="wAge" type="number" inputmode="numeric" min="14" max="90" value="${esc(W.age)}" placeholder="e.g. 35"></label>
-      <label class="field"><span>Weight (kg)</span><input id="wWt" type="number" inputmode="decimal" min="30" max="250" value="${esc(W.weight)}" placeholder="e.g. 75"></label>`;
+      <label class="field"><span>Weight (kg)</span><input id="wWt" type="number" inputmode="decimal" min="30" max="250" value="${esc(W.weight)}" placeholder="e.g. 75"></label>
+      <label class="field"><span>Height (cm) <span class="muted" style="font-weight:400">(optional)</span></span><input id="wHt" type="number" inputmode="numeric" min="120" max="230" value="${esc(W.height || "")}" placeholder="e.g. 175"></label>
+      <p class="small muted" style="margin:6px 0 0">Height is only used to estimate the calories you burn.</p>`;
   if (WSTEP === 3) body = `<h2>Your main goal</h2><div class="choice">${Object.entries(GOALS).map(([k, g]) => `<button class="cbtn${W.goal === k ? " on" : ""}" data-act="wgoal" data-v="${k}"><div class="ic">${g.icon}</div><div><b>${esc(g.name)}</b><span>${{ muscle: "Grow and shape muscle: moderate weights, more sets", fatloss: "Keep muscle while losing fat, plus a cardio finisher", strength: "Lift heavier: lower reps, longer rest", health: "Feel fitter and healthier with a balanced, shorter plan" }[k]}</span></div></button>`).join("")}</div>`;
   if (WSTEP === 4) body = `<h2>Your training</h2>
       <p style="font-weight:600;margin:4px 0 6px">Experience</p><div class="minis">${[["new", "New"], ["some", "Some"], ["exp", "Experienced"]].map(([k, l]) => `<button class="${W.exp === k ? "on" : ""}" data-act="wexp" data-v="${k}">${l}</button>`).join("")}</div>
@@ -3650,11 +3671,12 @@ function wizRead() {
   const n = $("#wName"); if (n) W.name = n.value.trim().slice(0, 24);
   const a = $("#wAge"); if (a) W.age = a.value === "" ? "" : Math.round(+a.value);
   const w = $("#wWt"); if (w) W.weight = w.value === "" ? "" : Math.round(+w.value * 10) / 10;
+  const h = $("#wHt"); if (h) { if (h.value === "") delete W.height; else W.height = Math.round(+h.value); }
 }
 function wizNext() {
   wizRead(); WERR = "";
   if (WSTEP === 1 && !W.sex) WERR = "Please choose one.";
-  if (WSTEP === 2) { if (!(W.age >= 14 && W.age <= 90)) WERR = "Enter an age between 14 and 90."; else if (!(W.weight >= 30 && W.weight <= 250)) WERR = "Enter a weight between 30 and 250 kg."; }
+  if (WSTEP === 2) { if (!(W.age >= 14 && W.age <= 90)) WERR = "Enter an age between 14 and 90."; else if (!(W.weight >= 30 && W.weight <= 250)) WERR = "Enter a weight between 30 and 250 kg."; else if (W.height && !(W.height >= 120 && W.height <= 230)) WERR = "Enter a height between 120 and 230 cm."; }
   if (WSTEP === 3 && !W.goal) WERR = "Pick a goal.";
   if (WERR) { renderWizard(); return; }
   if (WSTEP < 5) { WSTEP++; renderWizard(); return; }
