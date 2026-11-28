@@ -2505,7 +2505,7 @@ function buildPlan(pr, wn = weekNo()) {
     fitTime(pr, items);
     return { id: s.id, ab: s.ab, name: s.name, focus: s.focus, items };
   });
-  return { title: T.title, sessions, cardioSessions: cardioSessions(pr, wn), easy };
+  return { title: T.title, sessions, cardioSessions: cardioSessions(pr, wn), custom: wn === weekNo() ? customSessions(pr) : [], easy };
 }
 /* every 7th week of training is an easy week: same exercises, half the sets */
 const startOf = pr => pr.start || weekStart();
@@ -2568,7 +2568,8 @@ function weeklyCardio(pr) {
   (PLAN.cardioSessions || []).forEach(s => s.items.forEach(it => { if (it.role === "cardio") { const m = parseInt(String(it.reps).split("–").pop()) || parseInt(it.reps) || 0; mod += it.vig ? m * 2 : Math.round((parseInt(it.reps) + m) / 2); } }));
   return mod;
 }
-const sessById = sid => PLAN.sessions.find(x => x.id === sid) || (PLAN.cardioSessions || []).find(x => x.id === sid);
+const sessById = sid => PLAN.sessions.find(x => x.id === sid) || (PLAN.custom || []).find(x => x.id === sid) || (PLAN.cardioSessions || []).find(x => x.id === sid);
+const anySess = id => PLAN.sessions.some(x => x.id === id) || (PLAN.custom || []).some(x => x.id === id);
 const isTimed = it => EX[it.ex].kind === "cardio" || it.role === "cool";
 const NOWORK = ["warm", "cardio", "cool"];   // roles that aren't strength work
 function dayList(pr) { return (pr.dayList && pr.dayList.length ? pr.dayList : DEFAULT_DAYS[pr.days]).slice().sort((a, b) => a - b); }
@@ -2586,14 +2587,14 @@ function defaultWeek(pr) {
 }
 function weekPlan(pr) {
   const w = pr.wk, cs = PLAN.cardioSessions || [];
-  if (w && w.start === weekStart() && Object.values(w.m || {}).every(id => PLAN.sessions.some(x => x.id === id))) {
+  if (w && w.start === weekStart() && Object.values(w.m || {}).every(anySess)) {
     const c = {}; Object.entries(w.c || {}).forEach(([d, id]) => { if (cs.some(x => x.id === id) && !(d in w.m)) c[d] = id; });
     return { m: Object.assign({}, w.m), c, moved: true };
   }
   return defaultWeek(pr);
 }
 function sessionFor(pr, plan, dow) { const id = weekPlan(pr).m[dow]; return id ? plan.sessions.find(x => x.id === id) || null : null; }
-function dayPlan(pr, dow) { const w = weekPlan(pr); return (w.m[dow] && PLAN.sessions.find(x => x.id === w.m[dow])) || (w.c[dow] && (PLAN.cardioSessions || []).find(x => x.id === w.c[dow])) || null; }
+function dayPlan(pr, dow) { const w = weekPlan(pr); return (w.m[dow] && (PLAN.sessions.find(x => x.id === w.m[dow]) || (PLAN.custom || []).find(x => x.id === w.m[dow]))) || (w.c[dow] && (PLAN.cardioSessions || []).find(x => x.id === w.c[dow])) || null; }
 function started(pr, dow, sid) { const L = pr.log[logKey(dow)]; return !!L && Object.keys(L).some(k => k.split(":")[0] === sid && (L[k].d || []).some(Boolean)); }
 /* put sessions back in order on the free days, keeping a rest day between them when the week allows */
 function placeIn(m, free, list, prev) {
@@ -2646,7 +2647,7 @@ function planMove(pr, d) {
   const to = nums(m).find(x => x > d && m[x] === sid);
   return { w, over, sid, to };
 }
-const abOf = sid => { const s = PLAN.sessions.find(x => x.id === sid); return s ? (s.ab || s.name) : sid; };
+const abOf = sid => { const s = PLAN.sessions.find(x => x.id === sid) || (PLAN.custom || []).find(x => x.id === sid); return s ? (s.ab || s.name) : sid; };
 function weekLine(pr, w, from) { return nums(w.m).filter(x => x >= from).map(x => `${DAY[x]} ${esc(abOf(w.m[x]))}`).join(" · ") || "no more workouts"; }
 function applyWeek(pr, w) { const x = w.x || (pr.wk && pr.wk.start === weekStart() ? pr.wk.x : undefined); pr.wk = { start: weekStart(), m: w.m, c: w.c }; if (x) pr.wk.x = x; save(); }
 function estMin(pr, s) { let t = 0; s.items.forEach(it => { if (it.opt) return; if (it.role === "warm") { t += 7 * 60; return; } if (it.role === "cool") { t += 5 * 60; return; } if (it.role === "cardio") { t += (parseInt(it.reps) || 10) * 60; return; } t += it.sets * ((/side/.test(it.reps) ? 75 : 45) + it.rest) + 60; }); return Math.round(t / 300) * 5; }
@@ -2686,6 +2687,47 @@ function migrateLogs() {
 /* exercises the user removed from one day's workout: pr.hide[date][sessionId] = [item index, ...] (their logs are kept) */
 const hideList = (pr, dow, sid) => ((pr.hide || {})[logKey(dow)] || {})[sid] || [];
 const isHid = (pr, dow, sid, idx) => hideList(pr, dow, sid).includes(idx);
+/* ---------- custom workout: pick any exercise in the app for one day (this week only) ---------- */
+let PICKS = null;
+function pickable() {
+  if (PICKS) return PICKS; const out = new Map();
+  Object.entries(SLOTS).forEach(([k, sl]) => { if (["warmup", "cooldown", "balance"].includes(k) || sl.cat === "Cardio") return;
+    [...KEYS.map(x => sl[x]), ...(VARIANTS[k] || [])].forEach(id => { if (EX[id] && !out.has(id) && !CARDIO_INFO[id] && ANIM[id]) out.set(id, { id, cat: sl.cat }); }); });
+  return PICKS = [...out.values()];
+}
+function customSessions(pr) {
+  const out = [];
+  for (let d = 0; d < 7; d++) {
+    const c = pr.cw && pr.cw[logKey(d)]; if (!c || !(c.items || []).some(x => EX[x.ex])) continue;
+    const items = [{ slot: "warmup", role: "warm", ex: "warmup", alt: null, sets: 1, reps: pr.age >= 40 ? "8–10 min" : "5–8 min", rest: 0 }];
+    c.items.filter(x => EX[x.ex]).forEach((ci, i) => { const role = i === 0 ? "main" : i < 3 ? "sec" : "acc", dz = dose(pr, role, ci.ex);
+      items.push(Object.assign({ slot: null, role, ex: ci.ex, key: typeKey(ci.ex), alt: null, subFrom: null }, dz, ci.sets ? { sets: ci.sets } : {})); });
+    items.push({ slot: "cooldown", role: "cool", ex: "cooldown", alt: null, sets: 1, reps: "5 min", rest: 0 });
+    out.push({ id: "w" + d, dow: d, custom: true, ab: "Custom", name: "Custom workout", focus: "Your own workout", items });
+  }
+  return out;
+}
+let CB = null;
+const cbMus = id => EX[id].P.map(m => MUSCLE_NAMES[m]).join(", ");
+function cbListHTML() {
+  const q = CB.q.trim().toLowerCase(), have = new Set(CB.items.map(x => x.ex));
+  const rows = pickable().filter(p => (CB.cat === "All" || p.cat === CB.cat) && !have.has(p.id) && (!q || EX[p.id].name.toLowerCase().includes(q) || L(EX[p.id].name).toLowerCase().includes(q) || cbMus(p.id).toLowerCase().includes(q) || L(cbMus(p.id)).toLowerCase().includes(q)));
+  return rows.slice(0, 80).map(p => `<button class="row" data-act="cbadd" data-ex="${p.id}"><div class="rmain"><div class="rname">${esc(EX[p.id].name)}</div><div class="rmeta">${cbMus(p.id)}</div></div><div class="rprog">+</div></button>`).join("") + (rows.length > 80 ? `<div class="small muted" style="padding:8px">Showing the first 80. Type to narrow it down.</div>` : "") || `<div class="small muted" style="padding:10px">No exercises match.</div>`;
+}
+function cbRender() {
+  const pr = P(), c = pr.cw && pr.cw[logKey(CB.d)], cats = CATS.filter(x => x !== "Cardio");
+  const chosen = CB.items.map((x, i) => `<div class="row" style="cursor:default"><div class="rmain"><div class="rname"><span data-notr>${i + 1}.</span> ${esc(EX[x.ex].name)}</div><div class="rmeta">${cbMus(x.ex)}</div></div>
+    <div style="display:flex;gap:4px;align-items:center"><button class="btn sm" data-act="cbsets" data-i="${i}" data-d="-1">−</button><b data-notr style="min-width:18px;text-align:center">${x.sets}</b><button class="btn sm" data-act="cbsets" data-i="${i}" data-d="1">+</button>${i ? `<button class="btn sm" data-act="cbup" data-i="${i}" aria-label="Move up">↑</button>` : ""}<button class="btn sm" data-act="cbdel" data-i="${i}" aria-label="Remove" style="color:var(--bad,#ff6b6b)">✕</button></div></div>`).join("");
+  $("#modalIn").innerHTML = `<h2 style="margin:4px 0">Build a custom workout</h2><div class="small muted" style="margin-bottom:10px"><span data-notr>${esc(L(DAYF[CB.d]))}</span> · <span>Only this week. Pick any exercise in the app.</span></div>
+    <div class="list" style="margin:0 0 8px">${chosen || `<div class="small muted" style="padding:10px">Nothing yet. Add exercises below.</div>`}</div>
+    <div class="small muted" style="margin:0 0 8px">Sets are per exercise. A warm-up and cool-down are added for you.</div>
+    <div class="pills" style="display:flex;gap:6px;overflow-x:auto;margin:10px 0 6px">${cats.map(x => `<button class="pill${x === CB.cat ? " on" : ""}" data-act="cbcat" data-c="${x}">${x}</button>`).join("")}</div>
+    <input id="cbq" type="search" placeholder="Search exercises or muscles" value="${esc(CB.q)}" style="width:100%;margin:4px 0 6px;box-sizing:border-box;background:var(--card2,#161d1a);color:var(--tx,#fff);border:1px solid var(--line,#2c3631);border-radius:10px;padding:10px 12px;font:inherit">
+    <div class="list" id="cbList" style="margin:0;max-height:38vh;overflow:auto">${cbListHTML()}</div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn wide" data-act="closeModal">Cancel</button><button class="btn a wide" data-act="cbsave"${CB.items.length ? "" : " disabled"}>Save workout</button></div>
+    ${c ? `<button class="btn sm wide" style="margin-top:8px" data-act="cbremove">Remove my custom workout</button>` : ""}`;
+  trIn($("#modalIn")); $("#modal").classList.add("open");
+}
 /* every muscle group the plan trains must still be trained this week, and each workout keeps at least 3 exercises */
 const COVER_SKIP = new Set(["Forearms"]);
 function weekCover(pr, drop) {
@@ -3154,7 +3196,7 @@ function viewToday() {
 function trainCard(pr, d, isT) {
   const pk = pickFor(pr, d), when = isT ? "today" : "on " + DAYF[d];
   const res = pk ? planTrainOn(pr, d, pk.sid, pk.src) : null;
-  const s = pk && PLAN.sessions.find(x => x.id === pk.sid);
+  const s = pk && sessById(pk.sid);
   const from = pk ? (pk.src === null ? "" : pk.src < todayDow() ? ` (missed on ${DAYF[pk.src]})` : ` (moved from ${DAYF[pk.src]})`) : "";
   const others = PLAN.sessions.filter(x => !pk || x.id !== pk.sid).map(x => {
     const r = planTrainOn(pr, d, x.id);
@@ -3189,7 +3231,8 @@ function changeCard(pr, d, isT, s) {
   return `<div class="card"><div class="small muted">${s && !s.cardio ? "Not training" : "Change your plan"} ${when}?</div>
     <div class="small" style="margin:4px 0 8px">${s ? "Switch this day to:" : "Add some cardio instead:"}</div>
     <div class="seg" style="--n:${opts.length};margin:0">${opts.map(([k, l]) => `<button data-act="chg" data-dow="${d}" data-k="${k}">${l}</button>`).join("")}</div>
-    <p class="small muted" style="margin:8px 0 0">${s && !s.cardio ? "The workout comes off this week's plan. It is back to normal next week." : "Only for this week."}</p></div>`;
+    <p class="small muted" style="margin:8px 0 0">${s && !s.cardio ? "The workout comes off this week's plan. It is back to normal next week." : "Only for this week."}</p>
+    <button class="btn sm wide" style="margin-top:10px" data-act="cbopen" data-dow="${d}">${s && s.custom ? "Edit my custom workout" : "Build a custom workout"}</button></div>`;
 }
 /* training day not started yet: push it to a later day */
 function moveCard(pr, d, isT) {
@@ -3410,7 +3453,7 @@ function renderSheet() {
     nextBtn = nx ? `<button class="btn${mine ? " a" : ""} wide nextb" data-act="nextEx" data-idx="${nx.i}">${mine ? "Next" : "Skip to next"}: ${esc(EX[nx.it.ex].name)} →</button>`
       : p2.done >= p2.tot && !s.cardio ? `<button class="btn a wide nextb" data-act="summary">Finish: see your summary</button>` : `<button class="btn wide nextb" data-act="close">Back to the workout list</button>`;
   }
-  const subCard = it && !it.extra && !NOWORK.includes(it.role) && it.slot !== "balance" && id === inPlan ? (() => {
+  const subCard = it && it.slot && !it.extra && !NOWORK.includes(it.role) && it.slot !== "balance" && id === inPlan ? (() => {
     const base = it.subFrom || it.slot, alts = similarSlots(pr, base).filter(c => c.slot !== it.slot), baseEx = slotDef(pr, base)[pickOrder(pr, base)[0]];
     return `<div class="card"><h3>Swap for a similar exercise</h3>
       <p class="small muted" style="margin-top:-4px">Don't like this one, or the equipment is busy? Pick another exercise for the same main muscles. It replaces ${esc(EX[baseEx].name)} everywhere in your plan.</p>
@@ -3649,6 +3692,22 @@ document.addEventListener("click", ev => {
       if (L.length < 2 && !L.includes(el.dataset.slot)) L.push(el.dataset.slot);
       save(); render(); break;
     }
+    case "cbopen": { const d = +el.dataset.dow, c = pr.cw && pr.cw[logKey(d)]; CB = { d, items: c ? c.items.filter(x => EX[x.ex]).map(x => Object.assign({}, x)) : [], cat: "All", q: "" }; cbRender(); break; }
+    case "cbadd": if (CB && CB.items.length < 10 && EX[el.dataset.ex]) { CB.items.push({ ex: el.dataset.ex, sets: Math.min(4, dose(pr, CB.items.length ? "acc" : "main", el.dataset.ex).sets || 3) }); cbRender(); } else if (CB) { NOTE = L("A workout can have up to 10 exercises."); } break;
+    case "cbdel": CB.items.splice(+el.dataset.i, 1); cbRender(); break;
+    case "cbsets": { const x = CB.items[+el.dataset.i]; x.sets = Math.max(1, Math.min(6, x.sets + +el.dataset.d)); cbRender(); break; }
+    case "cbup": { const i = +el.dataset.i, t = CB.items[i]; CB.items[i] = CB.items[i - 1]; CB.items[i - 1] = t; cbRender(); break; }
+    case "cbcat": CB.cat = el.dataset.c; cbRender(); break;
+    case "cbsave": {
+      if (!CB || !CB.items.length) break; const d = CB.d, k = logKey(d); pr.cw = pr.cw || {}; const prev = pr.cw[k], w0 = weekPlan(pr), old = w0.m[d];
+      pr.cw[k] = { items: CB.items.map(x => ({ ex: x.ex, sets: x.sets })), was: prev ? prev.was : (old && !/^w\d$/.test(old) ? old : undefined), wasC: prev ? prev.wasC : w0.c[d] };
+      PLAN = buildPlan(pr); const w = weekPlan(pr); delete w.c[d]; w.m[d] = "w" + d; applyWeek(pr, w); PLAN = buildPlan(pr); track("custom-workout");
+      $("#modal").classList.remove("open"); CB = null; NOTE = L("Your custom workout is saved for this day."); render(); window.scrollTo(0, 0); break; }
+    case "cbremove": {
+      const d = CB.d, k = logKey(d), c = pr.cw && pr.cw[k]; if (!c) break; const w = weekPlan(pr), was = c.was; delete pr.cw[k]; PLAN = buildPlan(pr);
+      if (w.m[d] === "w" + d) { delete w.m[d]; if (was && PLAN.sessions.some(x => x.id === was) && !Object.values(w.m).includes(was)) w.m[d] = was; }
+      if (!w.m[d] && c.wasC && (PLAN.cardioSessions || []).some(x => x.id === c.wasC) && !(d in w.c)) w.c[d] = c.wasC;
+      applyWeek(pr, w); PLAN = buildPlan(pr); $("#modal").classList.remove("open"); CB = null; NOTE = L("Custom workout removed."); render(); break; }
     case "rmItem": {
       if (!SH.ctx) break; const { dow, sid, idx } = SH.ctx, s0 = sessById(sid), blk = removeBlock(pr, dow, idx);
       if (blk) { NOTE = blk; closeSheet(); break; }
@@ -3813,6 +3872,7 @@ document.addEventListener("click", ev => {
 });
 document.addEventListener("input", ev => {
   const el = ev.target, pr = P();
+  if (el.id === "cbq" && CB) { CB.q = el.value; const l = $("#cbList"); if (l) { l.innerHTML = cbListHTML(); trIn(l); } return; }
   if (el.dataset && el.dataset.act === "w" && SH.ctx && pr) {
     const { dow, sid, idx } = SH.ctx, e = entryX(pr, dow, sid, idx, SH.view), i = +el.dataset.i;
     const v = el.value.replace(",", ".").replace(/[^0-9.]/g, "").slice(0, 6); e.w[i] = v; e.x = SH.view; if (unitOf(SH.view) === "kg") e.u = unitW(pr, SH.view); if (v) pr.last[SH.view] = v; save();
